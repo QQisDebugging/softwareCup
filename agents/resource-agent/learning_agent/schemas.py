@@ -492,6 +492,106 @@ class ResourceCurationResponse(BaseModel):
     profileDimensionUpdates: list[ProfileDimensionUpdate]
 
 
+class PortfolioReportRequest(BaseModel):
+    studentProfileId: str
+    courseId: str
+    studentName: str = "匿名学生"
+    studentProfileSummary: str
+    courseTitle: str
+    topic: str = "综合学习表现"
+    timeRange: str = "最近 7 天"
+    completedResources: list[str] = Field(default_factory=list)
+    assessmentSummaries: list[str] = Field(default_factory=list)
+    tutoringSummaries: list[str] = Field(default_factory=list)
+    codePracticeSummaries: list[str] = Field(default_factory=list)
+    learningEvents: list[str] = Field(default_factory=list)
+    weaknesses: list[str] = Field(default_factory=list)
+    improvements: list[str] = Field(default_factory=list)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class PortfolioEvidenceItem(BaseModel):
+    category: str
+    title: str
+    evidence: str
+    source: str
+    confidenceScore: float = Field(ge=0, le=1)
+
+
+class MasteryRadarItem(BaseModel):
+    dimension: str
+    score: int = Field(ge=0, le=100)
+    evidence: str
+
+
+class LearningRiskFlag(BaseModel):
+    riskType: str
+    severity: str
+    evidence: str
+    intervention: str
+
+
+class PortfolioMilestone(BaseModel):
+    day: int
+    title: str
+    successCriteria: str
+    recommendedAgent: str
+
+
+class PortfolioReportResponse(BaseModel):
+    reportTitle: str
+    executiveSummary: str
+    evidenceItems: list[PortfolioEvidenceItem]
+    masteryRadar: list[MasteryRadarItem]
+    riskFlags: list[LearningRiskFlag]
+    nextMilestones: list[PortfolioMilestone]
+    teacherCommentsDraft: str
+    citations: list[KnowledgeMatch]
+    summary: str
+    profileDimensionUpdates: list[ProfileDimensionUpdate]
+
+
+class AgentTraceRequest(BaseModel):
+    traceId: str | None = None
+    taskName: str
+    userIntent: str
+    studentProfileId: str | None = None
+    courseId: str | None = None
+    involvedAgents: list[str] = Field(default_factory=list)
+    requestPayload: dict[str, Any] = Field(default_factory=dict)
+    responseSummary: str = ""
+    citations: list[KnowledgeMatch] = Field(default_factory=list)
+    fallbackEvents: list[str] = Field(default_factory=list)
+    safetyIssues: list[str] = Field(default_factory=list)
+
+
+class AgentTraceStep(BaseModel):
+    order: int = Field(ge=1)
+    agentName: str
+    role: str
+    inputSummary: str
+    outputSummary: str
+    evidenceRefs: list[str] = Field(default_factory=list)
+    status: str
+
+
+class AgentQualityGate(BaseModel):
+    name: str
+    status: str
+    details: str
+
+
+class AgentTraceResponse(BaseModel):
+    traceId: str
+    taskName: str
+    traceSteps: list[AgentTraceStep]
+    qualityGates: list[AgentQualityGate]
+    fallbackEvents: list[str]
+    reproducibilityNotes: list[str]
+    summary: str
+
+
 class HealthResponse(BaseModel):
     service: str
     status: Literal["UP", "DEGRADED"]

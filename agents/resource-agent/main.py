@@ -5,6 +5,7 @@ from typing import Iterable
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 
+from learning_agent.agent_trace import AgentTraceAgent
 from learning_agent.config import AgentSettings
 from learning_agent.documents import DocumentLoader
 from learning_agent.embeddings import HashingEmbeddingModel
@@ -22,6 +23,8 @@ from learning_agent.schemas import (
     AssessmentGenerateResponse,
     AssessmentGradeRequest,
     AssessmentGradeResponse,
+    AgentTraceRequest,
+    AgentTraceResponse,
     CodePracticeGenerateRequest,
     CodePracticeGenerateResponse,
     CodePracticeGradeRequest,
@@ -39,6 +42,8 @@ from learning_agent.schemas import (
     KnowledgeSearchResponse,
     LearningPathPlanRequest,
     LearningPathPlanResponse,
+    PortfolioReportRequest,
+    PortfolioReportResponse,
     PrerequisiteDiagnosisRequest,
     PrerequisiteDiagnosisResponse,
     ResourceAgentRequest,
@@ -53,6 +58,7 @@ from learning_agent.schemas import (
 from learning_agent.storyboard import StoryboardAgent
 from learning_agent.tutoring import TutoringAgent
 from learning_agent.vector_store import InMemoryVectorStore
+from learning_agent.portfolio_report import PortfolioReportAgent
 
 
 settings = AgentSettings.from_env()
@@ -70,6 +76,8 @@ code_practice_agent = CodePracticeAgent(settings=settings, vector_store=vector_s
 storyboard_agent = StoryboardAgent(settings=settings, vector_store=vector_store)
 prerequisite_agent = PrerequisiteDiagnosisAgent(settings=settings, vector_store=vector_store)
 resource_curation_agent = ResourceCurationAgent(settings=settings, vector_store=vector_store)
+portfolio_report_agent = PortfolioReportAgent(settings=settings, vector_store=vector_store)
+agent_trace_agent = AgentTraceAgent(settings=settings)
 
 
 @asynccontextmanager
@@ -250,6 +258,24 @@ def curate_resources(request: ResourceCurationRequest) -> ResourceCurationRespon
         metadata={"studentProfileId": request.studentProfileId, "courseId": request.courseId},
     )
     return resource_curation_agent.curate(request)
+
+
+@app.post("/agents/report/portfolio", response_model=PortfolioReportResponse)
+def build_portfolio_report(request: PortfolioReportRequest) -> PortfolioReportResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + request.completedResources + request.assessmentSummaries
+        + request.tutoringSummaries + request.codePracticeSummaries + request.learningEvents,
+        source="request.portfolio.documentTexts",
+        title_prefix=f"portfolio-{request.studentProfileId}-inline",
+        metadata={"studentProfileId": request.studentProfileId, "courseId": request.courseId},
+    )
+    return portfolio_report_agent.build(request)
+
+
+@app.post("/agents/trace/explain", response_model=AgentTraceResponse)
+def explain_agent_trace(request: AgentTraceRequest) -> AgentTraceResponse:
+    return agent_trace_agent.explain(request)
 
 
 @app.get("/agents/providers/status")
