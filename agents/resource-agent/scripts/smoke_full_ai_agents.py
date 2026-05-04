@@ -5,6 +5,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from learning_agent.agent_trace import AgentTraceAgent
 from learning_agent.assessment import AssessmentAgent
+from learning_agent.assessment_item_analysis import AssessmentItemAnalysisAgent
 from learning_agent.code_practice import CodePracticeAgent
 from learning_agent.config import AgentSettings
 from learning_agent.content_audit import ContentAuditAgent
@@ -13,22 +14,28 @@ from learning_agent.documents import DocumentLoader
 from learning_agent.embeddings import HashingEmbeddingModel
 from learning_agent.graph import ResourceGenerationWorkflow
 from learning_agent.knowledge_graph import KnowledgeGraphAgent
+from learning_agent.learning_event_analysis import LearningEventAnalysisAgent
 from learning_agent.path_planner import PathPlannerAgent
 from learning_agent.portfolio_report import PortfolioReportAgent
 from learning_agent.prerequisite import PrerequisiteDiagnosisAgent
+from learning_agent.profile_infer import ProfileInferenceAgent
 from learning_agent.resource_curation import ResourceCurationAgent
 from learning_agent.schemas import (
     AgentTraceRequest,
     AssessmentAnswer,
     AssessmentGenerateRequest,
     AssessmentGradeRequest,
+    AssessmentAttemptRecord,
+    AssessmentItemAnalysisRequest,
     CodePracticeGenerateRequest,
     CodePracticeGradeRequest,
     ContentAuditRequest,
     CourseDiagnosisRequest,
     KnowledgeGraphRequest,
+    LearningEventAnalysisRequest,
     LearningPathPlanRequest,
     PortfolioReportRequest,
+    ProfileInferRequest,
     PrerequisiteDiagnosisRequest,
     ResourceAgentRequest,
     ResourceCurationRequest,
@@ -216,6 +223,55 @@ def main() -> None:
         citations=graph.citations[:3],
         fallbackEvents=["offline provider 可保证无密钥演示链路不中断。"],
     ))
+    inferred_profile = ProfileInferenceAgent(settings, store).infer(ProfileInferRequest(
+        studentProfileId="profile-demo",
+        courseId="course-demo",
+        courseTitle=course,
+        declaredMajor="软件工程",
+        currentLevel="Java 基础较弱",
+        learningGoal=f"掌握 {topic}",
+        preferences="喜欢图解和项目案例",
+        constraintsText="每天 45 分钟",
+        dialogueTurns=[
+            "学生：我想学 Spring Boot，但是 Controller、Service、Repository 分不清。",
+            "学生：我喜欢先看图，再做一个能跑的小项目。",
+        ],
+        learningRecords=["错题复盘：Controller 直接访问 Repository。"],
+        assessmentSummaries=[grade.feedback],
+        documentTexts=[inline_doc],
+    ))
+    event_analysis = LearningEventAnalysisAgent(settings, store).analyze(LearningEventAnalysisRequest(
+        studentProfileId="profile-demo",
+        courseId="course-demo",
+        studentProfileSummary=profile,
+        courseTitle=course,
+        targetTopic=topic,
+        learningEvents=["完成资源生成和错题复盘。", "同一错误：Controller 直接访问 Repository。"],
+        resourceUsage=[resource.summary, curation.summary],
+        assessmentSummaries=[grade.feedback],
+        tutoringSummaries=[tutoring.answer[:140]],
+        codePracticeSummaries=[code_grade.feedback],
+        documentTexts=[inline_doc],
+    ))
+    item_analysis = AssessmentItemAnalysisAgent(settings, store).analyze(AssessmentItemAnalysisRequest(
+        courseId="course-demo",
+        courseTitle=course,
+        topic=topic,
+        studentProfileId="profile-demo",
+        attempts=[
+            AssessmentAttemptRecord(
+                questionId=result.questionId,
+                knowledgePoint=result.knowledgePoint,
+                questionType="自动测评题",
+                score=result.score,
+                maxScore=result.maxScore,
+                correct=result.correct,
+                feedback=result.feedback,
+            )
+            for result in grade.questionResults
+        ],
+        documentTexts=[inline_doc],
+    ))
 
     summary = {
         "resourceMinutes": resource.estimatedMinutes,
@@ -232,6 +288,9 @@ def main() -> None:
         "curatedResources": len(curation.curatedResources),
         "portfolioEvidence": len(portfolio.evidenceItems),
         "traceSteps": len(trace.traceSteps),
+        "profileDimensions": len(inferred_profile.dimensions),
+        "eventRisks": len(event_analysis.riskSignals),
+        "itemMasteryPoints": len(item_analysis.knowledgePointMastery),
     }
     print(summary)
     assert resource.content
@@ -248,6 +307,9 @@ def main() -> None:
     assert len(curation.curatedResources) >= 4
     assert portfolio.masteryRadar
     assert len(trace.traceSteps) >= 5
+    assert len(inferred_profile.dimensions) >= 8
+    assert event_analysis.recommendedAgentCalls
+    assert item_analysis.remediationPlan
 
 
 if __name__ == "__main__":

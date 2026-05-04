@@ -181,4 +181,41 @@ $trace = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/trace/explain" -Con
   responseSummary = $bundle.summary
   fallbackEvents = @('offline provider 可保证无密钥演示链路不中断。')
 } | ConvertTo-Json -Depth 12)
+
+$inferred = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/profile/infer" -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  declaredMajor = '软件工程'
+  currentLevel = '大二，Java 基础较弱'
+  learningGoal = '两周内掌握 Spring Boot REST API 分层开发'
+  preferences = '喜欢图解、项目案例和短视频脚本'
+  constraintsText = '每天可学习 45 分钟'
+  dialogueTurns = @('学生：Controller、Service、Repository 分层总混。', '学生：我喜欢先看图解，再做一个能跑的小项目。')
+  assessmentSummaries = @('入口测评 58/100，薄弱点是 HTTP 请求响应和 MVC 分层。')
+} | ConvertTo-Json -Depth 12)
+
+$eventAnalysis = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/learning/events/analyze" -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  studentProfileSummary = 'Java 基础较弱，喜欢图解和项目案例。'
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  targetTopic = 'Spring Boot Controller 与 REST API'
+  learningEvents = @('完成 2 个资源卡。', '错题复盘：同一错误是 Controller 直接访问 Repository。')
+  resourceUsage = @($bundle.summary)
+  assessmentSummaries = @('入口测评 58/100。', '复测 72/100。')
+  tutoringSummaries = @($tutoring.answer)
+} | ConvertTo-Json -Depth 12)
+
+$itemAnalysis = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/assessment/item-analysis" -ContentType 'application/json' -Body (@{
+  courseId = $course.id
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  topic = 'Spring Boot Controller 与 REST API'
+  studentProfileId = $profile.profile.id
+  attempts = @(
+    @{ questionId = 'q1'; knowledgePoint = 'HTTP 请求响应'; questionType = '选择题'; score = 4; maxScore = 10; correct = $false; feedback = '状态码和请求响应职责理解不稳。' },
+    @{ questionId = 'q2'; knowledgePoint = 'Controller 分层职责'; questionType = '简答题'; score = 5; maxScore = 15; correct = $false; feedback = 'Controller、Service、Repository 分层职责混淆。' },
+    @{ questionId = 'q3'; knowledgePoint = 'REST API 设计'; questionType = '代码纠错题'; score = 13; maxScore = 15; correct = $true; feedback = '能写出 Controller -> Service -> Repository 调用链。' }
+  )
+} | ConvertTo-Json -Depth 12)
 ```

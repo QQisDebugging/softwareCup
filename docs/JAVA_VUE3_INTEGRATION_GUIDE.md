@@ -63,6 +63,21 @@
   - 建议表：`agent_trace_logs`
   - 需要保存：traceId、traceSteps、qualityGates、fallbackEvents、reproducibilityNotes。
 
+- `POST /agents/profile/infer`
+  - 后端建议接口：`POST /api/profiles/agent-infer`
+  - 建议表：复用画像维度表和画像历史表
+  - 需要保存：dimensions、extractedSignals、contradictions、followUpQuestions、引用。
+
+- `POST /agents/learning/events/analyze`
+  - 后端建议接口：`POST /api/learning/events/analyze`
+  - 建议表：`learning_event_analyses`
+  - 需要保存：engagementScore、masteryTrend、riskSignals、nextActions、recommendedAgentCalls、画像更新建议。
+
+- `POST /agents/assessment/item-analysis`
+  - 后端建议接口：`POST /api/learning/assessments/item-analysis`
+  - 建议表：`assessment_item_analyses`
+  - 需要保存：knowledgePointMastery、hardItems、misconceptionClusters、remediationPlan、引用。
+
 ### 后端实现约束
 
 - DTO 字段保持 camelCase，直接对齐 Python Pydantic 字段。
@@ -116,6 +131,14 @@
   - 调用 `/api/learning/agent-traces`
   - 以时间线展示 `traceSteps`，以状态卡展示 `qualityGates`、降级事件和复现说明。
 
+- 对话式画像抽取面板
+  - 调用 `/api/profiles/agent-infer`
+  - 展示抽取出的 8 个画像维度、证据、置信度、冲突项和追问问题。
+
+- 学习事件分析页
+  - 调用 `/api/learning/events/analyze`
+  - 展示参与度、掌握趋势、风险信号、下一步动作和建议调用的 Agent。
+
 ### 教师端页面
 
 - 课程诊断页
@@ -125,6 +148,10 @@
 - 课程建设任务页
   - 从诊断结果生成待办卡片。
   - 支持一键进入资源生成、测评生成或多模态脚本生成。
+
+- 测评题目分析页
+  - 调用 `/api/learning/assessments/item-analysis`
+  - 展示知识点掌握度、高错题、误区聚类和补救计划，支持一键生成变式题或补救资源。
 
 ### 前端交互要求
 
@@ -155,4 +182,7 @@ cd agents/resource-agent
 .\.venv\Scripts\python.exe scripts\smoke_resource_curation.py
 .\.venv\Scripts\python.exe scripts\smoke_portfolio_report.py
 .\.venv\Scripts\python.exe scripts\smoke_agent_trace.py
+.\.venv\Scripts\python.exe scripts\smoke_profile_infer.py
+.\.venv\Scripts\python.exe scripts\smoke_learning_event_analysis.py
+.\.venv\Scripts\python.exe scripts\smoke_assessment_item_analysis.py
 ```

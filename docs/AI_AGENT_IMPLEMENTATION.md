@@ -19,6 +19,9 @@
 - 资源策展：`ResourceCurationAgent` 将课程资料、候选资源、薄弱点和时间预算重排为个性化资源包。
 - 学习档案：`PortfolioReportAgent` 汇总资源、测评、答疑、代码练习和复盘证据，形成教师可读报告。
 - 链路追踪：`AgentTraceAgent` 输出智能体步骤、质量门禁、引用编号、降级事件和复现说明，不暴露模型隐藏推理。
+- 画像抽取：`ProfileInferenceAgent` 从自然语言对话、学习记录和测评摘要抽取知识基础、认知风格、学习目标等 8 个画像维度。
+- 学习分析：`LearningEventAnalysisAgent` 分析学习事件、资源使用、答疑、测评和实操记录，给出风险信号和下一步 Agent 调用。
+- 题目分析：`AssessmentItemAnalysisAgent` 汇总测评作答，输出知识点掌握度、高错题、误区聚类和补救计划。
 - 个性化路径：生成结果中包含按画像层级调整的学习步骤、资源推送建议和画像更新建议。
 - 防幻觉：输出 RAG 资料来源、质量检查和空检索降级提示。
 - 响应体验：保留普通 JSON 接口，并新增 Markdown 流式接口。
@@ -44,6 +47,9 @@
 - `learning_agent/resource_curation.py`：资源策展 Agent，支撑资源包重排、覆盖图和学习顺序。
 - `learning_agent/portfolio_report.py`：学习档案 Agent，支撑过程证据、风险提示和教师评语草稿。
 - `learning_agent/agent_trace.py`：智能体追踪 Agent，支撑演示审计、质量门禁和降级可见性。
+- `learning_agent/profile_infer.py`：对话式画像抽取 Agent，支撑画像自主构建和随学更新。
+- `learning_agent/learning_event_analysis.py`：学习事件分析 Agent，支撑参与度、趋势、风险和下一步动作分析。
+- `learning_agent/assessment_item_analysis.py`：测评题目分析 Agent，支撑教师视角的知识点诊断和误区聚类。
 
 ## 稳定性优化
 
@@ -90,6 +96,9 @@ python scripts/smoke_prerequisite.py
 python scripts/smoke_resource_curation.py
 python scripts/smoke_portfolio_report.py
 python scripts/smoke_agent_trace.py
+python scripts/smoke_profile_infer.py
+python scripts/smoke_learning_event_analysis.py
+python scripts/smoke_assessment_item_analysis.py
 python scripts/smoke_full_ai_agents.py
 uvicorn main:app --host 0.0.0.0 --port 9001 --reload
 ```
