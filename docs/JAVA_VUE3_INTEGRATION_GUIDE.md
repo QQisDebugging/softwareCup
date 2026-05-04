@@ -81,17 +81,17 @@
 - `POST /agents/code/project-review`
   - 后端建议接口：`POST /api/learning/code-projects/review`
   - 建议表：`project_code_reviews`
-  - 需要保存：overallScore、architectureIssues、testGaps、securityNotes、knowledgeMapping、refactorTasks、画像更新建议。
+  - 需要保存：overallScore、riskLevel、reviewedFiles、totalLines、fileMetrics、architectureIssues、testGaps、securityNotes、knowledgeMapping、qualityGates、refactorTasks、画像更新建议。
 
 - `POST /agents/class/analytics`
   - 后端建议接口：`POST /api/teaching/class-analytics`
   - 建议表：`class_learning_analytics`
-  - 需要保存：classMasteryAverage、engagementAverage、topWeaknesses、interventionGroups、resourceGaps、teacherActions。
+  - 需要保存：classMasteryAverage、engagementAverage、classTrend、topWeaknesses、studentRiskProfiles、interventionGroups、resourceGaps、interventionPriority、teacherActions。
 
 - `POST /agents/demo/scenario-plan`
   - 后端建议接口：`POST /api/demo/scenario-plans`
   - 建议表：`demo_scenario_plans`
-  - 需要保存：scenes、judgeHighlights、prepChecklist、successMetrics、引用。
+  - 需要保存：scenes、timelineMarkdown、judgeHighlights、prepChecklist、riskPlaybook、successMetrics、引用。
 
 ### 后端实现约束
 
@@ -170,15 +170,15 @@
 
 - 项目级代码审查页
   - 调用 `/api/learning/code-projects/review`
-  - 展示工程质量分、分层缺陷、测试缺口、安全提示和重构任务。
+  - 展示工程质量分、风险等级、文件指标、分层缺陷、测试缺口、安全提示、质量门禁和重构任务。
 
 - 班级学情分析页
   - 调用 `/api/teaching/class-analytics`
-  - 展示班级掌握度、参与度、共性薄弱点、干预分组和资源缺口。
+  - 展示班级趋势、学生风险画像、班级掌握度、参与度、共性薄弱点、干预分组、干预优先级和资源缺口。
 
 - 演示规划页
   - 调用 `/api/demo/scenario-plans`
-  - 展示 7 分钟演示场景、每步话术、fallback 方案、准备清单和成功指标。
+  - 展示 7 分钟演示场景、时间轴 Markdown、每步话术、riskPlaybook、fallback 方案、准备清单和成功指标。
 
 ### 前端交互要求
 

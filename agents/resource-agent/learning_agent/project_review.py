@@ -6,8 +6,10 @@ from learning_agent.schemas import (
     KnowledgeMatch,
     ProfileDimensionUpdate,
     ProjectArchitectureIssue,
+    ProjectFileMetric,
     ProjectFileInput,
     ProjectKnowledgeMapping,
+    ProjectQualityGate,
     ProjectRefactorTask,
     ProjectReviewRequest,
     ProjectReviewResponse,
@@ -29,18 +31,27 @@ class ProjectReviewAgent:
         mapping = self._knowledge_mapping(request, issues, test_gaps)
         tasks = self._refactor_tasks(issues, test_gaps, security_notes)
         score = self._score(issues, test_gaps, security_notes)
+        file_metrics = self._file_metrics(request.files, issues)
+        quality_gates = self._quality_gates(issues, test_gaps, security_notes, citations)
+        total_lines = sum(metric.lines for metric in file_metrics)
+        risk_level = self._risk_level(score, issues, security_notes)
         summary = (
             f"`{request.projectTitle}` 项目级审查完成：工程质量 {score}/100，"
-            f"发现 {len(issues)} 个结构/实现问题、{len(test_gaps)} 个测试缺口、"
-            f"{len(security_notes)} 条安全提示。"
+            f"风险等级 `{risk_level}`，审查 {len(request.files)} 个文件/{total_lines} 行，"
+            f"发现 {len(issues)} 个结构/实现问题、{len(test_gaps)} 个测试缺口。"
         )
         return ProjectReviewResponse(
             overallScore=score,
+            riskLevel=risk_level,
+            reviewedFiles=len(request.files),
+            totalLines=total_lines,
+            fileMetrics=file_metrics,
             architectureIssues=issues,
             testGaps=test_gaps,
             securityNotes=security_notes,
             knowledgeMapping=mapping,
             refactorTasks=tasks,
+            qualityGates=quality_gates,
             citations=citations,
             summary=summary,
             profileDimensionUpdates=self._profile_updates(request, score, issues, test_gaps, summary),
@@ -64,55 +75,71 @@ class ProjectReviewAgent:
             content = file.content
             lower_path = file.path.lower()
             controller_like = "controller" in lower_path or "@RestController" in content or "@Controller" in content
-            if controller_like and re.search(r"\b\w*Repository\b|\.save\(|\.findBy|\.delete", content):
+            repository_match = re.search(r"\b\w*Repository\b|\.save\(|\.findBy|\.delete", content)
+            if controller_like and repository_match:
                 issues.append(self._issue(
                     "分层职责",
                     file,
-                    "Controller 直接访问 Repository 或数据操作",
+                    self._line_hint(content, repository_match, "Controller 直接访问 Repository 或数据操作"),
                     "高",
                     "Controller 层出现 Repository 调用或持久化方法。",
                     "把业务规则和数据访问下沉到 Service，Controller 只负责请求响应和 DTO 转换。",
                     "Controller/Service/Repository 职责边界",
                 ))
             if controller_like and self._method_complexity(content) >= 4:
+                first_branch = re.search(r"\b(if|for|while|switch|catch)\b", content)
                 issues.append(self._issue(
                     "业务逻辑下沉",
                     file,
-                    "Controller 方法分支过多",
+                    self._line_hint(content, first_branch, "Controller 方法分支过多"),
                     "中",
                     "Controller 中出现较多 if/for/while/switch 分支。",
                     "将校验、业务规则和状态流转提取到 Service，并补充单元测试。",
                     "业务逻辑分层",
                 ))
-            if re.search(r"catch\s*\([^)]*\)\s*\{\s*(e\.printStackTrace\(\);)?\s*\}", content, flags=re.S):
+            catch_match = re.search(r"catch\s*\([^)]*\)\s*\{\s*(e\.printStackTrace\(\);)?\s*\}", content, flags=re.S)
+            if catch_match:
                 issues.append(self._issue(
                     "异常处理",
                     file,
-                    "空 catch 或仅打印堆栈",
+                    self._line_hint(content, catch_match, "空 catch 或仅打印堆栈"),
                     "中",
                     "异常被吞掉或只调用 printStackTrace。",
                     "返回明确错误响应，记录结构化日志，并让调用方能感知失败原因。",
                     "异常响应与可观测性",
                 ))
-            if re.search(r"SELECT\s+.*\+|WHERE\s+.*\+", content, flags=re.I | re.S):
+            sql_match = re.search(r"SELECT\s+.*\+|WHERE\s+.*\+", content, flags=re.I | re.S)
+            if sql_match:
                 issues.append(self._issue(
                     "数据访问安全",
                     file,
-                    "SQL 字符串拼接",
+                    self._line_hint(content, sql_match, "SQL 字符串拼接"),
                     "高",
                     "SQL 片段和变量直接拼接。",
                     "使用参数化查询、Repository 方法或 ORM 条件构造，避免注入风险。",
                     "SQL 注入防护",
                 ))
-            if re.search(r"TODO|FIXME|临时|随便", content, flags=re.I):
+            todo_match = re.search(r"TODO|FIXME|临时|随便", content, flags=re.I)
+            if todo_match:
                 issues.append(self._issue(
                     "代码完成度",
                     file,
-                    "遗留 TODO/FIXME",
+                    self._line_hint(content, todo_match, "遗留 TODO/FIXME"),
                     "低",
                     "代码中仍有未完成标记。",
                     "把 TODO 转为明确任务，补齐验收标准后再提交。",
                     "工程交付规范",
+                ))
+            validation_match = re.search(r"@RequestBody", content)
+            if controller_like and validation_match and "@Valid" not in content and "BindingResult" not in content:
+                issues.append(self._issue(
+                    "参数校验",
+                    file,
+                    self._line_hint(content, validation_match, "请求体缺少显式校验"),
+                    "中",
+                    "Controller 接收 @RequestBody，但未看到 @Valid、BindingResult 或显式校验边界。",
+                    "为 DTO 增加校验注解，并在 Controller/全局异常处理器中返回结构化错误。",
+                    "DTO 校验与接口契约",
                 ))
         return issues[:12]
 
@@ -138,6 +165,12 @@ class ProjectReviewAgent:
 
     def _method_complexity(self, content: str) -> int:
         return len(re.findall(r"\b(if|for|while|switch|catch)\b", content))
+
+    def _line_hint(self, content: str, match: re.Match[str] | None, description: str) -> str:
+        if match is None:
+            return description
+        line_no = content[:match.start()].count("\n") + 1
+        return f"L{line_no}: {description}"
 
     def _test_gaps(self, files: list[ProjectFileInput], issues: list[ProjectArchitectureIssue]) -> list[ProjectTestGap]:
         test_files = [file for file in files if "test" in file.path.lower() or "@Test" in file.content]
@@ -167,6 +200,12 @@ class ProjectReviewAgent:
                 reason="存在 SQL 字符串拼接。",
                 suggestedTest="用包含引号和条件拼接的输入验证查询不会改变语义。",
             ))
+        if "DTO 校验与接口契约" in issue_points:
+            gaps.append(ProjectTestGap(
+                target="请求参数校验",
+                reason="存在 @RequestBody 但缺少显式校验。",
+                suggestedTest="提交空字段、超长字段和非法枚举值，断言返回 400 和字段级错误说明。",
+            ))
         return gaps[:8]
 
     def _security_notes(self, files: list[ProjectFileInput]) -> list[str]:
@@ -181,6 +220,40 @@ class ProjectReviewAgent:
         if not notes:
             notes.append("未发现明显硬编码密钥、开放 CORS 或控制台日志风险。")
         return notes[:8]
+
+    def _file_metrics(
+        self,
+        files: list[ProjectFileInput],
+        issues: list[ProjectArchitectureIssue],
+    ) -> list[ProjectFileMetric]:
+        issue_counter = {file.path: 0 for file in files}
+        for issue in issues:
+            issue_counter[issue.path] = issue_counter.get(issue.path, 0) + 1
+        return [
+            ProjectFileMetric(
+                path=file.path,
+                language=file.language,
+                lines=len(file.content.splitlines()),
+                detectedRole=self._detected_role(file),
+                issueCount=issue_counter.get(file.path, 0),
+            )
+            for file in files[:20]
+        ]
+
+    def _detected_role(self, file: ProjectFileInput) -> str:
+        path = file.path.lower()
+        content = file.content
+        if "test" in path or "@Test" in content:
+            return "Test"
+        if "controller" in path or "@RestController" in content or "@Controller" in content:
+            return "Controller"
+        if "service" in path or "@Service" in content:
+            return "Service"
+        if "repository" in path or "@Repository" in content:
+            return "Repository"
+        if "config" in path or "@Configuration" in content:
+            return "Configuration"
+        return "ApplicationCode"
 
     def _knowledge_mapping(
         self,
@@ -248,6 +321,43 @@ class ProjectReviewAgent:
             ))
         return tasks[:8]
 
+    def _quality_gates(
+        self,
+        issues: list[ProjectArchitectureIssue],
+        test_gaps: list[ProjectTestGap],
+        security_notes: list[str],
+        citations: list[KnowledgeMatch],
+    ) -> list[ProjectQualityGate]:
+        issue_points = {issue.knowledgePoint for issue in issues}
+        high_count = sum(1 for issue in issues if issue.severity == "高")
+        return [
+            ProjectQualityGate(
+                name="分层边界",
+                status="failed" if "Controller/Service/Repository 职责边界" in issue_points else "passed",
+                details="检查 Controller 是否直接访问 Repository 或持久化方法。",
+            ),
+            ProjectQualityGate(
+                name="测试基线",
+                status="failed" if any(gap.target == "项目测试基线" for gap in test_gaps) else ("warning" if test_gaps else "passed"),
+                details=f"发现 {len(test_gaps)} 个测试缺口。",
+            ),
+            ProjectQualityGate(
+                name="安全风险",
+                status="warning" if security_notes and "未发现明显" not in security_notes[0] else "passed",
+                details="; ".join(security_notes[:2]),
+            ),
+            ProjectQualityGate(
+                name="高危问题",
+                status="failed" if high_count >= 2 else ("warning" if high_count else "passed"),
+                details=f"高严重度问题 {high_count} 个。",
+            ),
+            ProjectQualityGate(
+                name="RAG 依据",
+                status="passed" if citations else "warning",
+                details=f"审查关联 {len(citations)} 条课程/代码证据。",
+            ),
+        ]
+
     def _score(
         self,
         issues: list[ProjectArchitectureIssue],
@@ -261,6 +371,20 @@ class ProjectReviewAgent:
         if security_notes and "未发现明显" not in security_notes[0]:
             penalty += min(18, len(security_notes) * 6)
         return max(20, min(96, 100 - penalty))
+
+    def _risk_level(
+        self,
+        score: int,
+        issues: list[ProjectArchitectureIssue],
+        security_notes: list[str],
+    ) -> str:
+        high_count = sum(1 for issue in issues if issue.severity == "高")
+        has_security_risk = bool(security_notes and "未发现明显" not in security_notes[0])
+        if score < 50 or high_count >= 2 or has_security_risk:
+            return "高风险"
+        if score < 75 or high_count == 1:
+            return "中风险"
+        return "低风险"
 
     def _profile_updates(
         self,

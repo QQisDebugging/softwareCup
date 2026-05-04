@@ -768,13 +768,32 @@ class ProjectRefactorTask(BaseModel):
     relatedFiles: list[str] = Field(default_factory=list)
 
 
+class ProjectFileMetric(BaseModel):
+    path: str
+    language: str
+    lines: int = Field(ge=0)
+    detectedRole: str
+    issueCount: int = Field(ge=0)
+
+
+class ProjectQualityGate(BaseModel):
+    name: str
+    status: Literal["passed", "warning", "failed"]
+    details: str
+
+
 class ProjectReviewResponse(BaseModel):
     overallScore: int = Field(ge=0, le=100)
+    riskLevel: str
+    reviewedFiles: int = Field(ge=0)
+    totalLines: int = Field(ge=0)
+    fileMetrics: list[ProjectFileMetric]
     architectureIssues: list[ProjectArchitectureIssue]
     testGaps: list[ProjectTestGap]
     securityNotes: list[str]
     knowledgeMapping: list[ProjectKnowledgeMapping]
     refactorTasks: list[ProjectRefactorTask]
+    qualityGates: list[ProjectQualityGate]
     citations: list[KnowledgeMatch]
     summary: str
     profileDimensionUpdates: list[ProfileDimensionUpdate]
@@ -807,6 +826,16 @@ class ClassResourceGap(BaseModel):
     suggestedAction: str
 
 
+class StudentRiskProfile(BaseModel):
+    studentProfileId: str
+    studentName: str
+    masteryScore: int = Field(ge=0, le=100)
+    engagementScore: int = Field(ge=0, le=100)
+    riskLevel: str
+    primaryWeaknesses: list[str]
+    recommendedAction: str
+
+
 class ClassAnalyticsRequest(BaseModel):
     courseId: str
     courseTitle: str
@@ -820,9 +849,12 @@ class ClassAnalyticsRequest(BaseModel):
 class ClassAnalyticsResponse(BaseModel):
     classMasteryAverage: int = Field(ge=0, le=100)
     engagementAverage: int = Field(ge=0, le=100)
+    classTrend: str
     topWeaknesses: list[str]
+    studentRiskProfiles: list[StudentRiskProfile]
     interventionGroups: list[ClassInterventionGroup]
     resourceGaps: list[ClassResourceGap]
+    interventionPriority: list[str]
     teacherActions: list[str]
     citations: list[KnowledgeMatch]
     summary: str
@@ -845,6 +877,8 @@ class DemoScene(BaseModel):
     order: int = Field(ge=1)
     title: str
     endpoint: str
+    startSecond: int = Field(default=0, ge=0)
+    endSecond: int = Field(default=0, ge=0)
     inputSetup: str
     expectedOutput: str
     talkingPoint: str
@@ -852,12 +886,20 @@ class DemoScene(BaseModel):
     estimatedSeconds: int = Field(ge=10)
 
 
+class DemoRiskPlan(BaseModel):
+    concern: str
+    mitigation: str
+    fallbackArtifact: str
+
+
 class DemoScenarioResponse(BaseModel):
     demoTitle: str
     totalEstimatedMinutes: int = Field(ge=1)
     scenes: list[DemoScene]
+    timelineMarkdown: str
     judgeHighlights: list[str]
     prepChecklist: list[str]
+    riskPlaybook: list[DemoRiskPlan]
     successMetrics: list[str]
     citations: list[KnowledgeMatch]
     summary: str

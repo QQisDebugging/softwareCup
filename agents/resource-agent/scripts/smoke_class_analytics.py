@@ -71,9 +71,13 @@ def main() -> None:
     print(response.model_dump_json(indent=2))
     assert response.classMasteryAverage > 0
     assert response.engagementAverage > 0
+    assert response.classTrend
     assert response.topWeaknesses
+    assert response.studentRiskProfiles
+    assert response.studentRiskProfiles[0].riskLevel == "高"
     assert response.interventionGroups
     assert response.resourceGaps
+    assert response.interventionPriority
     assert response.teacherActions
     assert response.citations
 

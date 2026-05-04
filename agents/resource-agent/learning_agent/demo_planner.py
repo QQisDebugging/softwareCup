@@ -1,6 +1,7 @@
 from learning_agent.config import AgentSettings
 from learning_agent.resource_templates import compact
 from learning_agent.schemas import (
+    DemoRiskPlan,
     DemoScenarioRequest,
     DemoScenarioResponse,
     DemoScene,
@@ -19,16 +20,19 @@ class DemoScenarioPlannerAgent:
         endpoints = request.coreEndpoints or self._default_endpoints()
         scenes = self._scenes(request, endpoints)
         total_seconds = sum(scene.estimatedSeconds for scene in scenes)
+        total_minutes = max(1, (total_seconds + 59) // 60)
         summary = (
-            f"`{request.scenarioTitle}` 演示规划完成：{len(scenes)} 个场景，预计 {round(total_seconds / 60)} 分钟，"
+            f"`{request.scenarioTitle}` 演示规划完成：{len(scenes)} 个场景，预计 {total_minutes} 分钟，"
             f"覆盖画像、诊断、生成、评估、报告和可解释追踪。"
         )
         return DemoScenarioResponse(
             demoTitle=request.scenarioTitle,
-            totalEstimatedMinutes=max(1, round(total_seconds / 60)),
+            totalEstimatedMinutes=total_minutes,
             scenes=scenes,
+            timelineMarkdown=self._timeline_markdown(scenes),
             judgeHighlights=self._highlights(request),
             prepChecklist=self._checklist(request, scenes),
+            riskPlaybook=self._risk_playbook(request),
             successMetrics=self._success_metrics(),
             citations=citations,
             summary=summary,
@@ -59,19 +63,31 @@ class DemoScenarioPlannerAgent:
 
     def _scenes(self, request: DemoScenarioRequest, endpoints: list[str]) -> list[DemoScene]:
         seconds_budget = max(180, request.timeLimitMinutes * 60)
-        per_scene = max(35, min(65, round(seconds_budget / max(1, len(endpoints)))))
+        selected_endpoints = endpoints[:min(10, max(1, seconds_budget // 10))]
+        per_scene = max(35, min(65, round(seconds_budget / max(1, len(selected_endpoints)))))
         scenes = [
             self._scene(index, endpoint, request, per_scene)
-            for index, endpoint in enumerate(endpoints[:10], start=1)
+            for index, endpoint in enumerate(selected_endpoints, start=1)
         ]
         total = sum(scene.estimatedSeconds for scene in scenes)
         if total > seconds_budget:
-            scale = seconds_budget / total
+            base_seconds = max(10, seconds_budget // len(scenes))
+            remainder = max(0, seconds_budget - (base_seconds * len(scenes)))
             scenes = [
-                scene.model_copy(update={"estimatedSeconds": max(30, round(scene.estimatedSeconds * scale))})
-                for scene in scenes
+                scene.model_copy(update={"estimatedSeconds": base_seconds + (1 if index < remainder else 0)})
+                for index, scene in enumerate(scenes)
             ]
-        return scenes
+        return self._with_timeline(scenes)
+
+    def _with_timeline(self, scenes: list[DemoScene]) -> list[DemoScene]:
+        current = 0
+        timeline: list[DemoScene] = []
+        for scene in scenes:
+            start = current
+            end = start + scene.estimatedSeconds
+            timeline.append(scene.model_copy(update={"startSecond": start, "endSecond": end}))
+            current = end
+        return timeline
 
     def _scene(
         self,
@@ -156,6 +172,8 @@ class DemoScenarioPlannerAgent:
             order=index,
             title=title,
             endpoint=endpoint,
+            startSecond=0,
+            endSecond=0,
             inputSetup=input_setup,
             expectedOutput=expected,
             talkingPoint=talking,
@@ -182,6 +200,45 @@ class DemoScenarioPlannerAgent:
         if request.riskConcerns:
             checklist.append(f"答辩风险预案：{compact('；'.join(request.riskConcerns), 160)}")
         return checklist[:10]
+
+    def _risk_playbook(self, request: DemoScenarioRequest) -> list[DemoRiskPlan]:
+        concerns = request.riskConcerns or [
+            "网络或模型密钥不可用",
+            "评委追问防幻觉依据",
+            "前端接口联调不稳定",
+        ]
+        playbook = []
+        for concern in concerns[:6]:
+            if "网络" in concern or "密钥" in concern or "模型" in concern:
+                mitigation = "切换 offline provider，并展示 smoke_full_ai_agents.py 的可复现输出。"
+                artifact = "终端 smoke 输出和 /agents/providers/status"
+            elif "幻觉" in concern or "引用" in concern:
+                mitigation = "展开 citations、qualityGates 和 content audit 结果，说明证据覆盖。"
+                artifact = "/agents/trace/explain 与 /agents/safety/audit 响应"
+            elif "前端" in concern or "联调" in concern:
+                mitigation = "直接调用 Python FastAPI Swagger 或 PowerShell API 示例展示核心能力。"
+                artifact = "docs/API_EXAMPLES.md"
+            else:
+                mitigation = "保留对应 smoke 脚本输出和结构化 JSON，确保可演示、可复核。"
+                artifact = "单功能 smoke 脚本"
+            playbook.append(DemoRiskPlan(
+                concern=concern,
+                mitigation=mitigation,
+                fallbackArtifact=artifact,
+            ))
+        return playbook
+
+    def _timeline_markdown(self, scenes: list[DemoScene]) -> str:
+        lines = ["| 时间 | 场景 | 端点 | 讲解重点 |", "| --- | --- | --- | --- |"]
+        for scene in scenes:
+            start = self._format_time(scene.startSecond)
+            end = self._format_time(scene.endSecond)
+            lines.append(f"| {start}-{end} | {scene.title} | `{scene.endpoint}` | {scene.talkingPoint} |")
+        return "\n".join(lines)
+
+    def _format_time(self, second: int) -> str:
+        minutes, seconds = divmod(second, 60)
+        return f"{minutes:02d}:{seconds:02d}"
 
     def _success_metrics(self) -> list[str]:
         return [

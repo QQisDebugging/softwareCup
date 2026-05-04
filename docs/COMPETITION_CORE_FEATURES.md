@@ -49,9 +49,9 @@
    - `ProfileInferenceAgent` 从对话和学习记录抽取 8 个画像维度，支撑“对话式学习画像自主构建”。
    - `LearningEventAnalysisAgent` 分析学习事件、掌握趋势和风险信号，驱动下一轮资源或测评。
    - `AssessmentItemAnalysisAgent` 进行题目质量与误区聚类分析，给教师端提供补救教学计划。
-   - `ProjectReviewAgent` 对多文件代码进行项目级审查，覆盖 AI 辅助编程、分层设计、测试缺口和安全提示。
-   - `ClassAnalyticsAgent` 汇总班级学习快照，输出干预分组、资源缺口和教师行动建议。
-   - `DemoScenarioPlannerAgent` 自动生成演示脚本、话术、fallback 和成功指标，降低答辩风险。
+   - `ProjectReviewAgent` 对多文件代码进行项目级审查，覆盖 AI 辅助编程、风险等级、质量门禁、分层设计、测试缺口和安全提示。
+   - `ClassAnalyticsAgent` 汇总班级学习快照，输出学生风险画像、干预分组、资源缺口和教师行动建议。
+   - `DemoScenarioPlannerAgent` 自动生成演示时间轴、话术、riskPlaybook、fallback 和成功指标，降低答辩风险。
 
 ## 对比普通项目的提升点
 

@@ -386,8 +386,15 @@ def main() -> None:
     assert event_analysis.recommendedAgentCalls
     assert item_analysis.remediationPlan
     assert project_review.refactorTasks
+    assert project_review.qualityGates
+    assert project_review.fileMetrics
     assert class_analytics.teacherActions
+    assert class_analytics.studentRiskProfiles
+    assert class_analytics.interventionPriority
     assert len(demo_plan.scenes) >= 6
+    assert demo_plan.totalEstimatedMinutes * 60 >= demo_plan.scenes[-1].endSecond
+    assert demo_plan.timelineMarkdown
+    assert demo_plan.riskPlaybook
 
 
 if __name__ == "__main__":

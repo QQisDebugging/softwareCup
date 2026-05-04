@@ -9,6 +9,7 @@ from learning_agent.schemas import (
     ClassResourceGap,
     KnowledgeMatch,
     StudentLearningSnapshot,
+    StudentRiskProfile,
 )
 from learning_agent.vector_store import InMemoryVectorStore
 
@@ -23,19 +24,25 @@ class ClassAnalyticsAgent:
         mastery = self._class_mastery(request.snapshots)
         engagement = self._engagement(request.snapshots)
         top_weaknesses = self._top_weaknesses(request.snapshots)
+        risk_profiles = self._student_risk_profiles(request.snapshots)
         groups = self._intervention_groups(request.snapshots, top_weaknesses)
         gaps = self._resource_gaps(top_weaknesses, request.snapshots)
-        actions = self._teacher_actions(request, groups, gaps)
+        priority = self._intervention_priority(groups, gaps, risk_profiles)
+        actions = self._teacher_actions(request, groups, gaps, priority)
+        class_trend = self._class_trend(mastery, engagement, risk_profiles)
         summary = (
             f"{request.timeRange} `{request.topic}` 班级分析完成：平均掌握度 {mastery}/100，"
-            f"平均参与度 {engagement}/100，识别 {len(groups)} 个干预分组。"
+            f"平均参与度 {engagement}/100，趋势 `{class_trend}`，识别 {len(groups)} 个干预分组。"
         )
         return ClassAnalyticsResponse(
             classMasteryAverage=mastery,
             engagementAverage=engagement,
+            classTrend=class_trend,
             topWeaknesses=top_weaknesses,
+            studentRiskProfiles=risk_profiles,
             interventionGroups=groups,
             resourceGaps=gaps,
+            interventionPriority=priority,
             teacherActions=actions,
             citations=citations,
             summary=summary,
@@ -72,6 +79,56 @@ class ClassAnalyticsAgent:
                 score += 8
             scores.append(min(96, score))
         return round(sum(scores) / len(scores))
+
+    def _student_mastery(self, snapshot: StudentLearningSnapshot) -> int:
+        valid_scores = [score for score in snapshot.recentScores if 0 <= score <= 100]
+        if not valid_scores:
+            return 55
+        return round(sum(valid_scores) / len(valid_scores))
+
+    def _student_engagement(self, snapshot: StudentLearningSnapshot) -> int:
+        score = 30
+        score += min(25, snapshot.completedResources * 6)
+        score += min(20, snapshot.tutoringCount * 8)
+        score += min(20, snapshot.codePracticeCount * 10)
+        if any("复盘" in item or "总结" in item for item in snapshot.learningEvents):
+            score += 8
+        return min(96, score)
+
+    def _student_risk_profiles(self, snapshots: list[StudentLearningSnapshot]) -> list[StudentRiskProfile]:
+        profiles: list[StudentRiskProfile] = []
+        for snapshot in snapshots:
+            mastery = self._student_mastery(snapshot)
+            engagement = self._student_engagement(snapshot)
+            risk_level = self._risk_level(mastery, engagement, snapshot)
+            profiles.append(StudentRiskProfile(
+                studentProfileId=snapshot.studentProfileId,
+                studentName=snapshot.studentName,
+                masteryScore=mastery,
+                engagementScore=engagement,
+                riskLevel=risk_level,
+                primaryWeaknesses=snapshot.weaknessSignals[:4],
+                recommendedAction=self._student_action(mastery, engagement, snapshot),
+            ))
+        severity_order = {"高": 0, "中": 1, "低": 2}
+        profiles.sort(key=lambda item: (severity_order.get(item.riskLevel, 3), item.masteryScore, item.engagementScore))
+        return profiles[:50]
+
+    def _risk_level(self, mastery: int, engagement: int, snapshot: StudentLearningSnapshot) -> str:
+        if mastery < 60 or engagement < 45:
+            return "高"
+        if mastery < 75 or engagement < 65 or len(snapshot.weaknessSignals) >= 3:
+            return "中"
+        return "低"
+
+    def _student_action(self, mastery: int, engagement: int, snapshot: StudentLearningSnapshot) -> str:
+        if mastery < 60:
+            return "先做先修诊断和基础补救资源，再安排低难度复测。"
+        if engagement < 55:
+            return "推送短时资源包，并用一次答疑任务唤醒主动提问。"
+        if snapshot.codePracticeCount == 0:
+            return "安排代码实操或项目迁移任务，补足实践证据。"
+        return "进入拓展阅读、同伴讲解或高阶项目挑战。"
 
     def _top_weaknesses(self, snapshots: list[StudentLearningSnapshot]) -> list[str]:
         counter: Counter[str] = Counter()
@@ -138,6 +195,7 @@ class ClassAnalyticsAgent:
                     recommendedAgent="/agents/multimodal/storyboard",
                     action=f"生成 `{weakness}` 的 5 分钟图解微课和 3 道变式题。",
                 ))
+        groups.sort(key=lambda item: len(item.studentProfileIds), reverse=True)
         return groups[:6]
 
     def _resource_gaps(
@@ -157,16 +215,55 @@ class ClassAnalyticsAgent:
             ))
         return gaps
 
+    def _intervention_priority(
+        self,
+        groups: list[ClassInterventionGroup],
+        gaps: list[ClassResourceGap],
+        risk_profiles: list[StudentRiskProfile],
+    ) -> list[str]:
+        high_risk_count = sum(1 for profile in risk_profiles if profile.riskLevel == "高")
+        priority = []
+        if high_risk_count:
+            priority.append(f"先处理 {high_risk_count} 名高风险学生，避免薄弱点继续固化。")
+        priority.extend(
+            f"{group.name}: {len(group.studentProfileIds)} 人，建议调用 {group.recommendedAgent}。"
+            for group in groups[:3]
+        )
+        priority.extend(
+            f"补齐 `{gap.knowledgePoint}` 的 `{gap.missingResourceType}`，影响 {gap.affectedStudents} 人。"
+            for gap in gaps[:2]
+        )
+        return priority[:7]
+
+    def _class_trend(
+        self,
+        mastery: int,
+        engagement: int,
+        risk_profiles: list[StudentRiskProfile],
+    ) -> str:
+        high_risk_count = sum(1 for profile in risk_profiles if profile.riskLevel == "高")
+        if mastery >= 78 and engagement >= 70 and high_risk_count == 0:
+            return "整体稳定提升"
+        if high_risk_count >= max(1, len(risk_profiles) // 3):
+            return "分化明显，需要分层干预"
+        if engagement < 55:
+            return "参与度偏低"
+        if mastery < 65:
+            return "掌握度偏低"
+        return "基本稳定，需补齐共性薄弱点"
+
     def _teacher_actions(
         self,
         request: ClassAnalyticsRequest,
         groups: list[ClassInterventionGroup],
         gaps: list[ClassResourceGap],
+        priority: list[str],
     ) -> list[str]:
         actions = [
             f"先处理人数最多的干预组：`{groups[0].name}`。" if groups else "先补充学习事件和测评记录，再重新分析班级学情。",
             f"围绕 `{request.topic}` 建立一次课后闭环：资源推送 -> 练习 -> 批改 -> 学习档案。",
         ]
+        actions.extend(priority[:2])
         actions.extend(
             f"为 `{gap.knowledgePoint}` 补充 `{gap.missingResourceType}`，影响 {gap.affectedStudents} 名学生。"
             for gap in gaps[:4]

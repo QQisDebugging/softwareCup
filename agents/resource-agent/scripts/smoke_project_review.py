@@ -67,11 +67,17 @@ class UserController {
     response = ProjectReviewAgent(settings, store).review(request)
     print(response.model_dump_json(indent=2))
     assert response.overallScore < 90
+    assert response.riskLevel == "高风险"
+    assert response.reviewedFiles == 2
+    assert response.totalLines > 0
+    assert response.fileMetrics
     assert response.architectureIssues
     assert response.testGaps
     assert response.securityNotes
     assert response.knowledgeMapping
     assert response.refactorTasks
+    assert response.qualityGates
+    assert any(gate.status == "failed" for gate in response.qualityGates)
     assert response.citations
     assert response.profileDimensionUpdates
 

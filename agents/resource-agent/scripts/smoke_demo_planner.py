@@ -47,8 +47,13 @@ def main() -> None:
     print(response.model_dump_json(indent=2))
     assert response.scenes
     assert len(response.scenes) >= 6
+    assert response.scenes[0].startSecond == 0
+    assert response.scenes[-1].endSecond <= request.timeLimitMinutes * 60
+    assert response.totalEstimatedMinutes * 60 >= response.scenes[-1].endSecond
+    assert response.timelineMarkdown
     assert response.judgeHighlights
     assert response.prepChecklist
+    assert response.riskPlaybook
     assert response.successMetrics
     assert response.citations
 
