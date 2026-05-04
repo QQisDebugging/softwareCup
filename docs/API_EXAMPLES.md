@@ -19,6 +19,48 @@ $profile = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/profile
 } | ConvertTo-Json)
 ```
 
+创建后会自动生成不少于 8 个结构化画像维度：
+
+- `KNOWLEDGE_FOUNDATION`：知识基础
+- `COGNITIVE_STYLE`：认知风格
+- `LEARNING_GOAL`：学习目标
+- `INTEREST_DIRECTION`：兴趣方向
+- `ERROR_PRONE_POINTS`：易错点
+- `TIME_CONSTRAINT`：时间约束
+- `RESOURCE_PREFERENCE`：资源偏好
+- `MASTERY_WEAKNESS`：掌握度/薄弱点
+
+## 查询画像维度和演化历史
+
+```powershell
+Invoke-RestMethod http://localhost:8080/api/profiles/$($profile.profile.id)/dimensions
+Invoke-RestMethod http://localhost:8080/api/profiles/$($profile.profile.id)/history
+```
+
+## 动态更新画像维度
+
+```powershell
+$updatedProfile = Invoke-RestMethod -Method Put -Uri http://localhost:8080/api/profiles/$($profile.profile.id)/dimensions -ContentType 'application/json' -Body (@{
+  reason = '完成 Spring Boot Controller 练习后更新画像'
+  dimensions = @(
+    @{
+      dimensionKey = 'MASTERY_WEAKNESS'
+      value = 'Controller 和 DTO 基本理解，Service 分层仍需通过项目案例巩固'
+      evidence = '练习测试得分 72 分，错题集中在 Controller 直接访问 Repository 的分层问题'
+      confidenceScore = 0.82
+      source = 'quiz_attempt'
+    },
+    @{
+      dimensionKey = 'ERROR_PRONE_POINTS'
+      value = '容易把 Controller、Service、Repository 的职责边界混淆'
+      evidence = '答疑记录和练习错题均出现分层职责混淆'
+      confidenceScore = 0.86
+      source = 'tutoring_session'
+    }
+  )
+} | ConvertTo-Json -Depth 8)
+```
+
 ## 创建课程
 
 ```powershell
@@ -36,7 +78,7 @@ $course = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/courses 
 
 ```powershell
 $task = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/tasks/resource-generation -ContentType 'application/json' -Body (@{
-  studentProfileId = $profile.id
+  studentProfileId = $profile.profile.id
   courseId = $course.id
   topic = 'Spring Boot Controller 与 REST API'
   resourceType = '微课讲义'

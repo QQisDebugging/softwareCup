@@ -1,0 +1,55 @@
+{
+  "spark": {
+    "enabled": true,
+    "priority": 1,
+    "name": "科大讯飞星火",
+    "appid": "<XF_APP_ID>",
+    "api_secret": "<XF_API_SECRET>",
+    "api_key": "<XF_API_KEY>",
+    "url": "wss://spark-api.cn-huabei-1.xf-yun.com/v2.1/image"
+  },
+  "spark_text": {
+    "enabled": true,
+    "priority": 1,
+    "name": "科大讯飞星火文本",
+    "appid": "<XF_APP_ID>",
+    "api_secret": "<XF_API_SECRET>",
+    "api_key": "<XF_API_KEY>",
+    "websocket_url": "wss://spark-api.xf-yun.com/v1/x1",
+    "http_url": "https://spark-api-open.xf-yun.com/v2/chat/completions",
+    "domain": "x1"
+  },
+  "baidu": {
+    "enabled": true,
+    "priority": 2,
+    "name": "百度AI图像识别",
+    "api_key": "",
+    "secret_key": "",
+    "ocr_url": "https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic",
+    "image_url": "https://aip.baidubce.com/rest/2.0/image-classify/v1/image_understanding"
+  },
+  "tencent": {
+    "enabled": true,
+    "priority": 3,
+    "name": "腾讯云OCR",
+    "secret_id": "",
+    "secret_key": "",
+    "region": "ap-beijing",
+    "url": "https://ocr.tencentcloudapi.com"
+  },
+  "ali": {
+    "enabled": true,
+    "priority": 4,
+    "name": "阿里云OCR",
+    "access_key_id": "",
+    "access_key_secret": "",
+    "endpoint": "https://ocr.cn-shanghai.aliyuncs.com",
+    "region": "cn-shanghai"
+  },
+  "ocr_general": {
+    "enabled": true,
+    "priority": 5,
+    "name": "通用OCR+AI解答",
+    "description": "使用OCR识别文字后由AI解答，作为最后的备用方案"
+  }
+}

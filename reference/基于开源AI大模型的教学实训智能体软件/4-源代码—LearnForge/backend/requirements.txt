@@ -1,0 +1,22 @@
+Flask==3.0.3
+gunicorn==20.0.4
+gevent==24.2.1
+# Bootstrap_Flask==2.4.0
+Flask_Bootstrap==3.3.7.1
+Flask_Cors==4.0.0
+Flask_Login==0.6.3
+flask_sqlalchemy==3.1.1
+flask_wtf==1.2.1
+PyJWT==2.8.0
+PyMySQL==1.1.0
+Requests==2.31.0
+websocket_client==1.8.0
+Werkzeug==3.0.3
+WTForms==3.1.2
+requests-toolbelt
+
+
+PyMuPDF==1.24.3
+jieba==0.42.1
+python_docx==1.1.2
+python_pptx==0.6.23

@@ -10,5 +10,9 @@ agents/**/.venv/
 agents/**/__pycache__/
 agents/**/*.pyc
 
+reference/**/node_modules/
+reference/**/__pycache__/
+reference/**/.vite/
+
 .env
 *.log

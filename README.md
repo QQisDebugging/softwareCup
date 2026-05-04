@@ -7,7 +7,7 @@
 - `backend/`：Spring Boot 后端，默认 H2 本地库，可切换 PostgreSQL。
 - `agents/resource-agent/`：Python FastAPI 资源生成智能体，先用 mock 跑通链路。
 - `data/courses/`：至少一门完整高校课程的自构造测试数据。
-- `docs/`：比赛文档、AI Coding 使用说明和后端接口说明。
+- `docs/`：比赛文档、后端接口说明和协作说明。
 
 ## 本地启动
 
@@ -48,6 +48,10 @@ cd backend
 - `GET /api/health`
 - `POST /api/profiles/dialogue`
 - `GET /api/profiles`
+- `GET /api/profiles/{profileId}/detail`
+- `GET /api/profiles/{profileId}/dimensions`
+- `PUT /api/profiles/{profileId}/dimensions`
+- `GET /api/profiles/{profileId}/history`
 - `POST /api/courses`
 - `GET /api/courses`
 - `GET /api/courses/{courseId}/resources`
