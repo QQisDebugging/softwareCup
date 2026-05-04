@@ -15,6 +15,8 @@ from learning_agent.content_audit import ContentAuditAgent
 from learning_agent.course_diagnosis import CourseDiagnosisAgent
 from learning_agent.knowledge_graph import KnowledgeGraphAgent
 from learning_agent.path_planner import PathPlannerAgent
+from learning_agent.prerequisite import PrerequisiteDiagnosisAgent
+from learning_agent.resource_curation import ResourceCurationAgent
 from learning_agent.schemas import (
     AssessmentGenerateRequest,
     AssessmentGenerateResponse,
@@ -37,8 +39,12 @@ from learning_agent.schemas import (
     KnowledgeSearchResponse,
     LearningPathPlanRequest,
     LearningPathPlanResponse,
+    PrerequisiteDiagnosisRequest,
+    PrerequisiteDiagnosisResponse,
     ResourceAgentRequest,
     ResourceAgentResponse,
+    ResourceCurationRequest,
+    ResourceCurationResponse,
     StoryboardRequest,
     StoryboardResponse,
     TutoringRequest,
@@ -62,6 +68,8 @@ content_audit_agent = ContentAuditAgent(settings=settings, vector_store=vector_s
 course_diagnosis_agent = CourseDiagnosisAgent(settings=settings, vector_store=vector_store)
 code_practice_agent = CodePracticeAgent(settings=settings, vector_store=vector_store)
 storyboard_agent = StoryboardAgent(settings=settings, vector_store=vector_store)
+prerequisite_agent = PrerequisiteDiagnosisAgent(settings=settings, vector_store=vector_store)
+resource_curation_agent = ResourceCurationAgent(settings=settings, vector_store=vector_store)
 
 
 @asynccontextmanager
@@ -218,6 +226,30 @@ def create_storyboard(request: StoryboardRequest) -> StoryboardResponse:
         metadata={"studentProfileId": request.studentProfileId or "", "courseId": request.courseId},
     )
     return storyboard_agent.create(request)
+
+
+@app.post("/agents/prerequisite/diagnose", response_model=PrerequisiteDiagnosisResponse)
+def diagnose_prerequisites(request: PrerequisiteDiagnosisRequest) -> PrerequisiteDiagnosisResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts,
+        source="request.prerequisite.documentTexts",
+        title_prefix=f"prerequisite-{request.studentProfileId}-inline",
+        metadata={"studentProfileId": request.studentProfileId, "courseId": request.courseId},
+    )
+    return prerequisite_agent.diagnose(request)
+
+
+@app.post("/agents/resources/curate", response_model=ResourceCurationResponse)
+def curate_resources(request: ResourceCurationRequest) -> ResourceCurationResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + request.candidateResources,
+        source="request.resource_curation.documentTexts",
+        title_prefix=f"curation-{request.studentProfileId}-inline",
+        metadata={"studentProfileId": request.studentProfileId, "courseId": request.courseId},
+    )
+    return resource_curation_agent.curate(request)
 
 
 @app.get("/agents/providers/status")

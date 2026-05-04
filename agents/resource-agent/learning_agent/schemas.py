@@ -406,6 +406,92 @@ class StoryboardResponse(BaseModel):
     summary: str
 
 
+class PrerequisiteDiagnosisRequest(BaseModel):
+    studentProfileId: str
+    courseId: str
+    studentProfileSummary: str
+    courseTitle: str
+    targetTopic: str
+    completedTopics: list[str] = Field(default_factory=list)
+    assessmentWeaknesses: list[str] = Field(default_factory=list)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class PrerequisiteItem(BaseModel):
+    name: str
+    status: Literal["已掌握", "部分掌握", "未掌握", "待诊断"]
+    importance: float = Field(ge=0, le=1)
+    evidence: str
+    remediationAction: str
+
+
+class DiagnosticQuestion(BaseModel):
+    id: str
+    prerequisite: str
+    question: str
+    expectedAnswer: str
+    questionType: str
+    score: int = Field(ge=1)
+
+
+class PrerequisiteDiagnosisResponse(BaseModel):
+    targetTopic: str
+    readinessScore: int = Field(ge=0, le=100)
+    readinessLevel: str
+    prerequisites: list[PrerequisiteItem]
+    diagnosticQuestions: list[DiagnosticQuestion]
+    gapSummary: str
+    recommendedWarmups: list[str]
+    citations: list[KnowledgeMatch]
+    profileDimensionUpdates: list[ProfileDimensionUpdate]
+
+
+class ResourceCurationRequest(BaseModel):
+    studentProfileId: str
+    courseId: str
+    studentProfileSummary: str
+    courseTitle: str
+    topic: str
+    targetLevel: str = "自适应"
+    resourceTypes: list[str] = Field(default_factory=list)
+    weaknesses: list[str] = Field(default_factory=list)
+    timeBudgetMinutes: int = Field(default=90, ge=10, le=480)
+    candidateResources: list[str] = Field(default_factory=list)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class CuratedResource(BaseModel):
+    rank: int = Field(ge=1)
+    title: str
+    resourceType: str
+    difficulty: str
+    estimatedMinutes: int = Field(ge=1)
+    sourceTitle: str
+    reason: str
+    usageOrder: str
+    citationIds: list[str] = Field(default_factory=list)
+
+
+class CoverageMapItem(BaseModel):
+    knowledgePoint: str
+    coveredBy: list[str]
+    gapLevel: str
+    recommendation: str
+
+
+class ResourceCurationResponse(BaseModel):
+    bundleTitle: str
+    targetLevel: str
+    curatedResources: list[CuratedResource]
+    coverageMap: list[CoverageMapItem]
+    usagePlan: list[str]
+    citations: list[KnowledgeMatch]
+    summary: str
+    profileDimensionUpdates: list[ProfileDimensionUpdate]
+
+
 class HealthResponse(BaseModel):
     service: str
     status: Literal["UP", "DEGRADED"]
