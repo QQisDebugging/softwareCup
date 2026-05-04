@@ -199,6 +199,78 @@ class LearningPathPlanResponse(BaseModel):
     profileDimensionUpdates: list[ProfileDimensionUpdate]
 
 
+class KnowledgeGraphRequest(BaseModel):
+    studentProfileId: str | None = None
+    courseId: str
+    courseTitle: str
+    topic: str
+    weaknessSignals: list[str] = Field(default_factory=list)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class KnowledgeGraphNode(BaseModel):
+    id: str
+    label: str
+    type: str
+    importance: float = Field(ge=0, le=1)
+    evidence: str
+    weakPoint: bool = False
+
+
+class KnowledgeGraphEdge(BaseModel):
+    source: str
+    target: str
+    relation: str
+    evidence: str
+
+
+class KnowledgeGraphResponse(BaseModel):
+    graphTitle: str
+    courseId: str
+    topic: str
+    nodes: list[KnowledgeGraphNode]
+    edges: list[KnowledgeGraphEdge]
+    weakPointHighlights: list[str]
+    mermaidDiagram: str
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
+class ContentAuditRequest(BaseModel):
+    studentProfileId: str | None = None
+    courseId: str | None = None
+    courseTitle: str = "未指定课程"
+    topic: str = "待审计内容"
+    content: str
+    citations: list[KnowledgeMatch] = Field(default_factory=list)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class UnsupportedClaim(BaseModel):
+    claim: str
+    reason: str
+    suggestedEvidenceQuery: str
+
+
+class RiskyClaim(BaseModel):
+    claim: str
+    riskType: str
+    mitigation: str
+
+
+class ContentAuditResponse(BaseModel):
+    overallScore: int = Field(ge=0, le=100)
+    citationCoverage: float = Field(ge=0, le=1)
+    unsupportedClaims: list[UnsupportedClaim]
+    riskyClaims: list[RiskyClaim]
+    revisedContent: str
+    recommendations: list[str]
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
 class HealthResponse(BaseModel):
     service: str
     status: Literal["UP", "DEGRADED"]

@@ -14,6 +14,8 @@ Python AI 主程，供 Spring Boot 后端通过 HTTP 调用。当前实现覆盖
 - 智能辅导：基于 RAG 的课程答疑，输出引用、追问、学习动作和画像信号。
 - 自适应测评：生成题库、自动批改、诊断薄弱点，并返回画像更新建议。
 - 学习路径规划：基于画像、薄弱点、测评结果和 RAG 资料生成动态学习路线。
+- 知识图谱：抽取课程知识点、先修/包含/易错关系，并高亮画像薄弱点。
+- 防幻觉审计：检查生成内容的引用覆盖、未支撑断言和风险表达。
 - 防幻觉与安全：输出资料来源、质量检查、敏感内容过滤和空检索降级提示。
 - Provider：默认 `offline`，可通过环境变量切换到 `xfyun_spark`，失败时自动降级。
 
@@ -42,6 +44,8 @@ python scripts/smoke_test.py
 python scripts/smoke_tutoring.py
 python scripts/smoke_assessment.py
 python scripts/smoke_path_planner.py
+python scripts/smoke_knowledge_graph.py
+python scripts/smoke_content_audit.py
 ```
 
 ## 接口
@@ -54,6 +58,8 @@ python scripts/smoke_path_planner.py
 - `POST /agents/assessment/generate`
 - `POST /agents/assessment/grade`
 - `POST /agents/path/plan`
+- `POST /agents/knowledge/graph`
+- `POST /agents/safety/audit`
 
 知识库接口：
 

@@ -10,13 +10,19 @@ from learning_agent.documents import DocumentLoader
 from learning_agent.embeddings import HashingEmbeddingModel
 from learning_agent.graph import ResourceGenerationWorkflow
 from learning_agent.assessment import AssessmentAgent
+from learning_agent.content_audit import ContentAuditAgent
+from learning_agent.knowledge_graph import KnowledgeGraphAgent
 from learning_agent.path_planner import PathPlannerAgent
 from learning_agent.schemas import (
     AssessmentGenerateRequest,
     AssessmentGenerateResponse,
     AssessmentGradeRequest,
     AssessmentGradeResponse,
+    ContentAuditRequest,
+    ContentAuditResponse,
     HealthResponse,
+    KnowledgeGraphRequest,
+    KnowledgeGraphResponse,
     KnowledgeIngestRequest,
     KnowledgeIngestResponse,
     KnowledgeSearchRequest,
@@ -40,6 +46,8 @@ workflow = ResourceGenerationWorkflow(settings=settings, vector_store=vector_sto
 tutoring_agent = TutoringAgent(settings=settings, vector_store=vector_store)
 assessment_agent = AssessmentAgent(settings=settings, vector_store=vector_store)
 path_planner_agent = PathPlannerAgent(settings=settings, vector_store=vector_store)
+knowledge_graph_agent = KnowledgeGraphAgent(settings=settings, vector_store=vector_store)
+content_audit_agent = ContentAuditAgent(settings=settings, vector_store=vector_store)
 
 
 @asynccontextmanager
@@ -131,6 +139,30 @@ def plan_learning_path(request: LearningPathPlanRequest) -> LearningPathPlanResp
         metadata={"studentProfileId": request.studentProfileId, "courseId": request.courseId},
     )
     return path_planner_agent.plan(request)
+
+
+@app.post("/agents/knowledge/graph", response_model=KnowledgeGraphResponse)
+def build_knowledge_graph(request: KnowledgeGraphRequest) -> KnowledgeGraphResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts,
+        source="request.graph.documentTexts",
+        title_prefix=f"graph-{request.courseId}-inline",
+        metadata={"studentProfileId": request.studentProfileId or "", "courseId": request.courseId},
+    )
+    return knowledge_graph_agent.build(request)
+
+
+@app.post("/agents/safety/audit", response_model=ContentAuditResponse)
+def audit_content(request: ContentAuditRequest) -> ContentAuditResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts,
+        source="request.audit.documentTexts",
+        title_prefix=f"audit-{request.courseId or 'course'}-inline",
+        metadata={"studentProfileId": request.studentProfileId or "", "courseId": request.courseId or ""},
+    )
+    return content_audit_agent.audit(request)
 
 
 @app.get("/agents/providers/status")

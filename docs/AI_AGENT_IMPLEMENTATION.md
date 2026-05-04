@@ -10,6 +10,8 @@
 - 智能辅导：`TutoringAgent` 提供 RAG 课程答疑，输出引用依据、追问问题、学习动作和画像更新信号。
 - 自适应测评：`AssessmentAgent` 生成选择、判断、简答、代码纠错题，批改后输出薄弱点和画像更新建议。
 - 学习路径规划：`PathPlannerAgent` 根据画像、薄弱点、最近得分和 RAG 资料生成动态学习路线。
+- 知识图谱：`KnowledgeGraphAgent` 从课程资料中抽取知识点、关系和薄弱点高亮。
+- 防幻觉审计：`ContentAuditAgent` 检查引用覆盖、未支撑断言、风险表达和修订建议。
 - 个性化路径：生成结果中包含按画像层级调整的学习步骤、资源推送建议和画像更新建议。
 - 防幻觉：输出 RAG 资料来源、质量检查和空检索降级提示。
 - 响应体验：保留普通 JSON 接口，并新增 Markdown 流式接口。
@@ -26,6 +28,8 @@
 - `learning_agent/tutoring.py`：智能辅导 Agent，支撑学生即时问答和画像信号识别。
 - `learning_agent/assessment.py`：测评生成与自动批改 Agent，支撑学习效果评估闭环。
 - `learning_agent/path_planner.py`：学习路径规划 Agent，支撑资源推荐和复习节点安排。
+- `learning_agent/knowledge_graph.py`：课程知识图谱 Agent，支撑 Mermaid 图谱和薄弱点高亮。
+- `learning_agent/content_audit.py`：内容审计 Agent，支撑防幻觉和内容安全复核。
 
 ## 稳定性优化
 
@@ -63,5 +67,7 @@ python scripts/smoke_test.py
 python scripts/smoke_tutoring.py
 python scripts/smoke_assessment.py
 python scripts/smoke_path_planner.py
+python scripts/smoke_knowledge_graph.py
+python scripts/smoke_content_audit.py
 uvicorn main:app --host 0.0.0.0 --port 9001 --reload
 ```
