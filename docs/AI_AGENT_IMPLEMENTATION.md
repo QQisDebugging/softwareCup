@@ -22,6 +22,9 @@
 - 画像抽取：`ProfileInferenceAgent` 从自然语言对话、学习记录和测评摘要抽取知识基础、认知风格、学习目标等 8 个画像维度。
 - 学习分析：`LearningEventAnalysisAgent` 分析学习事件、资源使用、答疑、测评和实操记录，给出风险信号和下一步 Agent 调用。
 - 题目分析：`AssessmentItemAnalysisAgent` 汇总测评作答，输出知识点掌握度、高错题、误区聚类和补救计划。
+- 项目审查：`ProjectReviewAgent` 审查多文件项目代码，输出分层缺陷、测试缺口、安全提示和重构任务。
+- 班级分析：`ClassAnalyticsAgent` 汇总学生快照，输出班级掌握度、参与度、干预分组和资源缺口。
+- 演示规划：`DemoScenarioPlannerAgent` 根据时间限制和可用端点生成演示场景、话术、备用方案和成功指标。
 - 个性化路径：生成结果中包含按画像层级调整的学习步骤、资源推送建议和画像更新建议。
 - 防幻觉：输出 RAG 资料来源、质量检查和空检索降级提示。
 - 响应体验：保留普通 JSON 接口，并新增 Markdown 流式接口。
@@ -50,6 +53,9 @@
 - `learning_agent/profile_infer.py`：对话式画像抽取 Agent，支撑画像自主构建和随学更新。
 - `learning_agent/learning_event_analysis.py`：学习事件分析 Agent，支撑参与度、趋势、风险和下一步动作分析。
 - `learning_agent/assessment_item_analysis.py`：测评题目分析 Agent，支撑教师视角的知识点诊断和误区聚类。
+- `learning_agent/project_review.py`：项目级代码审查 Agent，支撑 AI 辅助编程和工程实践反馈。
+- `learning_agent/class_analytics.py`：班级学习分析 Agent，支撑教师端学情看板和分层干预。
+- `learning_agent/demo_planner.py`：演示规划 Agent，支撑答辩脚本、录屏顺序和风险预案。
 
 ## 稳定性优化
 
@@ -99,6 +105,9 @@ python scripts/smoke_agent_trace.py
 python scripts/smoke_profile_infer.py
 python scripts/smoke_learning_event_analysis.py
 python scripts/smoke_assessment_item_analysis.py
+python scripts/smoke_project_review.py
+python scripts/smoke_class_analytics.py
+python scripts/smoke_demo_planner.py
 python scripts/smoke_full_ai_agents.py
 uvicorn main:app --host 0.0.0.0 --port 9001 --reload
 ```

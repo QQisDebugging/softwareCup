@@ -26,6 +26,9 @@ Python AI 主程，供 Spring Boot 后端通过 HTTP 调用。当前实现覆盖
 - 对话式画像抽取：从自然语言对话、学习记录和测评摘要抽取不少于 8 个画像维度。
 - 学习事件分析：分析资源使用、答疑、测评、代码练习和复盘行为，输出风险信号和下一步 Agent 调用。
 - 测评题目分析：按知识点统计掌握度、高错题和误区聚类，生成教师补救计划。
+- 项目级代码审查：审查多文件项目代码，输出分层缺陷、测试缺口、安全提示、知识点映射和重构任务。
+- 班级学习分析：面向教师端输出班级掌握度、参与度、干预分组和资源缺口。
+- 演示脚本规划：自动生成 7 分钟演示路径、场景话术、备用方案和成功指标。
 - 防幻觉与安全：输出资料来源、质量检查、敏感内容过滤和空检索降级提示。
 - Provider：默认 `offline`，可通过环境变量切换到 `xfyun_spark`，失败时自动降级。
 
@@ -66,6 +69,9 @@ python scripts/smoke_agent_trace.py
 python scripts/smoke_profile_infer.py
 python scripts/smoke_learning_event_analysis.py
 python scripts/smoke_assessment_item_analysis.py
+python scripts/smoke_project_review.py
+python scripts/smoke_class_analytics.py
+python scripts/smoke_demo_planner.py
 python scripts/smoke_full_ai_agents.py
 ```
 
@@ -92,6 +98,9 @@ python scripts/smoke_full_ai_agents.py
 - `POST /agents/profile/infer`
 - `POST /agents/learning/events/analyze`
 - `POST /agents/assessment/item-analysis`
+- `POST /agents/code/project-review`
+- `POST /agents/class/analytics`
+- `POST /agents/demo/scenario-plan`
 
 知识库接口：
 

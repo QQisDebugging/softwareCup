@@ -218,4 +218,37 @@ $itemAnalysis = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/assessment/i
     @{ questionId = 'q3'; knowledgePoint = 'REST API 设计'; questionType = '代码纠错题'; score = 13; maxScore = 15; correct = $true; feedback = '能写出 Controller -> Service -> Repository 调用链。' }
   )
 } | ConvertTo-Json -Depth 12)
+
+$projectReview = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/code/project-review" -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  studentProfileSummary = 'Java 基础较弱，容易把 Controller、Service、Repository 职责写混。'
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  projectTitle = 'REST API 分层练习'
+  targetTopic = 'Spring Boot Controller 与 REST API'
+  files = @(
+    @{ path = 'src/main/java/demo/UserController.java'; language = 'Java'; content = '@RestController class UserController { UserRepository repo; @PostMapping("/u") User save(@RequestBody User u){ return repo.save(u); } }' }
+  )
+} | ConvertTo-Json -Depth 12)
+
+$classAnalytics = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/class/analytics" -ContentType 'application/json' -Body (@{
+  courseId = $course.id
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  topic = 'Spring Boot Controller 与 REST API'
+  snapshots = @(
+    @{ studentProfileId = $profile.profile.id; studentName = '张同学'; profileSummary = 'Java 基础较弱'; recentScores = @(48, 55); completedResources = 1; tutoringCount = 0; codePracticeCount = 0; weaknessSignals = @('HTTP 请求响应', 'MVC 分层职责'); learningEvents = @('只完成入口讲解') },
+    @{ studentProfileId = 'peer-1'; studentName = '李同学'; profileSummary = '实操不足'; recentScores = @(68, 72); completedResources = 2; tutoringCount = 1; codePracticeCount = 0; weaknessSignals = @('MVC 分层职责', 'REST API 边界'); learningEvents = @('错题复盘') }
+  )
+} | ConvertTo-Json -Depth 12)
+
+$demoPlan = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/demo/scenario-plan" -ContentType 'application/json' -Body (@{
+  scenarioTitle = '软件杯 A3 个性化学习多智能体 7 分钟演示'
+  audience = '初赛评委'
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  studentProfileSummary = 'Java 基础较弱，喜欢图解和项目案例。'
+  timeLimitMinutes = 7
+  coreEndpoints = @('/agents/profile/infer', '/agents/prerequisite/diagnose', '/agents/resources/curate', '/agents/resource-generation', '/agents/assessment/grade', '/agents/report/portfolio', '/agents/trace/explain')
+  availableArtifacts = @('smoke_full_ai_agents.py 输出', 'Java/Vue3 对接文档')
+  riskConcerns = @('网络不稳定时使用 offline provider')
+} | ConvertTo-Json -Depth 12)
 ```

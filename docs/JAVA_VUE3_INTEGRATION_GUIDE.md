@@ -78,6 +78,21 @@
   - 建议表：`assessment_item_analyses`
   - 需要保存：knowledgePointMastery、hardItems、misconceptionClusters、remediationPlan、引用。
 
+- `POST /agents/code/project-review`
+  - 后端建议接口：`POST /api/learning/code-projects/review`
+  - 建议表：`project_code_reviews`
+  - 需要保存：overallScore、architectureIssues、testGaps、securityNotes、knowledgeMapping、refactorTasks、画像更新建议。
+
+- `POST /agents/class/analytics`
+  - 后端建议接口：`POST /api/teaching/class-analytics`
+  - 建议表：`class_learning_analytics`
+  - 需要保存：classMasteryAverage、engagementAverage、topWeaknesses、interventionGroups、resourceGaps、teacherActions。
+
+- `POST /agents/demo/scenario-plan`
+  - 后端建议接口：`POST /api/demo/scenario-plans`
+  - 建议表：`demo_scenario_plans`
+  - 需要保存：scenes、judgeHighlights、prepChecklist、successMetrics、引用。
+
 ### 后端实现约束
 
 - DTO 字段保持 camelCase，直接对齐 Python Pydantic 字段。
@@ -153,6 +168,18 @@
   - 调用 `/api/learning/assessments/item-analysis`
   - 展示知识点掌握度、高错题、误区聚类和补救计划，支持一键生成变式题或补救资源。
 
+- 项目级代码审查页
+  - 调用 `/api/learning/code-projects/review`
+  - 展示工程质量分、分层缺陷、测试缺口、安全提示和重构任务。
+
+- 班级学情分析页
+  - 调用 `/api/teaching/class-analytics`
+  - 展示班级掌握度、参与度、共性薄弱点、干预分组和资源缺口。
+
+- 演示规划页
+  - 调用 `/api/demo/scenario-plans`
+  - 展示 7 分钟演示场景、每步话术、fallback 方案、准备清单和成功指标。
+
 ### 前端交互要求
 
 - 所有 AI 调用都要有 loading、失败提示、重新生成按钮。
@@ -185,4 +212,7 @@ cd agents/resource-agent
 .\.venv\Scripts\python.exe scripts\smoke_profile_infer.py
 .\.venv\Scripts\python.exe scripts\smoke_learning_event_analysis.py
 .\.venv\Scripts\python.exe scripts\smoke_assessment_item_analysis.py
+.\.venv\Scripts\python.exe scripts\smoke_project_review.py
+.\.venv\Scripts\python.exe scripts\smoke_class_analytics.py
+.\.venv\Scripts\python.exe scripts\smoke_demo_planner.py
 ```

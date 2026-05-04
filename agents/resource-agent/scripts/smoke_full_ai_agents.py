@@ -6,10 +6,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from learning_agent.agent_trace import AgentTraceAgent
 from learning_agent.assessment import AssessmentAgent
 from learning_agent.assessment_item_analysis import AssessmentItemAnalysisAgent
+from learning_agent.class_analytics import ClassAnalyticsAgent
 from learning_agent.code_practice import CodePracticeAgent
 from learning_agent.config import AgentSettings
 from learning_agent.content_audit import ContentAuditAgent
 from learning_agent.course_diagnosis import CourseDiagnosisAgent
+from learning_agent.demo_planner import DemoScenarioPlannerAgent
 from learning_agent.documents import DocumentLoader
 from learning_agent.embeddings import HashingEmbeddingModel
 from learning_agent.graph import ResourceGenerationWorkflow
@@ -19,6 +21,7 @@ from learning_agent.path_planner import PathPlannerAgent
 from learning_agent.portfolio_report import PortfolioReportAgent
 from learning_agent.prerequisite import PrerequisiteDiagnosisAgent
 from learning_agent.profile_infer import ProfileInferenceAgent
+from learning_agent.project_review import ProjectReviewAgent
 from learning_agent.resource_curation import ResourceCurationAgent
 from learning_agent.schemas import (
     AgentTraceRequest,
@@ -27,19 +30,24 @@ from learning_agent.schemas import (
     AssessmentGradeRequest,
     AssessmentAttemptRecord,
     AssessmentItemAnalysisRequest,
+    ClassAnalyticsRequest,
     CodePracticeGenerateRequest,
     CodePracticeGradeRequest,
     ContentAuditRequest,
     CourseDiagnosisRequest,
+    DemoScenarioRequest,
     KnowledgeGraphRequest,
     LearningEventAnalysisRequest,
     LearningPathPlanRequest,
     PortfolioReportRequest,
     ProfileInferRequest,
     PrerequisiteDiagnosisRequest,
+    ProjectFileInput,
+    ProjectReviewRequest,
     ResourceAgentRequest,
     ResourceCurationRequest,
     StoryboardRequest,
+    StudentLearningSnapshot,
     TutoringRequest,
 )
 from learning_agent.storyboard import StoryboardAgent
@@ -272,6 +280,70 @@ def main() -> None:
         ],
         documentTexts=[inline_doc],
     ))
+    project_review = ProjectReviewAgent(settings, store).review(ProjectReviewRequest(
+        studentProfileId="profile-demo",
+        courseId="course-demo",
+        studentProfileSummary=profile,
+        courseTitle=course,
+        projectTitle="REST API 分层练习",
+        targetTopic=topic,
+        files=[
+            ProjectFileInput(
+                path="src/main/java/demo/UserController.java",
+                content="@RestController class UserController { UserRepository repo; @PostMapping(\"/u\") User save(@RequestBody User u){ return repo.save(u); } }",
+            )
+        ],
+        documentTexts=[inline_doc],
+    ))
+    class_analytics = ClassAnalyticsAgent(settings, store).analyze(ClassAnalyticsRequest(
+        courseId="course-demo",
+        courseTitle=course,
+        topic=topic,
+        snapshots=[
+            StudentLearningSnapshot(
+                studentProfileId="profile-demo",
+                studentName="演示学生",
+                profileSummary=profile,
+                recentScores=[grade.score],
+                completedResources=3,
+                tutoringCount=1,
+                codePracticeCount=0,
+                weaknessSignals=grade.weaknessSignals + ["REST API 边界"],
+                learningEvents=["错题复盘：Controller 直接访问 Repository。"],
+            ),
+            StudentLearningSnapshot(
+                studentProfileId="profile-peer",
+                studentName="同伴学生",
+                profileSummary="能理解概念但实操不足。",
+                recentScores=[68, 72],
+                completedResources=2,
+                tutoringCount=1,
+                codePracticeCount=0,
+                weaknessSignals=["REST API 边界", "MVC 分层职责"],
+                learningEvents=["完成资源学习。"],
+            ),
+        ],
+        documentTexts=[inline_doc],
+    ))
+    demo_plan = DemoScenarioPlannerAgent(settings, store).plan(DemoScenarioRequest(
+        scenarioTitle="软件杯 A3 个性化学习多智能体演示",
+        audience="评委",
+        courseTitle=course,
+        studentProfileSummary=profile,
+        timeLimitMinutes=7,
+        coreEndpoints=[
+            "/agents/profile/infer",
+            "/agents/prerequisite/diagnose",
+            "/agents/resources/curate",
+            "/agents/resource-generation",
+            "/agents/assessment/grade",
+            "/agents/report/portfolio",
+            "/agents/trace/explain",
+        ],
+        availableArtifacts=["smoke_full_ai_agents.py 输出", "Java/Vue3 对接文档"],
+        riskConcerns=["网络不稳定时使用 offline provider"],
+        documentTexts=[inline_doc],
+    ))
 
     summary = {
         "resourceMinutes": resource.estimatedMinutes,
@@ -291,6 +363,9 @@ def main() -> None:
         "profileDimensions": len(inferred_profile.dimensions),
         "eventRisks": len(event_analysis.riskSignals),
         "itemMasteryPoints": len(item_analysis.knowledgePointMastery),
+        "projectIssues": len(project_review.architectureIssues),
+        "classGroups": len(class_analytics.interventionGroups),
+        "demoScenes": len(demo_plan.scenes),
     }
     print(summary)
     assert resource.content
@@ -310,6 +385,9 @@ def main() -> None:
     assert len(inferred_profile.dimensions) >= 8
     assert event_analysis.recommendedAgentCalls
     assert item_analysis.remediationPlan
+    assert project_review.refactorTasks
+    assert class_analytics.teacherActions
+    assert len(demo_plan.scenes) >= 6
 
 
 if __name__ == "__main__":
