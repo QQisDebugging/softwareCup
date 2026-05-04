@@ -5,7 +5,7 @@
 ## 当前结构
 
 - `backend/`：Spring Boot 后端，默认 H2 本地库，可切换 PostgreSQL。
-- `agents/resource-agent/`：Python FastAPI 资源生成智能体，先用 mock 跑通链路。
+- `agents/resource-agent/`：Python FastAPI AI 主程，包含 LangGraph/LangChain、RAG、Embedding、文档解析和多智能体资源生成。
 - `data/courses/`：至少一门完整高校课程的自构造测试数据。
 - `docs/`：比赛文档、后端接口说明和协作说明。
 
@@ -59,6 +59,10 @@ cd backend
 - `GET /api/tasks`
 - `POST /api/uploads`
 
+## Python AI 主程
+
+`agents/resource-agent` 已保留 Spring Boot 调用契约，并实现离线可运行的 RAG 资源生成链路。详见 `docs/AI_AGENT_IMPLEMENTATION.md`。
+
 ## 讯飞工具接入说明
 
-比赛要求选用科大讯飞相关工具。当前仓库先保留 `agents/resource-agent` 的统一 HTTP 契约，后续把 mock 生成器替换为讯飞星火大模型调用即可，不需要改 Spring Boot 任务管理链路。真实密钥通过本地 `.env` 或系统环境变量注入，不提交到仓库。
+比赛要求选用科大讯飞相关工具。当前 Python 主程支持通过 `RESOURCE_AGENT_PROVIDER=xfyun_spark` 接入讯飞星火；未配置密钥或调用失败时会自动降级到本地生成器，保证演示链路不中断。真实密钥通过本地 `.env` 或系统环境变量注入，不提交到仓库。

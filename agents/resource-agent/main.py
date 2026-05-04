@@ -1,91 +1,107 @@
 from datetime import datetime, timezone
-from enum import Enum
-from typing import Literal
+from typing import Iterable
 
-from fastapi import FastAPI
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 
-
-class Provider(str, Enum):
-    MOCK = "mock"
-    XFYUN_SPARK = "xfyun_spark"
-
-
-class ResourceAgentRequest(BaseModel):
-    taskId: str
-    studentProfileId: str
-    courseId: str
-    studentProfileSummary: str
-    courseTitle: str
-    topic: str
-    resourceType: str
-    modality: str
-    prompt: str
+from learning_agent.config import AgentSettings
+from learning_agent.documents import DocumentLoader
+from learning_agent.embeddings import HashingEmbeddingModel
+from learning_agent.graph import ResourceGenerationWorkflow
+from learning_agent.schemas import (
+    HealthResponse,
+    KnowledgeIngestRequest,
+    KnowledgeIngestResponse,
+    KnowledgeSearchRequest,
+    KnowledgeSearchResponse,
+    ResourceAgentRequest,
+    ResourceAgentResponse,
+)
+from learning_agent.vector_store import InMemoryVectorStore
 
 
-class ResourceAgentResponse(BaseModel):
-    title: str
-    resourceType: str
-    modality: str
-    targetLevel: str
-    estimatedMinutes: int = Field(ge=1)
-    content: str
-    summary: str
+settings = AgentSettings.from_env()
+document_loader = DocumentLoader(project_root=settings.project_root)
+embedding_model = HashingEmbeddingModel(dimensions=settings.embedding_dimensions)
+vector_store = InMemoryVectorStore(embedding_model=embedding_model)
+workflow = ResourceGenerationWorkflow(settings=settings, vector_store=vector_store)
+
+app = FastAPI(
+    title="Software Cup AI Resource Agent",
+    version="1.0.0",
+    description="LangGraph/LangChain powered RAG service for personalized learning resources.",
+)
 
 
-app = FastAPI(title="Software Cup Resource Agent", version="0.1.0")
+@app.on_event("startup")
+def load_default_knowledge_base() -> None:
+    documents = document_loader.load_seed_documents(settings.seed_knowledge_paths)
+    vector_store.add_documents(documents)
 
 
-@app.get("/health")
-def health() -> dict:
-    return {
-        "service": "resource-agent",
-        "status": "UP",
-        "provider": Provider.MOCK,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
+@app.get("/health", response_model=HealthResponse)
+def health() -> HealthResponse:
+    return HealthResponse(
+        service="resource-agent",
+        status="UP",
+        provider=settings.provider,
+        graph_runtime=workflow.runtime_name,
+        vector_documents=vector_store.document_count,
+        vector_chunks=vector_store.chunk_count,
+        timestamp=datetime.now(timezone.utc),
+    )
 
 
 @app.post("/agents/resource-generation", response_model=ResourceAgentResponse)
 def generate_resource(request: ResourceAgentRequest) -> ResourceAgentResponse:
-    return ResourceAgentResponse(
-        title=f"{request.topic} - 个性化{request.resourceType}",
-        resourceType=request.resourceType,
-        modality=request.modality,
-        targetLevel="根据学习画像自适应",
-        estimatedMinutes=18,
-        content=build_mock_content(request),
-        summary=f"已围绕 {request.topic} 生成 {request.modality} 形式的学习资源。",
+    return workflow.generate(request)
+
+
+@app.post("/agents/resource-generation/stream")
+def stream_resource(request: ResourceAgentRequest) -> StreamingResponse:
+    response = workflow.generate(request)
+
+    def chunks() -> Iterable[str]:
+        for line in response.content.splitlines():
+            yield line + "\n"
+
+    return StreamingResponse(chunks(), media_type="text/markdown; charset=utf-8")
+
+
+@app.get("/agents/providers/status")
+def provider_status() -> dict:
+    return {
+        "configuredProvider": settings.provider,
+        "activeProvider": workflow.provider_router.active_name,
+        "xfyunConfigured": bool(settings.xfyun_api_key and settings.xfyun_api_secret),
+        "fallbackProvider": "offline",
+    }
+
+
+@app.post("/agents/knowledge/ingest", response_model=KnowledgeIngestResponse)
+@app.post("/knowledge/ingest", response_model=KnowledgeIngestResponse)
+def ingest_knowledge(request: KnowledgeIngestRequest) -> KnowledgeIngestResponse:
+    try:
+        documents = document_loader.load_request_documents(request)
+        added_chunks = vector_store.add_documents(documents)
+        return KnowledgeIngestResponse(
+            addedDocuments=len(documents),
+            addedChunks=added_chunks,
+            totalDocuments=vector_store.document_count,
+            totalChunks=vector_store.chunk_count,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/agents/knowledge/query", response_model=KnowledgeSearchResponse)
+@app.post("/knowledge/search", response_model=KnowledgeSearchResponse)
+def search_knowledge(request: KnowledgeSearchRequest) -> KnowledgeSearchResponse:
+    matches = vector_store.search(
+        query=request.query,
+        top_k=request.topK,
+        filters=request.filters,
     )
-
-
-def build_mock_content(request: ResourceAgentRequest) -> str:
-    return f"""# {request.topic}
-
-课程：{request.courseTitle}
-资源形式：{request.resourceType} / {request.modality}
-
-## 学习画像依据
-{request.studentProfileSummary}
-
-## 学习目标
-1. 解释 {request.topic} 的核心概念。
-2. 能够把概念应用到高校课程项目中的真实任务。
-3. 形成可检验的练习输出，便于后续学习效果评估智能体追踪。
-
-## 个性化讲解
-{request.prompt}
-
-## 图解脚本
-- 画布左侧：学生当前知识点掌握状态。
-- 画布中间：{request.topic} 的关键概念和先修关系。
-- 画布右侧：推荐练习、测试题和补救资源。
-
-## 练习任务
-完成一个 20 分钟小任务：用自己的话总结 {request.topic}，并提交一个能体现理解程度的例子。
-
-## 评估点
-- 概念准确性。
-- 例子与课程场景的贴合度。
-- 是否暴露出需要智能辅导继续补救的薄弱点。
-"""
+    return KnowledgeSearchResponse(query=request.query, matches=matches)
