@@ -780,6 +780,89 @@ class ProjectReviewResponse(BaseModel):
     profileDimensionUpdates: list[ProfileDimensionUpdate]
 
 
+class StudentLearningSnapshot(BaseModel):
+    studentProfileId: str
+    studentName: str = "匿名学生"
+    profileSummary: str = ""
+    recentScores: list[int] = Field(default_factory=list)
+    completedResources: int = Field(default=0, ge=0)
+    tutoringCount: int = Field(default=0, ge=0)
+    codePracticeCount: int = Field(default=0, ge=0)
+    weaknessSignals: list[str] = Field(default_factory=list)
+    learningEvents: list[str] = Field(default_factory=list)
+
+
+class ClassInterventionGroup(BaseModel):
+    name: str
+    criteria: str
+    studentProfileIds: list[str]
+    recommendedAgent: str
+    action: str
+
+
+class ClassResourceGap(BaseModel):
+    knowledgePoint: str
+    affectedStudents: int = Field(ge=0)
+    missingResourceType: str
+    suggestedAction: str
+
+
+class ClassAnalyticsRequest(BaseModel):
+    courseId: str
+    courseTitle: str
+    topic: str = "班级学习表现"
+    timeRange: str = "最近 7 天"
+    snapshots: list[StudentLearningSnapshot]
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class ClassAnalyticsResponse(BaseModel):
+    classMasteryAverage: int = Field(ge=0, le=100)
+    engagementAverage: int = Field(ge=0, le=100)
+    topWeaknesses: list[str]
+    interventionGroups: list[ClassInterventionGroup]
+    resourceGaps: list[ClassResourceGap]
+    teacherActions: list[str]
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
+class DemoScenarioRequest(BaseModel):
+    scenarioTitle: str = "软件杯智能学习系统演示"
+    audience: str = "评委"
+    courseTitle: str
+    studentProfileSummary: str
+    timeLimitMinutes: int = Field(default=7, ge=3, le=20)
+    coreEndpoints: list[str] = Field(default_factory=list)
+    availableArtifacts: list[str] = Field(default_factory=list)
+    riskConcerns: list[str] = Field(default_factory=list)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class DemoScene(BaseModel):
+    order: int = Field(ge=1)
+    title: str
+    endpoint: str
+    inputSetup: str
+    expectedOutput: str
+    talkingPoint: str
+    fallbackPlan: str
+    estimatedSeconds: int = Field(ge=10)
+
+
+class DemoScenarioResponse(BaseModel):
+    demoTitle: str
+    totalEstimatedMinutes: int = Field(ge=1)
+    scenes: list[DemoScene]
+    judgeHighlights: list[str]
+    prepChecklist: list[str]
+    successMetrics: list[str]
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
 class HealthResponse(BaseModel):
     service: str
     status: Literal["UP", "DEGRADED"]

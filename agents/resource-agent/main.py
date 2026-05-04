@@ -7,7 +7,9 @@ from fastapi.responses import StreamingResponse
 
 from learning_agent.agent_trace import AgentTraceAgent
 from learning_agent.assessment_item_analysis import AssessmentItemAnalysisAgent
+from learning_agent.class_analytics import ClassAnalyticsAgent
 from learning_agent.config import AgentSettings
+from learning_agent.demo_planner import DemoScenarioPlannerAgent
 from learning_agent.documents import DocumentLoader
 from learning_agent.embeddings import HashingEmbeddingModel
 from learning_agent.graph import ResourceGenerationWorkflow
@@ -29,6 +31,8 @@ from learning_agent.schemas import (
     AgentTraceResponse,
     AssessmentItemAnalysisRequest,
     AssessmentItemAnalysisResponse,
+    ClassAnalyticsRequest,
+    ClassAnalyticsResponse,
     CodePracticeGenerateRequest,
     CodePracticeGenerateResponse,
     CodePracticeGradeRequest,
@@ -37,6 +41,8 @@ from learning_agent.schemas import (
     ContentAuditResponse,
     CourseDiagnosisRequest,
     CourseDiagnosisResponse,
+    DemoScenarioRequest,
+    DemoScenarioResponse,
     HealthResponse,
     KnowledgeGraphRequest,
     KnowledgeGraphResponse,
@@ -94,6 +100,8 @@ profile_inference_agent = ProfileInferenceAgent(settings=settings, vector_store=
 learning_event_analysis_agent = LearningEventAnalysisAgent(settings=settings, vector_store=vector_store)
 assessment_item_analysis_agent = AssessmentItemAnalysisAgent(settings=settings, vector_store=vector_store)
 project_review_agent = ProjectReviewAgent(settings=settings, vector_store=vector_store)
+class_analytics_agent = ClassAnalyticsAgent(settings=settings, vector_store=vector_store)
+demo_scenario_planner_agent = DemoScenarioPlannerAgent(settings=settings, vector_store=vector_store)
 
 
 @asynccontextmanager
@@ -349,6 +357,34 @@ def review_project_code(request: ProjectReviewRequest) -> ProjectReviewResponse:
         metadata={"studentProfileId": request.studentProfileId, "courseId": request.courseId},
     )
     return project_review_agent.review(request)
+
+
+@app.post("/agents/class/analytics", response_model=ClassAnalyticsResponse)
+def analyze_class_learning(request: ClassAnalyticsRequest) -> ClassAnalyticsResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + [
+            f"{snapshot.studentName} {snapshot.profileSummary} {' '.join(snapshot.weaknessSignals)} "
+            f"{' '.join(snapshot.learningEvents)}"
+            for snapshot in request.snapshots
+        ],
+        source="request.class_analytics.documentTexts",
+        title_prefix=f"class-analytics-{request.courseId}-inline",
+        metadata={"courseId": request.courseId},
+    )
+    return class_analytics_agent.analyze(request)
+
+
+@app.post("/agents/demo/scenario-plan", response_model=DemoScenarioResponse)
+def plan_demo_scenario(request: DemoScenarioRequest) -> DemoScenarioResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + request.coreEndpoints + request.availableArtifacts + request.riskConcerns,
+        source="request.demo_scenario.documentTexts",
+        title_prefix="demo-scenario-inline",
+        metadata={"courseTitle": request.courseTitle},
+    )
+    return demo_scenario_planner_agent.plan(request)
 
 
 @app.get("/agents/providers/status")
