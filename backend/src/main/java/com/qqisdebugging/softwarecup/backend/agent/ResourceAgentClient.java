@@ -18,4 +18,28 @@ public class ResourceAgentClient {
                 .retrieve()
                 .body(ResourceAgentResponse.class);
     }
+
+    public TutoringAgentResponse tutor(TutoringAgentRequest request) {
+        return resourceAgentRestClient.post()
+                .uri("/agents/tutoring")
+                .body(request)
+                .retrieve()
+                .body(TutoringAgentResponse.class);
+    }
+
+    public AssessmentGenerateAgentResponse generateAssessment(AssessmentGenerateAgentRequest request) {
+        return resourceAgentRestClient.post()
+                .uri("/agents/assessment/generate")
+                .body(request)
+                .retrieve()
+                .body(AssessmentGenerateAgentResponse.class);
+    }
+
+    public AssessmentGradeAgentResponse gradeAssessment(AssessmentGradeAgentRequest request) {
+        return resourceAgentRestClient.post()
+                .uri("/agents/assessment/grade")
+                .body(request)
+                .retrieve()
+                .body(AssessmentGradeAgentResponse.class);
+    }
 }

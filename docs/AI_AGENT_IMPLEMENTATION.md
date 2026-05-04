@@ -43,6 +43,13 @@ POST http://localhost:9001/agents/resource-generation
 
 请求字段和返回字段没有破坏性变化。新增的知识库接口和流式接口只供 Python 服务直接调用，不影响已有 Spring Boot 任务链路。
 
+新增后端学习闭环接口会调用 Python 主程的辅导和测评端点，并把学习过程写入数据库：
+
+- `POST /api/learning/tutoring`：调用 `/agents/tutoring`，保存答疑会话、RAG 引用、学习动作和画像信号。
+- `POST /api/learning/assessments/generate`：调用 `/agents/assessment/generate`，生成自适应测评并写入学习事件。
+- `POST /api/learning/assessments/grade`：调用 `/agents/assessment/grade`，保存测评尝试，并把 `profileDimensionUpdates` 自动写回学生画像。
+- `GET /api/learning/events`、`GET /api/learning/tutoring`、`GET /api/learning/attempts`：查询学生学习事件、答疑历史和测评历史。
+
 ## 可验证命令
 
 ```powershell

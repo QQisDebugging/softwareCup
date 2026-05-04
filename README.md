@@ -1,6 +1,6 @@
 # 基于大模型的个性化资源生成与学习多智能体系统
 
-软件杯项目仓库。当前后端主线聚焦 Spring Boot、数据库、接口、文件上传、任务管理和 Python 智能体调用。
+软件杯项目仓库。当前后端主线聚焦 Spring Boot、数据库、接口、文件上传、任务管理、学习闭环和 Python 智能体调用。
 
 ## 当前结构
 
@@ -58,6 +58,12 @@ cd backend
 - `POST /api/tasks/resource-generation`
 - `GET /api/tasks`
 - `POST /api/uploads`
+- `POST /api/learning/tutoring`
+- `POST /api/learning/assessments/generate`
+- `POST /api/learning/assessments/grade`
+- `GET /api/learning/events?studentProfileId=...`
+- `GET /api/learning/tutoring?studentProfileId=...`
+- `GET /api/learning/attempts?studentProfileId=...`
 
 ## Python AI 主程
 

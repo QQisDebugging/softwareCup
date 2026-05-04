@@ -89,3 +89,41 @@ $task = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/tasks/reso
 Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)
 Invoke-RestMethod http://localhost:8080/api/courses/$($course.id)/resources
 ```
+
+## 学习闭环：辅导、测评、画像自动更新
+
+```powershell
+$tutoring = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/tutoring -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  question = 'Controller 为什么不应该直接写复杂业务逻辑？'
+  modality = '文本+图解'
+  documentTexts = @('Controller 负责请求响应，Service 负责业务规则，Repository 负责数据访问。')
+} | ConvertTo-Json -Depth 8)
+
+$assessment = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/assessments/generate -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  topic = 'Spring Boot Controller 与 REST API'
+  difficulty = '自适应'
+  count = 4
+  documentTexts = @('Controller 负责请求响应，Service 负责业务规则，Repository 负责数据访问。')
+} | ConvertTo-Json -Depth 8)
+
+$grade = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/assessments/grade -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  topic = 'Spring Boot Controller 与 REST API'
+  questions = $assessment.questions
+  answers = @(
+    @{ questionId = $assessment.questions[0].id; answer = $assessment.questions[0].answer },
+    @{ questionId = $assessment.questions[1].id; answer = '错误' },
+    @{ questionId = $assessment.questions[2].id; answer = 'Controller 负责请求响应，Service 负责业务规则。' },
+    @{ questionId = $assessment.questions[3].id; answer = 'Controller -> Service -> Repository -> DB' }
+  )
+} | ConvertTo-Json -Depth 30)
+
+Invoke-RestMethod http://localhost:8080/api/learning/events?studentProfileId=$($profile.profile.id)
+Invoke-RestMethod http://localhost:8080/api/learning/tutoring?studentProfileId=$($profile.profile.id)
+Invoke-RestMethod http://localhost:8080/api/learning/attempts?studentProfileId=$($profile.profile.id)
+```
