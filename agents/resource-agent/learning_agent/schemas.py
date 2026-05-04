@@ -592,6 +592,133 @@ class AgentTraceResponse(BaseModel):
     summary: str
 
 
+class ProfileInferRequest(BaseModel):
+    studentProfileId: str | None = None
+    courseId: str | None = None
+    courseTitle: str = ""
+    declaredMajor: str = ""
+    currentLevel: str = ""
+    learningGoal: str = ""
+    preferences: str = ""
+    constraintsText: str = ""
+    dialogueTurns: list[str] = Field(default_factory=list)
+    learningRecords: list[str] = Field(default_factory=list)
+    assessmentSummaries: list[str] = Field(default_factory=list)
+    tutoringSummaries: list[str] = Field(default_factory=list)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class ProfileContradiction(BaseModel):
+    field: str
+    evidenceA: str
+    evidenceB: str
+    resolutionQuestion: str
+
+
+class ProfileInferResponse(BaseModel):
+    studentProfileId: str | None = None
+    dimensions: list[ProfileDimensionUpdate]
+    extractedSignals: list[str]
+    contradictions: list[ProfileContradiction]
+    followUpQuestions: list[str]
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
+class LearningEventAnalysisRequest(BaseModel):
+    studentProfileId: str
+    courseId: str
+    studentProfileSummary: str
+    courseTitle: str
+    targetTopic: str = "综合学习表现"
+    timeRange: str = "最近 7 天"
+    learningEvents: list[str] = Field(default_factory=list)
+    resourceUsage: list[str] = Field(default_factory=list)
+    assessmentSummaries: list[str] = Field(default_factory=list)
+    tutoringSummaries: list[str] = Field(default_factory=list)
+    codePracticeSummaries: list[str] = Field(default_factory=list)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class LearningRiskSignal(BaseModel):
+    riskType: str
+    severity: str
+    evidence: str
+    recommendedAgent: str
+
+
+class AgentCallRecommendation(BaseModel):
+    priority: int = Field(ge=1)
+    agentEndpoint: str
+    reason: str
+    payloadHint: dict[str, Any] = Field(default_factory=dict)
+
+
+class LearningEventAnalysisResponse(BaseModel):
+    engagementScore: int = Field(ge=0, le=100)
+    masteryTrend: str
+    riskSignals: list[LearningRiskSignal]
+    nextActions: list[str]
+    recommendedAgentCalls: list[AgentCallRecommendation]
+    profileDimensionUpdates: list[ProfileDimensionUpdate]
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
+class AssessmentAttemptRecord(BaseModel):
+    questionId: str
+    knowledgePoint: str
+    questionType: str
+    score: int = Field(ge=0)
+    maxScore: int = Field(ge=1)
+    correct: bool
+    answerSummary: str = ""
+    feedback: str = ""
+
+
+class AssessmentItemAnalysisRequest(BaseModel):
+    courseId: str
+    courseTitle: str
+    topic: str
+    studentProfileId: str | None = None
+    attempts: list[AssessmentAttemptRecord]
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class KnowledgePointMastery(BaseModel):
+    knowledgePoint: str
+    accuracy: float = Field(ge=0, le=1)
+    attempts: int = Field(ge=0)
+    masteryLevel: str
+
+
+class HardItem(BaseModel):
+    questionId: str
+    knowledgePoint: str
+    wrongRate: float = Field(ge=0, le=1)
+    reason: str
+
+
+class MisconceptionCluster(BaseModel):
+    name: str
+    knowledgePoints: list[str]
+    evidence: str
+    remediation: str
+
+
+class AssessmentItemAnalysisResponse(BaseModel):
+    topic: str
+    knowledgePointMastery: list[KnowledgePointMastery]
+    hardItems: list[HardItem]
+    misconceptionClusters: list[MisconceptionCluster]
+    remediationPlan: list[str]
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
 class HealthResponse(BaseModel):
     service: str
     status: Literal["UP", "DEGRADED"]

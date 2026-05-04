@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 
 from learning_agent.agent_trace import AgentTraceAgent
+from learning_agent.assessment_item_analysis import AssessmentItemAnalysisAgent
 from learning_agent.config import AgentSettings
 from learning_agent.documents import DocumentLoader
 from learning_agent.embeddings import HashingEmbeddingModel
@@ -25,6 +26,8 @@ from learning_agent.schemas import (
     AssessmentGradeResponse,
     AgentTraceRequest,
     AgentTraceResponse,
+    AssessmentItemAnalysisRequest,
+    AssessmentItemAnalysisResponse,
     CodePracticeGenerateRequest,
     CodePracticeGenerateResponse,
     CodePracticeGradeRequest,
@@ -42,8 +45,12 @@ from learning_agent.schemas import (
     KnowledgeSearchResponse,
     LearningPathPlanRequest,
     LearningPathPlanResponse,
+    LearningEventAnalysisRequest,
+    LearningEventAnalysisResponse,
     PortfolioReportRequest,
     PortfolioReportResponse,
+    ProfileInferRequest,
+    ProfileInferResponse,
     PrerequisiteDiagnosisRequest,
     PrerequisiteDiagnosisResponse,
     ResourceAgentRequest,
@@ -58,7 +65,9 @@ from learning_agent.schemas import (
 from learning_agent.storyboard import StoryboardAgent
 from learning_agent.tutoring import TutoringAgent
 from learning_agent.vector_store import InMemoryVectorStore
+from learning_agent.learning_event_analysis import LearningEventAnalysisAgent
 from learning_agent.portfolio_report import PortfolioReportAgent
+from learning_agent.profile_infer import ProfileInferenceAgent
 
 
 settings = AgentSettings.from_env()
@@ -78,6 +87,9 @@ prerequisite_agent = PrerequisiteDiagnosisAgent(settings=settings, vector_store=
 resource_curation_agent = ResourceCurationAgent(settings=settings, vector_store=vector_store)
 portfolio_report_agent = PortfolioReportAgent(settings=settings, vector_store=vector_store)
 agent_trace_agent = AgentTraceAgent(settings=settings)
+profile_inference_agent = ProfileInferenceAgent(settings=settings, vector_store=vector_store)
+learning_event_analysis_agent = LearningEventAnalysisAgent(settings=settings, vector_store=vector_store)
+assessment_item_analysis_agent = AssessmentItemAnalysisAgent(settings=settings, vector_store=vector_store)
 
 
 @asynccontextmanager
@@ -276,6 +288,48 @@ def build_portfolio_report(request: PortfolioReportRequest) -> PortfolioReportRe
 @app.post("/agents/trace/explain", response_model=AgentTraceResponse)
 def explain_agent_trace(request: AgentTraceRequest) -> AgentTraceResponse:
     return agent_trace_agent.explain(request)
+
+
+@app.post("/agents/profile/infer", response_model=ProfileInferResponse)
+def infer_profile(request: ProfileInferRequest) -> ProfileInferResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + request.dialogueTurns + request.learningRecords
+        + request.assessmentSummaries + request.tutoringSummaries,
+        source="request.profile_infer.documentTexts",
+        title_prefix=f"profile-{request.studentProfileId or 'anonymous'}-inline",
+        metadata={"studentProfileId": request.studentProfileId or "", "courseId": request.courseId or ""},
+    )
+    return profile_inference_agent.infer(request)
+
+
+@app.post("/agents/learning/events/analyze", response_model=LearningEventAnalysisResponse)
+def analyze_learning_events(request: LearningEventAnalysisRequest) -> LearningEventAnalysisResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + request.learningEvents + request.resourceUsage
+        + request.assessmentSummaries + request.tutoringSummaries + request.codePracticeSummaries,
+        source="request.learning_event_analysis.documentTexts",
+        title_prefix=f"events-{request.studentProfileId}-inline",
+        metadata={"studentProfileId": request.studentProfileId, "courseId": request.courseId},
+    )
+    return learning_event_analysis_agent.analyze(request)
+
+
+@app.post("/agents/assessment/item-analysis", response_model=AssessmentItemAnalysisResponse)
+def analyze_assessment_items(request: AssessmentItemAnalysisRequest) -> AssessmentItemAnalysisResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + [
+            f"{attempt.knowledgePoint} {attempt.questionType} {attempt.score}/{attempt.maxScore} "
+            f"{attempt.answerSummary} {attempt.feedback}"
+            for attempt in request.attempts
+        ],
+        source="request.assessment_item_analysis.documentTexts",
+        title_prefix=f"item-analysis-{request.courseId}-inline",
+        metadata={"studentProfileId": request.studentProfileId or "", "courseId": request.courseId},
+    )
+    return assessment_item_analysis_agent.analyze(request)
 
 
 @app.get("/agents/providers/status")
