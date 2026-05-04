@@ -42,6 +42,12 @@ public class GenerationTask {
     private String createdResourceId;
 
     @Column(nullable = false)
+    private Integer progressPercent = 0;
+
+    @Column(length = 160)
+    private String currentStep;
+
+    @Column(nullable = false)
     private Instant createdAt;
 
     @Column(nullable = false)
@@ -76,6 +82,17 @@ public class GenerationTask {
 
     public void markRunning() {
         status = TaskStatus.RUNNING.name();
+        progressPercent = Math.max(progressPercent == null ? 0 : progressPercent, 5);
+    }
+
+    public void attachResource(String resourceId, String summary) {
+        createdResourceId = resourceId;
+        resultSummary = summary;
+    }
+
+    public void advanceProgress(Integer progressPercent, String currentStep) {
+        this.progressPercent = progressPercent;
+        this.currentStep = currentStep;
     }
 
     public void markSucceeded(String resourceId, String summary) {
@@ -83,11 +100,14 @@ public class GenerationTask {
         createdResourceId = resourceId;
         resultSummary = summary;
         errorMessage = null;
+        progressPercent = 100;
+        currentStep = "任务完成";
     }
 
     public void markFailed(String message) {
         status = TaskStatus.FAILED.name();
         errorMessage = message;
+        currentStep = "任务失败";
     }
 
     public String getId() {
@@ -128,6 +148,14 @@ public class GenerationTask {
 
     public String getCreatedResourceId() {
         return createdResourceId;
+    }
+
+    public Integer getProgressPercent() {
+        return progressPercent;
+    }
+
+    public String getCurrentStep() {
+        return currentStep;
     }
 
     public Instant getCreatedAt() {

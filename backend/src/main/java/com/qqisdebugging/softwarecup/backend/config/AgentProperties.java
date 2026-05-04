@@ -5,6 +5,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "softwarecup.agent")
 public class AgentProperties {
     private String resourceBaseUrl = "http://localhost:9001";
+    private String provider = "xunfei-spark";
+    private String model = "spark-lite-resource-agent";
+    private String fallbackProvider = "local-rule-engine";
+    private String fallbackModel = "deterministic-template-v1";
     private int connectTimeoutMs = 3000;
     private int readTimeoutMs = 30000;
 
@@ -14,6 +18,38 @@ public class AgentProperties {
 
     public void setResourceBaseUrl(String resourceBaseUrl) {
         this.resourceBaseUrl = resourceBaseUrl;
+    }
+
+    public String getProvider() {
+        return provider;
+    }
+
+    public void setProvider(String provider) {
+        this.provider = provider;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    public String getFallbackProvider() {
+        return fallbackProvider;
+    }
+
+    public void setFallbackProvider(String fallbackProvider) {
+        this.fallbackProvider = fallbackProvider;
+    }
+
+    public String getFallbackModel() {
+        return fallbackModel;
+    }
+
+    public void setFallbackModel(String fallbackModel) {
+        this.fallbackModel = fallbackModel;
     }
 
     public int getConnectTimeoutMs() {
