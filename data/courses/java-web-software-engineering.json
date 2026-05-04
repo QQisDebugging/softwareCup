@@ -1,0 +1,29 @@
+{
+  "title": "Java Web 应用开发与软件工程实践",
+  "department": "计算机科学与技术",
+  "creditHours": 48,
+  "description": "面向高等教育软件工程方向的完整课程，覆盖 Java Web、Spring Boot、数据库、REST API、文件上传、异步任务、测试与部署。",
+  "weeks": [
+    {"week": 1, "topic": "课程导论与工程环境", "outcome": "完成 Git、JDK、Maven、IDE 环境配置"},
+    {"week": 2, "topic": "Java Web 与 HTTP 基础", "outcome": "理解请求响应、状态码、JSON 契约"},
+    {"week": 3, "topic": "Spring Boot 项目结构", "outcome": "实现第一个健康检查接口"},
+    {"week": 4, "topic": "REST API 设计", "outcome": "完成资源增删改查接口"},
+    {"week": 5, "topic": "数据库建模与 JPA", "outcome": "完成实体、仓库和事务边界"},
+    {"week": 6, "topic": "Flyway 数据库迁移", "outcome": "用迁移脚本固化表结构"},
+    {"week": 7, "topic": "文件上传与对象存储", "outcome": "实现课程资料上传和元数据管理"},
+    {"week": 8, "topic": "异步任务与状态机", "outcome": "实现资源生成任务的排队、运行和失败记录"},
+    {"week": 9, "topic": "Python 智能体服务调用", "outcome": "通过 HTTP 调用资源生成智能体"},
+    {"week": 10, "topic": "学习画像建模", "outcome": "从对话中抽取目标、偏好、基础和约束"},
+    {"week": 11, "topic": "个性化学习路径规划", "outcome": "根据画像生成阶段性学习路径"},
+    {"week": 12, "topic": "多模态资源生成", "outcome": "生成文本、图解脚本、短视频讲解脚本"},
+    {"week": 13, "topic": "智能辅导与即时答疑", "outcome": "实现问题诊断和针对性讲解"},
+    {"week": 14, "topic": "学习效果评估", "outcome": "根据行为和练习数据生成评估报告"},
+    {"week": 15, "topic": "系统测试与性能优化", "outcome": "补齐接口测试和异常处理"},
+    {"week": 16, "topic": "课程项目答辩", "outcome": "交付可演示的智能学习系统"}
+  ],
+  "assessment": {
+    "process": "40%",
+    "project": "40%",
+    "presentation": "20%"
+  }
+}

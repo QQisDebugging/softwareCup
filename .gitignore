@@ -1,0 +1,14 @@
+.idea/
+.vscode/
+*.iml
+
+backend/data/
+backend/uploads/
+backend/target/
+
+agents/**/.venv/
+agents/**/__pycache__/
+agents/**/*.pyc
+
+.env
+*.log

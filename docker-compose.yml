@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: softwarecup-postgres
+    environment:
+      POSTGRES_DB: softwarecup
+      POSTGRES_USER: softwarecup
+      POSTGRES_PASSWORD: softwarecup
+    ports:
+      - "5432:5432"
+    volumes:
+      - softwarecup-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  softwarecup-postgres-data:
