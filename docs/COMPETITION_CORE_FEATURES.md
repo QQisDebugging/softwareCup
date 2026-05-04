@@ -33,6 +33,14 @@
    - 空检索和模型失败时会降级到离线模板，避免演示链路中断。
    - 画像更新保留 evidence、source 和 confidenceScore，便于答辩说明依据。
 
+7. 功能广度增强 Agent
+   - `PathPlannerAgent` 生成个性化学习路径和资源推荐。
+   - `KnowledgeGraphAgent` 生成课程知识图谱并高亮薄弱点。
+   - `ContentAuditAgent` 输出可信度、引用覆盖率、未支撑断言和修订内容。
+   - `CourseDiagnosisAgent` 为教师诊断课程覆盖率、缺失资源和测评蓝图。
+   - `CodePracticeAgent` 生成代码实操题并按静态规则批改。
+   - `StoryboardAgent` 生成 PPT 大纲、视频分镜、旁白和素材提示词。
+
 ## 对比普通项目的提升点
 
 - 不只生成资源，还能在学生使用后反向更新画像。
@@ -54,4 +62,11 @@
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\demo_learning_loop.ps1
+```
+
+Python 智能体全量 smoke：
+
+```powershell
+cd agents/resource-agent
+.\.venv\Scripts\python.exe scripts\smoke_full_ai_agents.py
 ```
