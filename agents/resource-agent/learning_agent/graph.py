@@ -9,6 +9,7 @@ from learning_agent.resource_templates import (
     estimate_minutes,
     exercise_block,
     infer_target_level,
+    limit_text,
     mermaid_map,
     project_case,
     video_script,
@@ -196,10 +197,10 @@ class ResourceGenerationWorkflow:
 {self._recommendations(resource_plan)}
 """
         response = ResourceAgentResponse(
-            title=f"{request.topic} - 个性化{request.resourceType}",
-            resourceType=request.resourceType[:60],
-            modality=request.modality[:60],
-            targetLevel=target_level[:80],
+            title=limit_text(f"{request.topic} - 个性化{request.resourceType}", 180),
+            resourceType=limit_text(request.resourceType, 60),
+            modality=limit_text(request.modality, 60),
+            targetLevel=limit_text(target_level, 80),
             estimatedMinutes=estimate_minutes(request.resourceType, request.modality, len(resource_plan)),
             content=content,
             summary=f"已基于画像、RAG资料和多智能体流程生成 {len(resource_plan)} 类学习资源。Provider={provider_used}。",

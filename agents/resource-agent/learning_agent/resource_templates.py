@@ -2,12 +2,12 @@ from learning_agent.schemas import KnowledgeMatch, ResourceAgentRequest
 
 
 def infer_target_level(profile_summary: str) -> str:
-    text = profile_summary or ""
-    if any(keyword in text for keyword in ["基础弱", "较弱", "零基础", "不熟"]):
+    text = (profile_summary or "").lower()
+    if any(keyword in text for keyword in ["基础弱", "较弱", "零基础", "不熟", "weak", "beginner", "unfamiliar"]):
         return "基础补强型"
-    if any(keyword in text for keyword in ["项目", "实践", "案例"]):
+    if any(keyword in text for keyword in ["项目", "实践", "案例", "project", "practice", "case"]):
         return "实践进阶型"
-    if any(keyword in text for keyword in ["考研", "竞赛", "高阶"]):
+    if any(keyword in text for keyword in ["考研", "竞赛", "高阶", "competition", "advanced"]):
         return "高阶拓展型"
     return "根据学习画像自适应"
 
@@ -54,6 +54,15 @@ def compact(text: str, limit: int) -> str:
     if len(normalized) <= limit:
         return normalized
     return normalized[:limit].rstrip() + "..."
+
+
+def limit_text(text: str, limit: int) -> str:
+    normalized = " ".join(text.split())
+    if len(normalized) <= limit:
+        return normalized
+    if limit <= 3:
+        return normalized[:limit]
+    return normalized[: limit - 3].rstrip() + "..."
 
 
 def mermaid_map(topic: str) -> str:
@@ -115,4 +124,3 @@ def video_script(topic: str, modality: str) -> str:
 **镜头 3（45 秒）**：演示一个小案例，标注关键代码/步骤和易错点。
 
 **镜头 4（20 秒）**：给出自测题和下一步学习资源，提醒学生提交反馈以更新画像。"""
-

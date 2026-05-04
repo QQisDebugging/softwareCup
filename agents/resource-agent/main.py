@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from contextlib import asynccontextmanager
 from typing import Iterable
 
 from fastapi import FastAPI, HTTPException
@@ -23,17 +24,24 @@ from learning_agent.vector_store import InMemoryVectorStore
 settings = AgentSettings.from_env()
 document_loader = DocumentLoader(project_root=settings.project_root)
 embedding_model = HashingEmbeddingModel(dimensions=settings.embedding_dimensions)
-vector_store = InMemoryVectorStore(embedding_model=embedding_model)
+vector_store = InMemoryVectorStore(embedding_model=embedding_model, project_root=settings.project_root)
 workflow = ResourceGenerationWorkflow(settings=settings, vector_store=vector_store)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    load_default_knowledge_base()
+    yield
+
 
 app = FastAPI(
     title="Software Cup AI Resource Agent",
     version="1.0.0",
     description="LangGraph/LangChain powered RAG service for personalized learning resources.",
+    lifespan=lifespan,
 )
 
 
-@app.on_event("startup")
 def load_default_knowledge_base() -> None:
     documents = document_loader.load_seed_documents(settings.seed_knowledge_paths)
     vector_store.add_documents(documents)
@@ -54,11 +62,13 @@ def health() -> HealthResponse:
 
 @app.post("/agents/resource-generation", response_model=ResourceAgentResponse)
 def generate_resource(request: ResourceAgentRequest) -> ResourceAgentResponse:
+    ingest_generation_request_knowledge(request)
     return workflow.generate(request)
 
 
 @app.post("/agents/resource-generation/stream")
 def stream_resource(request: ResourceAgentRequest) -> StreamingResponse:
+    ingest_generation_request_knowledge(request)
     response = workflow.generate(request)
 
     def chunks() -> Iterable[str]:
@@ -76,6 +86,16 @@ def provider_status() -> dict:
         "xfyunConfigured": bool(settings.xfyun_api_key and settings.xfyun_api_secret),
         "fallbackProvider": "offline",
     }
+
+
+def ingest_generation_request_knowledge(request: ResourceAgentRequest) -> int:
+    try:
+        documents = document_loader.load_generation_request_documents(request)
+        return vector_store.add_documents(documents)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/agents/knowledge/ingest", response_model=KnowledgeIngestResponse)
@@ -96,6 +116,7 @@ def ingest_knowledge(request: KnowledgeIngestRequest) -> KnowledgeIngestResponse
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+@app.post("/agents/knowledge/search", response_model=KnowledgeSearchResponse)
 @app.post("/agents/knowledge/query", response_model=KnowledgeSearchResponse)
 @app.post("/knowledge/search", response_model=KnowledgeSearchResponse)
 def search_knowledge(request: KnowledgeSearchRequest) -> KnowledgeSearchResponse:

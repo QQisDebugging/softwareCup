@@ -19,7 +19,7 @@ class HashingEmbeddingModel:
 
     def embed(self, text: str) -> list[float]:
         vector = [0.0] * self.dimensions
-        for token in self._tokens(text):
+        for token in self.tokens(text):
             index = self._hash(token) % self.dimensions
             sign = 1.0 if self._hash("sign:" + token) % 2 == 0 else -1.0
             vector[index] += sign
@@ -33,7 +33,7 @@ class HashingEmbeddingModel:
             return 0.0
         return sum(a * b for a, b in zip(left, right, strict=False))
 
-    def _tokens(self, text: str) -> list[str]:
+    def tokens(self, text: str) -> list[str]:
         lower = text.lower()
         words = re.findall(r"[a-z0-9_+#.-]+", lower)
         chinese = re.findall(r"[\u4e00-\u9fff]", lower)
@@ -49,4 +49,3 @@ class HashingEmbeddingModel:
         if norm == 0:
             return vector
         return [value / norm for value in vector]
-

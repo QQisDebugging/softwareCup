@@ -1,11 +1,12 @@
 import csv
+import hashlib
 import json
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from learning_agent.schemas import KnowledgeDocumentInput, KnowledgeIngestRequest
+from learning_agent.schemas import KnowledgeDocumentInput, KnowledgeIngestRequest, ResourceAgentRequest
 
 try:
     from langchain_core.documents import Document as LangChainDocument
@@ -57,6 +58,20 @@ class DocumentLoader:
             documents.append(self._from_inline_document(document))
         if not documents:
             raise ValueError("No knowledge documents were provided.")
+        return documents
+
+    def load_generation_request_documents(self, request: ResourceAgentRequest) -> list[KnowledgeDocument]:
+        documents: list[KnowledgeDocument] = []
+        for path in request.knowledgeBasePaths:
+            documents.extend(self.load_path(self._resolve_path(path)))
+        for index, text in enumerate(request.documentTexts):
+            if text.strip():
+                documents.append(self._from_text(
+                    text=text,
+                    title=f"task-{request.taskId}-inline-{index + 1}",
+                    source="request.documentTexts",
+                    metadata={"taskId": request.taskId, "courseId": request.courseId},
+                ))
         return documents
 
     def load_path(self, path: Path) -> list[KnowledgeDocument]:
@@ -134,12 +149,22 @@ class DocumentLoader:
 
     def _from_inline_document(self, document: KnowledgeDocumentInput) -> KnowledgeDocument:
         title = document.title or document.id or "inline_document"
+        document_id = document.id or self._content_id(document.text, title)
         return KnowledgeDocument(
-            id=document.id or uuid.uuid4().hex,
+            id=document_id,
             title=title,
             text=document.text.strip(),
             source=document.metadata.get("source", "inline"),
             metadata=document.metadata,
+        )
+
+    def _from_text(self, text: str, title: str, source: str, metadata: dict[str, Any]) -> KnowledgeDocument:
+        return KnowledgeDocument(
+            id=self._content_id(text, title),
+            title=title,
+            text=text.strip(),
+            source=source,
+            metadata=metadata,
         )
 
     def _resolve_path(self, path: str) -> Path:
@@ -150,6 +175,10 @@ class DocumentLoader:
 
     def _is_supported(self, path: Path) -> bool:
         return path.suffix.lower() in {".txt", ".md", ".markdown", ".json", ".csv", ".pdf", ".docx"}
+
+    def _content_id(self, text: str, title: str) -> str:
+        digest = hashlib.sha256((title + "\n" + text).encode("utf-8")).hexdigest()
+        return digest[:32]
 
     def _fallback_split(self, documents: list[KnowledgeDocument]) -> list[KnowledgeChunk]:
         chunks: list[KnowledgeChunk] = []
@@ -209,4 +238,3 @@ class DocumentLoader:
             raise ValueError("DOCX parsing requires python-docx. Install requirements.txt first.") from exc
         document = Document(str(path))
         return "\n".join(paragraph.text for paragraph in document.paragraphs)
-

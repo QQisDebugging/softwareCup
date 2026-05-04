@@ -61,7 +61,7 @@ cd backend
 
 ## Python AI 主程
 
-`agents/resource-agent` 已保留 Spring Boot 调用契约，并实现离线可运行的 RAG 资源生成链路。详见 `docs/AI_AGENT_IMPLEMENTATION.md`。
+`agents/resource-agent` 已保留 Spring Boot 调用契约，并实现离线可运行的 RAG 资源生成链路。运行时可通过 `knowledgeBasePaths` / `documentTexts` 把上传资料纳入单次生成。详见 `docs/AI_AGENT_IMPLEMENTATION.md`。
 
 ## 讯飞工具接入说明
 

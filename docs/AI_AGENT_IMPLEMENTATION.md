@@ -21,6 +21,14 @@
 - `learning_agent/llm.py`：Provider 路由，默认离线生成，可选讯飞星火。
 - `learning_agent/safety.py`：内容安全和防幻觉检查。
 
+## 稳定性优化
+
+- 默认知识库和运行时知识库导入都是幂等的，同一文档再次导入会替换旧 chunk。
+- `knowledgeBasePaths` 和 `documentTexts` 会在资源生成前临时进入 RAG 检索，支持把上传资料用于单次任务。
+- FastAPI 使用 lifespan 加载默认知识库，避免 startup 弃用告警。
+- 后端异步生成任务调整为事务提交后启动，避免异步线程提前读取未提交任务。
+- Python 返回的 `title/resourceType/modality/targetLevel` 会按 Java 落库字段长度裁剪，降低大模型长标题导致任务失败的风险。
+
 ## 与 Java 后端的兼容性
 
 Java 后端仍调用：
@@ -41,4 +49,3 @@ pip install -r requirements.txt
 python scripts/smoke_test.py
 uvicorn main:app --host 0.0.0.0 --port 9001 --reload
 ```
-
