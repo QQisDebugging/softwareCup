@@ -61,16 +61,32 @@ class DocumentLoader:
         return documents
 
     def load_generation_request_documents(self, request: ResourceAgentRequest) -> list[KnowledgeDocument]:
+        return self.load_context_documents(
+            paths=request.knowledgeBasePaths,
+            texts=request.documentTexts,
+            source="request.documentTexts",
+            title_prefix=f"task-{request.taskId}-inline",
+            metadata={"taskId": request.taskId, "courseId": request.courseId},
+        )
+
+    def load_context_documents(
+        self,
+        paths: list[str],
+        texts: list[str],
+        source: str,
+        title_prefix: str,
+        metadata: dict[str, Any],
+    ) -> list[KnowledgeDocument]:
         documents: list[KnowledgeDocument] = []
-        for path in request.knowledgeBasePaths:
+        for path in paths:
             documents.extend(self.load_path(self._resolve_path(path)))
-        for index, text in enumerate(request.documentTexts):
+        for index, text in enumerate(texts):
             if text.strip():
                 documents.append(self._from_text(
                     text=text,
-                    title=f"task-{request.taskId}-inline-{index + 1}",
-                    source="request.documentTexts",
-                    metadata={"taskId": request.taskId, "courseId": request.courseId},
+                    title=f"{title_prefix}-{index + 1}",
+                    source=source,
+                    metadata=metadata,
                 ))
         return documents
 

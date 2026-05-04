@@ -32,6 +32,39 @@ class ResourceAgentResponse(BaseModel):
     summary: str
 
 
+class KnowledgeMatch(BaseModel):
+    id: str
+    score: float
+    text: str
+    source: str
+    title: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class TutoringRequest(BaseModel):
+    sessionId: str | None = None
+    studentProfileId: str
+    courseId: str
+    studentProfileSummary: str
+    courseTitle: str
+    question: str
+    conversationHistory: list[str] = Field(default_factory=list)
+    modality: str = "文本+图解"
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class TutoringResponse(BaseModel):
+    answer: str
+    citations: list[KnowledgeMatch]
+    followUpQuestions: list[str]
+    learningActions: list[str]
+    profileSignals: list[str]
+    mermaidDiagram: str
+    provider: str
+    fallbackUsed: bool = False
+
+
 class HealthResponse(BaseModel):
     service: str
     status: Literal["UP", "DEGRADED"]
@@ -67,16 +100,6 @@ class KnowledgeSearchRequest(BaseModel):
     filters: dict[str, str] = Field(default_factory=dict)
 
 
-class KnowledgeMatch(BaseModel):
-    id: str
-    score: float
-    text: str
-    source: str
-    title: str
-    metadata: dict[str, Any] = Field(default_factory=dict)
-
-
 class KnowledgeSearchResponse(BaseModel):
     query: str
     matches: list[KnowledgeMatch]
-

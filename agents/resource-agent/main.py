@@ -17,7 +17,10 @@ from learning_agent.schemas import (
     KnowledgeSearchResponse,
     ResourceAgentRequest,
     ResourceAgentResponse,
+    TutoringRequest,
+    TutoringResponse,
 )
+from learning_agent.tutoring import TutoringAgent
 from learning_agent.vector_store import InMemoryVectorStore
 
 
@@ -26,6 +29,7 @@ document_loader = DocumentLoader(project_root=settings.project_root)
 embedding_model = HashingEmbeddingModel(dimensions=settings.embedding_dimensions)
 vector_store = InMemoryVectorStore(embedding_model=embedding_model, project_root=settings.project_root)
 workflow = ResourceGenerationWorkflow(settings=settings, vector_store=vector_store)
+tutoring_agent = TutoringAgent(settings=settings, vector_store=vector_store)
 
 
 @asynccontextmanager
@@ -78,6 +82,18 @@ def stream_resource(request: ResourceAgentRequest) -> StreamingResponse:
     return StreamingResponse(chunks(), media_type="text/markdown; charset=utf-8")
 
 
+@app.post("/agents/tutoring", response_model=TutoringResponse)
+def tutoring(request: TutoringRequest) -> TutoringResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts,
+        source="request.tutoring.documentTexts",
+        title_prefix=f"tutoring-{request.sessionId or request.studentProfileId}-inline",
+        metadata={"studentProfileId": request.studentProfileId, "courseId": request.courseId},
+    )
+    return tutoring_agent.answer(request)
+
+
 @app.get("/agents/providers/status")
 def provider_status() -> dict:
     return {
@@ -90,7 +106,22 @@ def provider_status() -> dict:
 
 def ingest_generation_request_knowledge(request: ResourceAgentRequest) -> int:
     try:
-        documents = document_loader.load_generation_request_documents(request)
+        return vector_store.add_documents(document_loader.load_generation_request_documents(request))
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+def ingest_context_knowledge(
+    paths: list[str],
+    texts: list[str],
+    source: str,
+    title_prefix: str,
+    metadata: dict,
+) -> int:
+    try:
+        documents = document_loader.load_context_documents(paths, texts, source, title_prefix, metadata)
         return vector_store.add_documents(documents)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

@@ -7,6 +7,7 @@
 - 对话画像输入：沿用 Java 后端传入的 `studentProfileSummary`，作为画像分析 Agent 的输入。
 - 多智能体协同：`ResourceGenerationWorkflow` 中串联画像分析、RAG 检索、资源规划、资源生成、安全审查、结果装配。
 - 资源生成类型：讲解文档、知识点思维导图、练习题、拓展阅读、实操案例、多模态视频/动画脚本。
+- 智能辅导：`TutoringAgent` 提供 RAG 课程答疑，输出引用依据、追问问题、学习动作和画像更新信号。
 - 个性化路径：生成结果中包含按画像层级调整的学习步骤、资源推送建议和画像更新建议。
 - 防幻觉：输出 RAG 资料来源、质量检查和空检索降级提示。
 - 响应体验：保留普通 JSON 接口，并新增 Markdown 流式接口。
@@ -20,6 +21,7 @@
 - `learning_agent/vector_store.py`：内存向量库与相似度检索。
 - `learning_agent/llm.py`：Provider 路由，默认离线生成，可选讯飞星火。
 - `learning_agent/safety.py`：内容安全和防幻觉检查。
+- `learning_agent/tutoring.py`：智能辅导 Agent，支撑学生即时问答和画像信号识别。
 
 ## 稳定性优化
 
@@ -47,5 +49,6 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python scripts/smoke_test.py
+python scripts/smoke_tutoring.py
 uvicorn main:app --host 0.0.0.0 --port 9001 --reload
 ```
