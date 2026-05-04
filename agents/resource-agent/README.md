@@ -19,6 +19,10 @@ Python AI 主程，供 Spring Boot 后端通过 HTTP 调用。当前实现覆盖
 - 教师课程诊断：分析课程资料覆盖率、缺失资源类型和测评蓝图。
 - 代码实操练习：生成工程实操题，基于静态规则批改代码并返回画像更新建议。
 - 多模态分镜：生成 PPT 大纲、视频分镜、旁白和画面提示词。
+- 先修诊断：进入新知识点前识别先修缺口，生成入口诊断题、补救动作和画像更新建议。
+- 资源策展：把 RAG 证据、候选资源和学生薄弱点重排成可执行资源包，输出覆盖图和学习顺序。
+- 学习档案报告：汇总资源完成、测评、答疑、代码练习和复盘证据，生成教师可读成长报告。
+- 智能体追踪：记录任务链路步骤、质量门禁、引用证据和降级事件，用于答辩和防黑盒展示。
 - 防幻觉与安全：输出资料来源、质量检查、敏感内容过滤和空检索降级提示。
 - Provider：默认 `offline`，可通过环境变量切换到 `xfyun_spark`，失败时自动降级。
 
@@ -52,6 +56,11 @@ python scripts/smoke_content_audit.py
 python scripts/smoke_course_diagnosis.py
 python scripts/smoke_code_practice.py
 python scripts/smoke_storyboard.py
+python scripts/smoke_prerequisite.py
+python scripts/smoke_resource_curation.py
+python scripts/smoke_portfolio_report.py
+python scripts/smoke_agent_trace.py
+python scripts/smoke_full_ai_agents.py
 ```
 
 ## 接口
@@ -70,6 +79,10 @@ python scripts/smoke_storyboard.py
 - `POST /agents/code/practice/generate`
 - `POST /agents/code/practice/grade`
 - `POST /agents/multimodal/storyboard`
+- `POST /agents/prerequisite/diagnose`
+- `POST /agents/resources/curate`
+- `POST /agents/report/portfolio`
+- `POST /agents/trace/explain`
 
 知识库接口：
 

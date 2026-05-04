@@ -43,6 +43,26 @@
   - 建议表：`multimodal_storyboards`
   - 需要保存：pptOutline、videoStoryboard、narrationScript、assetPrompts、interactionQuestions、引用。
 
+- `POST /agents/prerequisite/diagnose`
+  - 后端建议接口：`POST /api/learning/prerequisites/diagnose`
+  - 建议表：`prerequisite_diagnoses`
+  - 需要保存：readinessScore、readinessLevel、prerequisites、diagnosticQuestions、recommendedWarmups、引用、画像更新建议。
+
+- `POST /agents/resources/curate`
+  - 后端建议接口：`POST /api/learning/resource-bundles/curate`
+  - 建议表：`resource_bundles`
+  - 需要保存：curatedResources、coverageMap、usagePlan、citations、profileDimensionUpdates。
+
+- `POST /agents/report/portfolio`
+  - 后端建议接口：`POST /api/learning/portfolio-reports`
+  - 建议表：`portfolio_reports`
+  - 需要保存：evidenceItems、masteryRadar、riskFlags、nextMilestones、teacherCommentsDraft、引用。
+
+- `POST /agents/trace/explain`
+  - 后端建议接口：`POST /api/learning/agent-traces`
+  - 建议表：`agent_trace_logs`
+  - 需要保存：traceId、traceSteps、qualityGates、fallbackEvents、reproducibilityNotes。
+
 ### 后端实现约束
 
 - DTO 字段保持 camelCase，直接对齐 Python Pydantic 字段。
@@ -50,6 +70,7 @@
 - 涉及 `profileDimensionUpdates` 的响应，复用现有 `ProfileService.updateDimensions` 写回画像。
 - GET 历史接口都按 `studentProfileId` 或 `courseId` 查询最近 30 条即可。
 - 所有 POST 接口失败时返回 `ProblemDetail`，保留 Python Agent 错误摘要。
+- 建议为每次 AI 任务生成统一 `traceId`，后端把业务结果和 `/agents/trace/explain` 的追踪结果关联，便于教师端展示证据链和演示视频复现。
 
 ## Vue3 前端同学
 
@@ -79,6 +100,22 @@
   - 调用 `/api/learning/storyboards`
   - 展示 PPT 大纲、视频分镜、旁白、素材提示词。
 
+- 先修诊断页
+  - 调用 `/api/learning/prerequisites/diagnose`
+  - 展示准备度仪表、先修知识列表、入口诊断题和补救资源按钮。
+
+- 个性化资源包页
+  - 调用 `/api/learning/resource-bundles/curate`
+  - 按 `usagePlan` 展示学习顺序，按 `coverageMap` 展示知识点覆盖和待补齐项。
+
+- 学习档案页
+  - 调用 `/api/learning/portfolio-reports`
+  - 展示证据时间线、掌握度雷达、风险提示、下一阶段里程碑和教师评语草稿。
+
+- 智能体追踪抽屉
+  - 调用 `/api/learning/agent-traces`
+  - 以时间线展示 `traceSteps`，以状态卡展示 `qualityGates`、降级事件和复现说明。
+
 ### 教师端页面
 
 - 课程诊断页
@@ -96,6 +133,7 @@
 - 代码区建议用普通 textarea 起步，后续再换 Monaco Editor。
 - 引用 `citations` 必须可展开，展示 title、source、score、text 摘要。
 - 演示视频中优先展示：路径规划、知识图谱、防幻觉审计、代码批改、课程诊断。
+- 新增推荐演示顺序：先修诊断 -> 资源策展 -> 资源生成/答疑 -> 测评批改 -> 学习档案 -> 智能体追踪，能完整体现“诊断、生成、学习、评估、优化、可解释”的闭环。
 
 ## Python 同学已提供的验证命令
 
@@ -113,4 +151,8 @@ cd agents/resource-agent
 .\.venv\Scripts\python.exe scripts\smoke_course_diagnosis.py
 .\.venv\Scripts\python.exe scripts\smoke_code_practice.py
 .\.venv\Scripts\python.exe scripts\smoke_storyboard.py
+.\.venv\Scripts\python.exe scripts\smoke_prerequisite.py
+.\.venv\Scripts\python.exe scripts\smoke_resource_curation.py
+.\.venv\Scripts\python.exe scripts\smoke_portfolio_report.py
+.\.venv\Scripts\python.exe scripts\smoke_agent_trace.py
 ```

@@ -3,6 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from learning_agent.agent_trace import AgentTraceAgent
 from learning_agent.assessment import AssessmentAgent
 from learning_agent.code_practice import CodePracticeAgent
 from learning_agent.config import AgentSettings
@@ -13,7 +14,11 @@ from learning_agent.embeddings import HashingEmbeddingModel
 from learning_agent.graph import ResourceGenerationWorkflow
 from learning_agent.knowledge_graph import KnowledgeGraphAgent
 from learning_agent.path_planner import PathPlannerAgent
+from learning_agent.portfolio_report import PortfolioReportAgent
+from learning_agent.prerequisite import PrerequisiteDiagnosisAgent
+from learning_agent.resource_curation import ResourceCurationAgent
 from learning_agent.schemas import (
+    AgentTraceRequest,
     AssessmentAnswer,
     AssessmentGenerateRequest,
     AssessmentGradeRequest,
@@ -23,7 +28,10 @@ from learning_agent.schemas import (
     CourseDiagnosisRequest,
     KnowledgeGraphRequest,
     LearningPathPlanRequest,
+    PortfolioReportRequest,
+    PrerequisiteDiagnosisRequest,
     ResourceAgentRequest,
+    ResourceCurationRequest,
     StoryboardRequest,
     TutoringRequest,
 )
@@ -151,6 +159,63 @@ def main() -> None:
         topic=topic,
         documentTexts=[inline_doc],
     ))
+    prerequisite = PrerequisiteDiagnosisAgent(settings, store).diagnose(PrerequisiteDiagnosisRequest(
+        studentProfileId="profile-demo",
+        courseId="course-demo",
+        studentProfileSummary=profile,
+        courseTitle=course,
+        targetTopic=topic,
+        completedTopics=["Java 面向对象基础"],
+        assessmentWeaknesses=grade.weaknessSignals,
+        documentTexts=[inline_doc],
+    ))
+    curation = ResourceCurationAgent(settings, store).curate(ResourceCurationRequest(
+        studentProfileId="profile-demo",
+        courseId="course-demo",
+        studentProfileSummary=profile,
+        courseTitle=course,
+        topic=topic,
+        weaknesses=grade.weaknessSignals + ["REST API 边界"],
+        candidateResources=[
+            resource.summary,
+            path.summary,
+            storyboard.summary,
+        ],
+        documentTexts=[inline_doc],
+    ))
+    portfolio = PortfolioReportAgent(settings, store).build(PortfolioReportRequest(
+        studentProfileId="profile-demo",
+        courseId="course-demo",
+        studentName="演示学生",
+        studentProfileSummary=profile,
+        courseTitle=course,
+        topic=topic,
+        completedResources=[resource.summary, path.summary, storyboard.summary],
+        assessmentSummaries=[grade.feedback],
+        tutoringSummaries=[tutoring.answer[:160]],
+        codePracticeSummaries=[code_grade.feedback],
+        learningEvents=["错题复盘：Controller 直接承载业务逻辑导致职责边界不清。"],
+        weaknesses=grade.weaknessSignals,
+        improvements=["能说出 Controller -> Service -> Repository 调用链。"],
+        documentTexts=[inline_doc],
+    ))
+    trace = AgentTraceAgent(settings).explain(AgentTraceRequest(
+        taskName="全链路智能学习闭环",
+        userIntent="演示资源生成、答疑、测评、路径、图谱、审计、代码实操、多模态、先修诊断、资源策展和档案报告。",
+        studentProfileId="profile-demo",
+        courseId="course-demo",
+        involvedAgents=[
+            "profile_agent",
+            "rag_retrieval_agent",
+            "resource_generator_agent",
+            "assessment_agent",
+            "portfolio_report_agent",
+            "content_audit_agent",
+        ],
+        responseSummary=portfolio.summary,
+        citations=graph.citations[:3],
+        fallbackEvents=["offline provider 可保证无密钥演示链路不中断。"],
+    ))
 
     summary = {
         "resourceMinutes": resource.estimatedMinutes,
@@ -163,6 +228,10 @@ def main() -> None:
         "diagnosisTasks": len(diagnosis.recommendedTasks),
         "codeDefects": len(code_grade.defects),
         "storyboardScenes": len(storyboard.videoStoryboard),
+        "prerequisiteReadiness": prerequisite.readinessScore,
+        "curatedResources": len(curation.curatedResources),
+        "portfolioEvidence": len(portfolio.evidenceItems),
+        "traceSteps": len(trace.traceSteps),
     }
     print(summary)
     assert resource.content
@@ -175,6 +244,10 @@ def main() -> None:
     assert diagnosis.recommendedTasks
     assert code_grade.defects
     assert len(storyboard.videoStoryboard) >= 4
+    assert prerequisite.prerequisites
+    assert len(curation.curatedResources) >= 4
+    assert portfolio.masteryRadar
+    assert len(trace.traceSteps) >= 5
 
 
 if __name__ == "__main__":
