@@ -9,7 +9,12 @@ from learning_agent.config import AgentSettings
 from learning_agent.documents import DocumentLoader
 from learning_agent.embeddings import HashingEmbeddingModel
 from learning_agent.graph import ResourceGenerationWorkflow
+from learning_agent.assessment import AssessmentAgent
 from learning_agent.schemas import (
+    AssessmentGenerateRequest,
+    AssessmentGenerateResponse,
+    AssessmentGradeRequest,
+    AssessmentGradeResponse,
     HealthResponse,
     KnowledgeIngestRequest,
     KnowledgeIngestResponse,
@@ -30,6 +35,7 @@ embedding_model = HashingEmbeddingModel(dimensions=settings.embedding_dimensions
 vector_store = InMemoryVectorStore(embedding_model=embedding_model, project_root=settings.project_root)
 workflow = ResourceGenerationWorkflow(settings=settings, vector_store=vector_store)
 tutoring_agent = TutoringAgent(settings=settings, vector_store=vector_store)
+assessment_agent = AssessmentAgent(settings=settings, vector_store=vector_store)
 
 
 @asynccontextmanager
@@ -92,6 +98,23 @@ def tutoring(request: TutoringRequest) -> TutoringResponse:
         metadata={"studentProfileId": request.studentProfileId, "courseId": request.courseId},
     )
     return tutoring_agent.answer(request)
+
+
+@app.post("/agents/assessment/generate", response_model=AssessmentGenerateResponse)
+def generate_assessment(request: AssessmentGenerateRequest) -> AssessmentGenerateResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts,
+        source="request.assessment.documentTexts",
+        title_prefix=f"assessment-{request.studentProfileId}-inline",
+        metadata={"studentProfileId": request.studentProfileId, "courseId": request.courseId},
+    )
+    return assessment_agent.generate(request)
+
+
+@app.post("/agents/assessment/grade", response_model=AssessmentGradeResponse)
+def grade_assessment(request: AssessmentGradeRequest) -> AssessmentGradeResponse:
+    return assessment_agent.grade(request)
 
 
 @app.get("/agents/providers/status")

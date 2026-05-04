@@ -12,6 +12,7 @@ Python AI 主程，供 Spring Boot 后端通过 HTTP 调用。当前实现覆盖
 - 幂等导入：同一文档重复导入会替换旧 chunk，避免向量库越跑越重复。
 - 资源生成：一次生成讲解文档、Mermaid 思维导图、练习题、拓展阅读、实操案例、视频/动画脚本。
 - 智能辅导：基于 RAG 的课程答疑，输出引用、追问、学习动作和画像信号。
+- 自适应测评：生成题库、自动批改、诊断薄弱点，并返回画像更新建议。
 - 防幻觉与安全：输出资料来源、质量检查、敏感内容过滤和空检索降级提示。
 - Provider：默认 `offline`，可通过环境变量切换到 `xfyun_spark`，失败时自动降级。
 
@@ -38,6 +39,7 @@ cd agents/resource-agent
 .\.venv\Scripts\Activate.ps1
 python scripts/smoke_test.py
 python scripts/smoke_tutoring.py
+python scripts/smoke_assessment.py
 ```
 
 ## 接口
@@ -47,6 +49,8 @@ python scripts/smoke_tutoring.py
 - `POST /agents/resource-generation`
 - `POST /agents/resource-generation/stream`
 - `POST /agents/tutoring`
+- `POST /agents/assessment/generate`
+- `POST /agents/assessment/grade`
 
 知识库接口：
 
