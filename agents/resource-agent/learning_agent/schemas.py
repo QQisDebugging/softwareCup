@@ -271,6 +271,141 @@ class ContentAuditResponse(BaseModel):
     summary: str
 
 
+class CourseDiagnosisRequest(BaseModel):
+    courseId: str
+    courseTitle: str
+    courseDescription: str = ""
+    syllabusText: str = ""
+    targetStudentProfile: str = ""
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class AssessmentBlueprintItem(BaseModel):
+    knowledgePoint: str
+    questionTypes: list[str]
+    suggestedCount: int = Field(ge=1)
+    reason: str
+
+
+class CourseDiagnosisResponse(BaseModel):
+    courseId: str
+    courseTitle: str
+    coverageScore: int = Field(ge=0, le=100)
+    coveredKnowledgePoints: list[str]
+    missingKnowledgePoints: list[str]
+    missingResourceTypes: list[str]
+    assessmentBlueprint: list[AssessmentBlueprintItem]
+    recommendedTasks: list[str]
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
+class CodePracticeGenerateRequest(BaseModel):
+    studentProfileId: str
+    courseId: str
+    studentProfileSummary: str
+    courseTitle: str
+    topic: str
+    difficulty: str = "自适应"
+    language: str = "Java"
+    practiceType: str = "代码纠错"
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class CodePracticeExercise(BaseModel):
+    id: str
+    title: str
+    scenario: str
+    language: str
+    starterCode: str
+    referenceSolution: str
+    rubric: list[str]
+    testCases: list[str]
+    estimatedMinutes: int = Field(ge=1)
+
+
+class CodePracticeGenerateResponse(BaseModel):
+    exercise: CodePracticeExercise
+    citations: list[KnowledgeMatch]
+    profileDimensionUpdates: list[ProfileDimensionUpdate]
+    summary: str
+
+
+class CodePracticeGradeRequest(BaseModel):
+    studentProfileId: str
+    courseId: str
+    studentProfileSummary: str
+    courseTitle: str
+    topic: str
+    exercise: CodePracticeExercise
+    submissionCode: str
+    explanation: str = ""
+
+
+class CodeDefect(BaseModel):
+    defectType: str
+    location: str
+    feedback: str
+    severity: str
+
+
+class CodePracticeGradeResponse(BaseModel):
+    score: int = Field(ge=0)
+    maxScore: int = Field(ge=1)
+    feedback: str
+    defects: list[CodeDefect]
+    correctedCode: str
+    nextActions: list[str]
+    profileDimensionUpdates: list[ProfileDimensionUpdate]
+
+
+class StoryboardRequest(BaseModel):
+    studentProfileId: str | None = None
+    courseId: str
+    studentProfileSummary: str = ""
+    courseTitle: str
+    topic: str
+    targetDurationMinutes: int = Field(default=5, ge=1, le=20)
+    modality: str = "PPT+短视频"
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class PPTSlide(BaseModel):
+    slideNo: int
+    title: str
+    bullets: list[str]
+    visualHint: str
+    speakerNote: str
+
+
+class StoryboardScene(BaseModel):
+    sceneNo: int
+    durationSeconds: int = Field(ge=1)
+    visual: str
+    narration: str
+    interaction: str
+
+
+class AssetPrompt(BaseModel):
+    assetType: str
+    prompt: str
+    usage: str
+
+
+class StoryboardResponse(BaseModel):
+    title: str
+    pptOutline: list[PPTSlide]
+    videoStoryboard: list[StoryboardScene]
+    narrationScript: str
+    assetPrompts: list[AssetPrompt]
+    interactionQuestions: list[str]
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
 class HealthResponse(BaseModel):
     service: str
     status: Literal["UP", "DEGRADED"]

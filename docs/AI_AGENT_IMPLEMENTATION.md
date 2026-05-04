@@ -12,6 +12,9 @@
 - 学习路径规划：`PathPlannerAgent` 根据画像、薄弱点、最近得分和 RAG 资料生成动态学习路线。
 - 知识图谱：`KnowledgeGraphAgent` 从课程资料中抽取知识点、关系和薄弱点高亮。
 - 防幻觉审计：`ContentAuditAgent` 检查引用覆盖、未支撑断言、风险表达和修订建议。
+- 教师诊断：`CourseDiagnosisAgent` 诊断课程覆盖率、缺失资源和测评蓝图。
+- 代码实操：`CodePracticeAgent` 生成代码纠错/分层改造题，并进行静态规则批改。
+- 多模态脚本：`StoryboardAgent` 生成 PPT 大纲、视频分镜、旁白和素材提示词。
 - 个性化路径：生成结果中包含按画像层级调整的学习步骤、资源推送建议和画像更新建议。
 - 防幻觉：输出 RAG 资料来源、质量检查和空检索降级提示。
 - 响应体验：保留普通 JSON 接口，并新增 Markdown 流式接口。
@@ -30,6 +33,9 @@
 - `learning_agent/path_planner.py`：学习路径规划 Agent，支撑资源推荐和复习节点安排。
 - `learning_agent/knowledge_graph.py`：课程知识图谱 Agent，支撑 Mermaid 图谱和薄弱点高亮。
 - `learning_agent/content_audit.py`：内容审计 Agent，支撑防幻觉和内容安全复核。
+- `learning_agent/course_diagnosis.py`：教师课程诊断 Agent，支撑课程建设建议。
+- `learning_agent/code_practice.py`：代码实操 Agent，支撑代码练习生成与静态批改。
+- `learning_agent/storyboard.py`：多模态分镜 Agent，支撑 PPT 和视频脚本生成。
 
 ## 稳定性优化
 
@@ -69,5 +75,8 @@ python scripts/smoke_assessment.py
 python scripts/smoke_path_planner.py
 python scripts/smoke_knowledge_graph.py
 python scripts/smoke_content_audit.py
+python scripts/smoke_course_diagnosis.py
+python scripts/smoke_code_practice.py
+python scripts/smoke_storyboard.py
 uvicorn main:app --host 0.0.0.0 --port 9001 --reload
 ```

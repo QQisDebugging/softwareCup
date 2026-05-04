@@ -10,7 +10,9 @@ from learning_agent.documents import DocumentLoader
 from learning_agent.embeddings import HashingEmbeddingModel
 from learning_agent.graph import ResourceGenerationWorkflow
 from learning_agent.assessment import AssessmentAgent
+from learning_agent.code_practice import CodePracticeAgent
 from learning_agent.content_audit import ContentAuditAgent
+from learning_agent.course_diagnosis import CourseDiagnosisAgent
 from learning_agent.knowledge_graph import KnowledgeGraphAgent
 from learning_agent.path_planner import PathPlannerAgent
 from learning_agent.schemas import (
@@ -18,8 +20,14 @@ from learning_agent.schemas import (
     AssessmentGenerateResponse,
     AssessmentGradeRequest,
     AssessmentGradeResponse,
+    CodePracticeGenerateRequest,
+    CodePracticeGenerateResponse,
+    CodePracticeGradeRequest,
+    CodePracticeGradeResponse,
     ContentAuditRequest,
     ContentAuditResponse,
+    CourseDiagnosisRequest,
+    CourseDiagnosisResponse,
     HealthResponse,
     KnowledgeGraphRequest,
     KnowledgeGraphResponse,
@@ -31,9 +39,12 @@ from learning_agent.schemas import (
     LearningPathPlanResponse,
     ResourceAgentRequest,
     ResourceAgentResponse,
+    StoryboardRequest,
+    StoryboardResponse,
     TutoringRequest,
     TutoringResponse,
 )
+from learning_agent.storyboard import StoryboardAgent
 from learning_agent.tutoring import TutoringAgent
 from learning_agent.vector_store import InMemoryVectorStore
 
@@ -48,6 +59,9 @@ assessment_agent = AssessmentAgent(settings=settings, vector_store=vector_store)
 path_planner_agent = PathPlannerAgent(settings=settings, vector_store=vector_store)
 knowledge_graph_agent = KnowledgeGraphAgent(settings=settings, vector_store=vector_store)
 content_audit_agent = ContentAuditAgent(settings=settings, vector_store=vector_store)
+course_diagnosis_agent = CourseDiagnosisAgent(settings=settings, vector_store=vector_store)
+code_practice_agent = CodePracticeAgent(settings=settings, vector_store=vector_store)
+storyboard_agent = StoryboardAgent(settings=settings, vector_store=vector_store)
 
 
 @asynccontextmanager
@@ -163,6 +177,47 @@ def audit_content(request: ContentAuditRequest) -> ContentAuditResponse:
         metadata={"studentProfileId": request.studentProfileId or "", "courseId": request.courseId or ""},
     )
     return content_audit_agent.audit(request)
+
+
+@app.post("/agents/course/diagnose", response_model=CourseDiagnosisResponse)
+def diagnose_course(request: CourseDiagnosisRequest) -> CourseDiagnosisResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + ([request.syllabusText] if request.syllabusText.strip() else []),
+        source="request.course_diagnosis.documentTexts",
+        title_prefix=f"diagnosis-{request.courseId}-inline",
+        metadata={"courseId": request.courseId},
+    )
+    return course_diagnosis_agent.diagnose(request)
+
+
+@app.post("/agents/code/practice/generate", response_model=CodePracticeGenerateResponse)
+def generate_code_practice(request: CodePracticeGenerateRequest) -> CodePracticeGenerateResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts,
+        source="request.code_practice.documentTexts",
+        title_prefix=f"code-{request.studentProfileId}-inline",
+        metadata={"studentProfileId": request.studentProfileId, "courseId": request.courseId},
+    )
+    return code_practice_agent.generate(request)
+
+
+@app.post("/agents/code/practice/grade", response_model=CodePracticeGradeResponse)
+def grade_code_practice(request: CodePracticeGradeRequest) -> CodePracticeGradeResponse:
+    return code_practice_agent.grade(request)
+
+
+@app.post("/agents/multimodal/storyboard", response_model=StoryboardResponse)
+def create_storyboard(request: StoryboardRequest) -> StoryboardResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts,
+        source="request.storyboard.documentTexts",
+        title_prefix=f"storyboard-{request.courseId}-inline",
+        metadata={"studentProfileId": request.studentProfileId or "", "courseId": request.courseId},
+    )
+    return storyboard_agent.create(request)
 
 
 @app.get("/agents/providers/status")
