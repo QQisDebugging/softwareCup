@@ -10,6 +10,7 @@ from learning_agent.documents import DocumentLoader
 from learning_agent.embeddings import HashingEmbeddingModel
 from learning_agent.graph import ResourceGenerationWorkflow
 from learning_agent.assessment import AssessmentAgent
+from learning_agent.path_planner import PathPlannerAgent
 from learning_agent.schemas import (
     AssessmentGenerateRequest,
     AssessmentGenerateResponse,
@@ -20,6 +21,8 @@ from learning_agent.schemas import (
     KnowledgeIngestResponse,
     KnowledgeSearchRequest,
     KnowledgeSearchResponse,
+    LearningPathPlanRequest,
+    LearningPathPlanResponse,
     ResourceAgentRequest,
     ResourceAgentResponse,
     TutoringRequest,
@@ -36,6 +39,7 @@ vector_store = InMemoryVectorStore(embedding_model=embedding_model, project_root
 workflow = ResourceGenerationWorkflow(settings=settings, vector_store=vector_store)
 tutoring_agent = TutoringAgent(settings=settings, vector_store=vector_store)
 assessment_agent = AssessmentAgent(settings=settings, vector_store=vector_store)
+path_planner_agent = PathPlannerAgent(settings=settings, vector_store=vector_store)
 
 
 @asynccontextmanager
@@ -115,6 +119,18 @@ def generate_assessment(request: AssessmentGenerateRequest) -> AssessmentGenerat
 @app.post("/agents/assessment/grade", response_model=AssessmentGradeResponse)
 def grade_assessment(request: AssessmentGradeRequest) -> AssessmentGradeResponse:
     return assessment_agent.grade(request)
+
+
+@app.post("/agents/path/plan", response_model=LearningPathPlanResponse)
+def plan_learning_path(request: LearningPathPlanRequest) -> LearningPathPlanResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts,
+        source="request.path.documentTexts",
+        title_prefix=f"path-{request.studentProfileId}-inline",
+        metadata={"studentProfileId": request.studentProfileId, "courseId": request.courseId},
+    )
+    return path_planner_agent.plan(request)
 
 
 @app.get("/agents/providers/status")

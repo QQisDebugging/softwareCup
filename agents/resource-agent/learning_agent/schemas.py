@@ -143,6 +143,62 @@ class AssessmentGradeResponse(BaseModel):
     profileDimensionUpdates: list[ProfileDimensionUpdate]
 
 
+class LearningPathPlanRequest(BaseModel):
+    studentProfileId: str
+    courseId: str
+    studentProfileSummary: str
+    courseTitle: str
+    topic: str
+    goal: str = "补齐薄弱点并完成一次可验证实践"
+    timeframeDays: int = Field(default=7, ge=1, le=30)
+    dailyMinutes: int = Field(default=45, ge=10, le=240)
+    weaknessSignals: list[str] = Field(default_factory=list)
+    completedResources: list[str] = Field(default_factory=list)
+    recentScores: list[int] = Field(default_factory=list)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class LearningPathStage(BaseModel):
+    day: int
+    title: str
+    objective: str
+    learningActions: list[str]
+    resourceTypes: list[str]
+    practiceTask: str
+    checkpoint: str
+    estimatedMinutes: int = Field(ge=1)
+
+
+class ResourceRecommendation(BaseModel):
+    priority: int
+    resourceType: str
+    title: str
+    reason: str
+    estimatedMinutes: int = Field(ge=1)
+
+
+class ReviewCheckpoint(BaseModel):
+    day: int
+    method: str
+    successCriteria: str
+
+
+class LearningPathPlanResponse(BaseModel):
+    planTitle: str
+    studentProfileId: str
+    courseId: str
+    topic: str
+    targetLevel: str
+    stages: list[LearningPathStage]
+    resourceRecommendations: list[ResourceRecommendation]
+    reviewCheckpoints: list[ReviewCheckpoint]
+    mermaidRoadmap: str
+    citations: list[KnowledgeMatch]
+    summary: str
+    profileDimensionUpdates: list[ProfileDimensionUpdate]
+
+
 class HealthResponse(BaseModel):
     service: str
     status: Literal["UP", "DEGRADED"]
