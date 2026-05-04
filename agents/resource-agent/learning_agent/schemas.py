@@ -719,6 +719,67 @@ class AssessmentItemAnalysisResponse(BaseModel):
     summary: str
 
 
+class ProjectFileInput(BaseModel):
+    path: str
+    language: str = "Java"
+    content: str
+
+
+class ProjectReviewRequest(BaseModel):
+    studentProfileId: str
+    courseId: str
+    studentProfileSummary: str
+    courseTitle: str
+    projectTitle: str
+    targetTopic: str = "项目级代码审查"
+    files: list[ProjectFileInput]
+    reviewFocus: list[str] = Field(default_factory=list)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class ProjectArchitectureIssue(BaseModel):
+    category: str
+    path: str
+    lineHint: str
+    severity: str
+    evidence: str
+    suggestion: str
+    knowledgePoint: str
+
+
+class ProjectTestGap(BaseModel):
+    target: str
+    reason: str
+    suggestedTest: str
+
+
+class ProjectKnowledgeMapping(BaseModel):
+    knowledgePoint: str
+    evidence: str
+    masterySignal: str
+
+
+class ProjectRefactorTask(BaseModel):
+    priority: int = Field(ge=1)
+    title: str
+    action: str
+    estimatedMinutes: int = Field(ge=1)
+    relatedFiles: list[str] = Field(default_factory=list)
+
+
+class ProjectReviewResponse(BaseModel):
+    overallScore: int = Field(ge=0, le=100)
+    architectureIssues: list[ProjectArchitectureIssue]
+    testGaps: list[ProjectTestGap]
+    securityNotes: list[str]
+    knowledgeMapping: list[ProjectKnowledgeMapping]
+    refactorTasks: list[ProjectRefactorTask]
+    citations: list[KnowledgeMatch]
+    summary: str
+    profileDimensionUpdates: list[ProfileDimensionUpdate]
+
+
 class HealthResponse(BaseModel):
     service: str
     status: Literal["UP", "DEGRADED"]

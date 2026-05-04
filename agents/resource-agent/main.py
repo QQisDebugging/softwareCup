@@ -18,6 +18,7 @@ from learning_agent.course_diagnosis import CourseDiagnosisAgent
 from learning_agent.knowledge_graph import KnowledgeGraphAgent
 from learning_agent.path_planner import PathPlannerAgent
 from learning_agent.prerequisite import PrerequisiteDiagnosisAgent
+from learning_agent.project_review import ProjectReviewAgent
 from learning_agent.resource_curation import ResourceCurationAgent
 from learning_agent.schemas import (
     AssessmentGenerateRequest,
@@ -53,6 +54,8 @@ from learning_agent.schemas import (
     ProfileInferResponse,
     PrerequisiteDiagnosisRequest,
     PrerequisiteDiagnosisResponse,
+    ProjectReviewRequest,
+    ProjectReviewResponse,
     ResourceAgentRequest,
     ResourceAgentResponse,
     ResourceCurationRequest,
@@ -90,6 +93,7 @@ agent_trace_agent = AgentTraceAgent(settings=settings)
 profile_inference_agent = ProfileInferenceAgent(settings=settings, vector_store=vector_store)
 learning_event_analysis_agent = LearningEventAnalysisAgent(settings=settings, vector_store=vector_store)
 assessment_item_analysis_agent = AssessmentItemAnalysisAgent(settings=settings, vector_store=vector_store)
+project_review_agent = ProjectReviewAgent(settings=settings, vector_store=vector_store)
 
 
 @asynccontextmanager
@@ -330,6 +334,21 @@ def analyze_assessment_items(request: AssessmentItemAnalysisRequest) -> Assessme
         metadata={"studentProfileId": request.studentProfileId or "", "courseId": request.courseId},
     )
     return assessment_item_analysis_agent.analyze(request)
+
+
+@app.post("/agents/code/project-review", response_model=ProjectReviewResponse)
+def review_project_code(request: ProjectReviewRequest) -> ProjectReviewResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + [
+            f"{file.path}\n{file.content}"
+            for file in request.files
+        ],
+        source="request.project_review.documentTexts",
+        title_prefix=f"project-review-{request.studentProfileId}-inline",
+        metadata={"studentProfileId": request.studentProfileId, "courseId": request.courseId},
+    )
+    return project_review_agent.review(request)
 
 
 @app.get("/agents/providers/status")
