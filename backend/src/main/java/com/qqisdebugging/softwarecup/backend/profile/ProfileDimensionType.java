@@ -10,7 +10,8 @@ public enum ProfileDimensionType {
     ERROR_PRONE_POINTS("易错点"),
     TIME_CONSTRAINT("时间约束"),
     RESOURCE_PREFERENCE("资源偏好"),
-    MASTERY_WEAKNESS("掌握度/薄弱点");
+    MASTERY_WEAKNESS("掌握度/薄弱点"),
+    LEARNING_BEHAVIOR_PATTERN("学习行为模式");
 
     private final String displayName;
 

@@ -30,6 +30,10 @@ $profile = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/profile
 - `RESOURCE_PREFERENCE`：资源偏好
 - `MASTERY_WEAKNESS`：掌握度/薄弱点
 
+学习行为写入后还会自动维护：
+
+- `LEARNING_BEHAVIOR_PATTERN`：学习行为模式
+
 ## 查询画像维度和演化历史
 
 ```powershell
@@ -87,7 +91,16 @@ $task = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/tasks/reso
 } | ConvertTo-Json)
 
 Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)
+Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)/steps
+Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)/model-invocations
+Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)/audits
 Invoke-RestMethod http://localhost:8080/api/courses/$($course.id)/resources
+```
+
+资源类型固定覆盖 7 类，可直接给前端做筛选项：
+
+```powershell
+Invoke-RestMethod http://localhost:8080/api/resource-types
 ```
 
 ## 学习闭环：辅导、测评、画像自动更新
@@ -126,6 +139,38 @@ $grade = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/
 Invoke-RestMethod http://localhost:8080/api/learning/events?studentProfileId=$($profile.profile.id)
 Invoke-RestMethod http://localhost:8080/api/learning/tutoring?studentProfileId=$($profile.profile.id)
 Invoke-RestMethod http://localhost:8080/api/learning/attempts?studentProfileId=$($profile.profile.id)
+```
+
+普通学习行为也会写回画像、掌握度和阶段评估：
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/events -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  resourceId = $task.createdResourceId
+  eventType = 'FEEDBACK'
+  durationSeconds = 300
+  feedbackScore = 2
+  eventPayload = '{}'
+} | ConvertTo-Json)
+```
+
+## 查询 Agent 产物与证据
+
+高级 Agent 代理接口会自动保存结构化产物、引用、安全摘要、traceId 和耗时：
+
+```powershell
+$pathPlan = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/path-plans -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  studentProfileSummary = $profile.profile.dialogueSummary
+  courseTitle = $course.title
+  topic = 'Spring Boot Controller 与 REST API'
+  traceId = 'demo-trace-001'
+  documentTexts = @('Controller 负责请求响应，Service 负责业务规则。')
+} | ConvertTo-Json -Depth 8)
+
+Invoke-RestMethod "http://localhost:8080/api/agent-artifacts?studentProfileId=$($profile.profile.id)"
 ```
 
 ## Python 智能体增强接口：先修诊断、资源策展、档案报告、链路追踪

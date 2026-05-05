@@ -86,6 +86,7 @@ Python 智能体新增学习路径、知识图谱、防幻觉审计、教师诊�
 - `GET /api/tasks/{taskId}/events`
 - `GET /api/tasks/{taskId}/model-invocations`
 - `GET /api/tasks/{taskId}/audits`
+- `GET /api/agent-artifacts?studentProfileId=...`
 - `GET /api/learning/paths?studentProfileId=...`
 - `GET /api/learning/recommendations?studentProfileId=...`
 - `POST /api/learning/events`
@@ -93,4 +94,4 @@ Python 智能体新增学习路径、知识图谱、防幻觉审计、教师诊�
 - `GET /api/learning/mastery?studentProfileId=...&courseId=...`
 - `GET /api/learning/evaluation-reports?studentProfileId=...&courseId=...`
 
-固定资源类型覆盖 6 类：课程讲解文档、知识点思维导图、练习题/测验、拓展阅读、实操案例、视频讲解脚本/动画脚本。
+固定资源类型覆盖 7 类：课程讲解文档、知识点思维导图、练习题/测验、拓展阅读、实操案例、视频讲解脚本/动画脚本、PPT课件/课堂讲稿。

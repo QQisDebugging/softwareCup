@@ -79,6 +79,12 @@ public class GenerationTaskRunner {
                     "学习路径=" + path.title(),
                     "已生成实操案例蓝图：需求描述、编码任务、验收标准和拓展挑战。");
 
+            runRuleStep(
+                    taskId,
+                    "PPT_COURSEWARE_GENERATOR",
+                    "资源=" + resource.getTitle() + "；学习路径=" + path.title(),
+                    "已生成 6 页 PPT 课件/课堂讲稿大纲：学习目标、先修诊断、流程拆解、易错点、实操任务和画像更新。");
+
             runSafetyReviewStep(taskId, context, resource);
 
             learningService.recommendGeneratedResource(

@@ -53,8 +53,9 @@ public class GenerationTaskTransactions {
                 new TaskStep(taskId, "DOCUMENT_GENERATOR", 4, "资源生成中", 55),
                 new TaskStep(taskId, "QUIZ_GENERATOR", 5, "题库生成中", 68),
                 new TaskStep(taskId, "MIND_MAP_GENERATOR", 6, "思维导图生成中", 78),
-                new TaskStep(taskId, "PRACTICE_CASE_GENERATOR", 7, "实操案例生成中", 88),
-                new TaskStep(taskId, "SAFETY_REVIEWER", 8, "安全审核中", 96)));
+                new TaskStep(taskId, "PRACTICE_CASE_GENERATOR", 7, "实操案例生成中", 86),
+                new TaskStep(taskId, "PPT_COURSEWARE_GENERATOR", 8, "PPT课件生成中", 92),
+                new TaskStep(taskId, "SAFETY_REVIEWER", 9, "安全审核中", 97)));
     }
 
     @Transactional
