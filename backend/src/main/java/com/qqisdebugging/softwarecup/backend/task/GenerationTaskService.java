@@ -7,7 +7,8 @@ import com.qqisdebugging.softwarecup.backend.profile.ProfileService;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 public class GenerationTaskService {
@@ -42,8 +43,7 @@ public class GenerationTaskService {
                 request.courseId(),
                 request.topic(),
                 request.prompt()));
-        transactions.initializeWorkflow(task.getId());
-        generationTaskRunner.runResourceGeneration(task.getId(), resourceType.name(), request.modality());
+        runAfterCommit(task.getId(), request.resourceType(), request.modality());
         return GenerationTaskResponse.from(task);
     }
 
@@ -97,5 +97,18 @@ public class GenerationTaskService {
     private GenerationTask requireTask(String taskId) {
         return taskRepository.findById(taskId)
                 .orElseThrow(() -> new NotFoundException("Generation task not found: " + taskId));
+    }
+
+    private void runAfterCommit(String taskId, String resourceType, String modality) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            generationTaskRunner.runResourceGeneration(taskId, resourceType, modality);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                generationTaskRunner.runResourceGeneration(taskId, resourceType, modality);
+            }
+        });
     }
 }

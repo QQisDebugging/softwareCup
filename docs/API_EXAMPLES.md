@@ -89,65 +89,166 @@ $task = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/tasks/reso
 Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)
 Invoke-RestMethod http://localhost:8080/api/courses/$($course.id)/resources
 ```
-## 多智能体任务链与学习闭环
 
-查询智能体定义和固定资源类型：
-
-```powershell
-Invoke-RestMethod http://localhost:8080/api/agents
-Invoke-RestMethod http://localhost:8080/api/resource-types
-```
-
-创建资源生成任务时，`resourceType` 建议使用固定枚举或中文名称，例如 `课程讲解文档`、`知识点思维导图`、`练习题/测验`、`拓展阅读`、`实操案例`、`视频讲解脚本/动画脚本`。
+## 学习闭环：辅导、测评、画像自动更新
 
 ```powershell
-$task = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/tasks/resource-generation -ContentType 'application/json' -Body (@{
+$tutoring = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/tutoring -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  question = 'Controller 为什么不应该直接写复杂业务逻辑？'
+  modality = '文本+图解'
+  documentTexts = @('Controller 负责请求响应，Service 负责业务规则，Repository 负责数据访问。')
+} | ConvertTo-Json -Depth 8)
+
+$assessment = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/assessments/generate -ContentType 'application/json' -Body (@{
   studentProfileId = $profile.profile.id
   courseId = $course.id
   topic = 'Spring Boot Controller 与 REST API'
-  resourceType = '课程讲解文档'
-  modality = '文本+图解脚本'
-  prompt = '面向 Java 基础较弱的大二学生，用项目案例讲解 Controller、DTO 和 Service 分层。'
-} | ConvertTo-Json)
+  difficulty = '自适应'
+  count = 4
+  documentTexts = @('Controller 负责请求响应，Service 负责业务规则，Repository 负责数据访问。')
+} | ConvertTo-Json -Depth 8)
 
-Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)
-Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)/steps
-Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)/model-invocations
-Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)/audits
-Invoke-RestMethod "http://localhost:8080/api/learning/paths?studentProfileId=$($profile.profile.id)"
-Invoke-RestMethod "http://localhost:8080/api/learning/recommendations?studentProfileId=$($profile.profile.id)"
-```
-
-SSE 进度接口：
-
-```powershell
-curl.exe -N http://localhost:8080/api/tasks/$($task.id)/events
-```
-
-记录学习行为和测验结果：
-
-```powershell
-Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/events -ContentType 'application/json' -Body (@{
+$grade = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/assessments/grade -ContentType 'application/json' -Body (@{
   studentProfileId = $profile.profile.id
   courseId = $course.id
-  resourceId = $task.createdResourceId
-  eventType = 'RESOURCE_VIEW'
-  durationSeconds = 780
-  feedbackScore = 4
-  eventPayload = '完成 Controller 示例阅读'
-} | ConvertTo-Json)
+  topic = 'Spring Boot Controller 与 REST API'
+  questions = $assessment.questions
+  answers = @(
+    @{ questionId = $assessment.questions[0].id; answer = $assessment.questions[0].answer },
+    @{ questionId = $assessment.questions[1].id; answer = '错误' },
+    @{ questionId = $assessment.questions[2].id; answer = 'Controller 负责请求响应，Service 负责业务规则。' },
+    @{ questionId = $assessment.questions[3].id; answer = 'Controller -> Service -> Repository -> DB' }
+  )
+} | ConvertTo-Json -Depth 30)
 
-Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/quiz-attempts -ContentType 'application/json' -Body (@{
+Invoke-RestMethod http://localhost:8080/api/learning/events?studentProfileId=$($profile.profile.id)
+Invoke-RestMethod http://localhost:8080/api/learning/tutoring?studentProfileId=$($profile.profile.id)
+Invoke-RestMethod http://localhost:8080/api/learning/attempts?studentProfileId=$($profile.profile.id)
+```
+
+## Python 智能体增强接口：先修诊断、资源策展、档案报告、链路追踪
+
+这些接口目前由 Python 主程直接提供，Java 后端可按 `docs/JAVA_VUE3_INTEGRATION_GUIDE.md` 中的建议封装为 `/api/learning/*`。
+
+```powershell
+$aiBase = 'http://localhost:9001'
+
+$preq = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/prerequisite/diagnose" -ContentType 'application/json' -Body (@{
   studentProfileId = $profile.profile.id
   courseId = $course.id
-  resourceId = $task.createdResourceId
-  score = 78
-  maxScore = 100
-  correctCount = 8
-  totalCount = 10
-  weakPoints = 'Controller 与 Service 职责边界'
-} | ConvertTo-Json)
+  studentProfileSummary = 'Java 基础较弱，容易混淆 Controller、Service、Repository。'
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  targetTopic = 'Spring Boot Controller 与 REST API'
+  completedTopics = @('Java 面向对象基础')
+  assessmentWeaknesses = @('HTTP 请求响应', 'MVC 分层职责')
+  documentTexts = @('学习 Spring Boot Controller 前，需要理解 HTTP、JSON、MVC 分层和接口调试。')
+} | ConvertTo-Json -Depth 10)
 
-Invoke-RestMethod "http://localhost:8080/api/learning/mastery?studentProfileId=$($profile.profile.id)&courseId=$($course.id)"
-Invoke-RestMethod "http://localhost:8080/api/learning/evaluation-reports?studentProfileId=$($profile.profile.id)&courseId=$($course.id)"
+$bundle = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/resources/curate" -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  studentProfileSummary = 'Java 基础较弱，喜欢图解和项目案例。'
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  topic = 'Spring Boot Controller 与 REST API'
+  weaknesses = @('HTTP 请求响应', 'MVC 分层职责')
+  timeBudgetMinutes = 120
+  candidateResources = @('Controller 负责请求响应，Service 负责业务规则，Repository 负责数据访问。')
+} | ConvertTo-Json -Depth 10)
+
+$report = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/report/portfolio" -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  studentName = '张同学'
+  studentProfileSummary = 'Java 基础较弱，最近开始主动复盘错题。'
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  topic = 'Spring Boot Controller 与 REST API'
+  completedResources = @($bundle.summary)
+  assessmentSummaries = @('入口测评 58/100，复测 72/100。')
+  tutoringSummaries = @($tutoring.answer)
+  codePracticeSummaries = @('REST API 分层改造练习批改 76分。')
+  weaknesses = @('HTTP 状态码', 'MVC 分层职责')
+} | ConvertTo-Json -Depth 12)
+
+$trace = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/trace/explain" -ContentType 'application/json' -Body (@{
+  taskName = '个性化资源生成'
+  userIntent = '为 Java 基础较弱学生生成 REST API 分层资源'
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  involvedAgents = @('profile_agent', 'rag_retrieval_agent', 'resource_generator_agent', 'content_audit_agent')
+  requestPayload = @{ topic = 'Spring Boot Controller 与 REST API'; weaknesses = @('MVC 分层职责') }
+  responseSummary = $bundle.summary
+  fallbackEvents = @('offline provider 可保证无密钥演示链路不中断。')
+} | ConvertTo-Json -Depth 12)
+
+$inferred = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/profile/infer" -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  declaredMajor = '软件工程'
+  currentLevel = '大二，Java 基础较弱'
+  learningGoal = '两周内掌握 Spring Boot REST API 分层开发'
+  preferences = '喜欢图解、项目案例和短视频脚本'
+  constraintsText = '每天可学习 45 分钟'
+  dialogueTurns = @('学生：Controller、Service、Repository 分层总混。', '学生：我喜欢先看图解，再做一个能跑的小项目。')
+  assessmentSummaries = @('入口测评 58/100，薄弱点是 HTTP 请求响应和 MVC 分层。')
+} | ConvertTo-Json -Depth 12)
+
+$eventAnalysis = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/learning/events/analyze" -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  studentProfileSummary = 'Java 基础较弱，喜欢图解和项目案例。'
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  targetTopic = 'Spring Boot Controller 与 REST API'
+  learningEvents = @('完成 2 个资源卡。', '错题复盘：同一错误是 Controller 直接访问 Repository。')
+  resourceUsage = @($bundle.summary)
+  assessmentSummaries = @('入口测评 58/100。', '复测 72/100。')
+  tutoringSummaries = @($tutoring.answer)
+} | ConvertTo-Json -Depth 12)
+
+$itemAnalysis = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/assessment/item-analysis" -ContentType 'application/json' -Body (@{
+  courseId = $course.id
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  topic = 'Spring Boot Controller 与 REST API'
+  studentProfileId = $profile.profile.id
+  attempts = @(
+    @{ questionId = 'q1'; knowledgePoint = 'HTTP 请求响应'; questionType = '选择题'; score = 4; maxScore = 10; correct = $false; feedback = '状态码和请求响应职责理解不稳。' },
+    @{ questionId = 'q2'; knowledgePoint = 'Controller 分层职责'; questionType = '简答题'; score = 5; maxScore = 15; correct = $false; feedback = 'Controller、Service、Repository 分层职责混淆。' },
+    @{ questionId = 'q3'; knowledgePoint = 'REST API 设计'; questionType = '代码纠错题'; score = 13; maxScore = 15; correct = $true; feedback = '能写出 Controller -> Service -> Repository 调用链。' }
+  )
+} | ConvertTo-Json -Depth 12)
+
+$projectReview = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/code/project-review" -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  studentProfileSummary = 'Java 基础较弱，容易把 Controller、Service、Repository 职责写混。'
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  projectTitle = 'REST API 分层练习'
+  targetTopic = 'Spring Boot Controller 与 REST API'
+  files = @(
+    @{ path = 'src/main/java/demo/UserController.java'; language = 'Java'; content = '@RestController class UserController { UserRepository repo; @PostMapping("/u") User save(@RequestBody User u){ return repo.save(u); } }' }
+  )
+} | ConvertTo-Json -Depth 12)
+
+$classAnalytics = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/class/analytics" -ContentType 'application/json' -Body (@{
+  courseId = $course.id
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  topic = 'Spring Boot Controller 与 REST API'
+  snapshots = @(
+    @{ studentProfileId = $profile.profile.id; studentName = '张同学'; profileSummary = 'Java 基础较弱'; recentScores = @(48, 55); completedResources = 1; tutoringCount = 0; codePracticeCount = 0; weaknessSignals = @('HTTP 请求响应', 'MVC 分层职责'); learningEvents = @('只完成入口讲解') },
+    @{ studentProfileId = 'peer-1'; studentName = '李同学'; profileSummary = '实操不足'; recentScores = @(68, 72); completedResources = 2; tutoringCount = 1; codePracticeCount = 0; weaknessSignals = @('MVC 分层职责', 'REST API 边界'); learningEvents = @('错题复盘') }
+  )
+} | ConvertTo-Json -Depth 12)
+
+$demoPlan = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/demo/scenario-plan" -ContentType 'application/json' -Body (@{
+  scenarioTitle = '软件杯 A3 个性化学习多智能体 7 分钟演示'
+  audience = '初赛评委'
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  studentProfileSummary = 'Java 基础较弱，喜欢图解和项目案例。'
+  timeLimitMinutes = 7
+  coreEndpoints = @('/agents/profile/infer', '/agents/prerequisite/diagnose', '/agents/resources/curate', '/agents/resource-generation', '/agents/assessment/grade', '/agents/report/portfolio', '/agents/trace/explain')
+  availableArtifacts = @('smoke_full_ai_agents.py 输出', 'Java/Vue3 对接文档')
+  riskConcerns = @('网络不稳定时使用 offline provider')
+} | ConvertTo-Json -Depth 12)
 ```
