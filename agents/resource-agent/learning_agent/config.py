@@ -18,8 +18,10 @@ class AgentSettings:
     embedding_dimensions: int = 384
     retrieval_top_k: int = 6
     seed_knowledge_paths: list[str] = field(default_factory=list)
+    xfyun_app_id: str = ""
     xfyun_api_key: str = ""
     xfyun_api_secret: str = ""
+    xfyun_api_password: str = ""
     xfyun_model: str = "generalv3.5"
     xfyun_endpoint: str = "https://spark-api-open.xf-yun.com/v1/chat/completions"
     request_timeout_seconds: int = 25
@@ -41,10 +43,11 @@ class AgentSettings:
             embedding_dimensions=int(os.getenv("RESOURCE_AGENT_EMBEDDING_DIM", "384")),
             retrieval_top_k=int(os.getenv("RESOURCE_AGENT_RETRIEVAL_TOP_K", "6")),
             seed_knowledge_paths=_split_paths(os.getenv("RESOURCE_AGENT_SEED_PATHS")) or default_seed_paths,
+            xfyun_app_id=os.getenv("XFYUN_APP_ID", ""),
             xfyun_api_key=os.getenv("XFYUN_API_KEY", ""),
             xfyun_api_secret=os.getenv("XFYUN_API_SECRET", ""),
+            xfyun_api_password=os.getenv("XFYUN_API_PASSWORD", ""),
             xfyun_model=os.getenv("XFYUN_MODEL", "generalv3.5"),
             xfyun_endpoint=os.getenv("XFYUN_ENDPOINT", "https://spark-api-open.xf-yun.com/v1/chat/completions"),
             request_timeout_seconds=int(os.getenv("RESOURCE_AGENT_TIMEOUT_SECONDS", "25")),
         )
-

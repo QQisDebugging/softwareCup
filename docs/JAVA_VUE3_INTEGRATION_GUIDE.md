@@ -92,6 +92,42 @@
   - 后端建议接口：`POST /api/demo/scenario-plans`
   - 建议表：`demo_scenario_plans`
   - 需要保存：scenes、timelineMarkdown、judgeHighlights、prepChecklist、riskPlaybook、successMetrics、引用。
+- `POST /agents/evaluation/rag-quality`
+  - 后端建议接口：`POST /api/learning/rag-evaluations`
+  - 建议表：`rag_evaluation_reports`
+  - 需要保存：overallScore、faithfulness、answerRelevancy、contextPrecision、contextRecall、groundedness、citationCoverage、unsupportedClaims、improvementActions。
+- `POST /agents/runs/record` / `GET /agents/runs/{runId}`
+  - 后端建议接口：`POST /api/learning/agent-runs`、`GET /api/learning/agent-runs/{runId}`
+  - 建议表：`agent_run_records`
+  - 需要保存：runId、endpoint、provider、fallbackUsed、steps、qualityGates、replayMarkdown。
+- `POST /agents/review/human-gate`
+  - 后端建议接口：`POST /api/learning/review-gates`
+  - 建议表：`human_review_gates`
+  - 需要保存：decision、riskReasons、revisionSuggestions、publishChecklist、requiredReviewerRoles。
+- `POST /agents/multimodal/voice-package`
+  - 后端建议接口：`POST /api/learning/voice-packages`
+  - 建议表：`voice_packages`
+  - 需要保存：voiceConfig、segments、subtitleSrt、productionChecklist。
+- `POST /agents/document/ocr-question`
+  - 后端建议接口：`POST /api/learning/ocr-questions`
+  - 建议表：`ocr_question_parses`
+  - 需要保存：extractedText、questions、detectedKnowledgePoints、nextAgentCalls、citations。
+- `POST /agents/knowledge/graphrag-query`
+  - 后端建议接口：`POST /api/learning/graphrag-queries`
+  - 建议表：`graphrag_query_results`
+  - 需要保存：answerOutline、expandedConcepts、retrievalPath、localCitations、globalSummary、confidenceScore。
+- `POST /agents/assessment/error-book`
+  - 后端建议接口：`POST /api/learning/error-books/analyze`
+  - 建议表：`error_book_reports`
+  - 需要保存：errorClusters、reviewSchedule、personalizedRemediation、nextAssessmentPlan、profileDimensionUpdates。
+- `POST /agents/course/coverage`
+  - 后端建议接口：`POST /api/teaching/course-coverage`
+  - 建议表：`course_coverage_reports`
+  - 需要保存：resourceCoverageScore、assessmentCoverageScore、coverageRadar、gaps、buildPlan。
+- `POST /agents/demo/defense-pack`
+  - 后端建议接口：`POST /api/demo/defense-packs`
+  - 建议表：`defense_packs`
+  - 需要保存：openingScript、featureMatrix、qaPairs、apiChecklist、openSourceNotes、riskResponses、finalDemoScript。
 
 ### 后端实现约束
 
@@ -179,6 +215,24 @@
 - 演示规划页
   - 调用 `/api/demo/scenario-plans`
   - 展示 7 分钟演示场景、时间轴 Markdown、每步话术、riskPlaybook、fallback 方案、准备清单和成功指标。
+- RAG 质量评测页
+  - 调用 `/api/learning/rag-evaluations`
+  - 用指标卡展示 faithfulness、groundedness、contextPrecision、citationCoverage，并列出 unsupportedClaims 和 improvementActions。
+- 教师审核页
+  - 调用 `/api/learning/review-gates`
+  - 展示 autoApproved、needsTeacherReview、riskReasons、publishChecklist，支持教师通过/退回。
+- OCR 拍照题目页
+  - 调用 `/api/learning/ocr-questions`
+  - 展示 OCR 文本、题目结构、知识点、解题步骤和后续 Agent 调用按钮。
+- 错题本页
+  - 调用 `/api/learning/error-books/analyze`
+  - 展示易错簇、错因、间隔复习计划和下一次测评计划。
+- 课程覆盖率页
+  - 调用 `/api/teaching/course-coverage`
+  - 展示资源覆盖率、测评覆盖率、coverageRadar、缺口列表和一键补齐任务。
+- 答辩包页
+  - 调用 `/api/demo/defense-packs`
+  - 展示开场稿、评分点矩阵、Q&A、API 清单、开源说明和风险应答。
 
 ### 前端交互要求
 
@@ -215,4 +269,5 @@ cd agents/resource-agent
 .\.venv\Scripts\python.exe scripts\smoke_project_review.py
 .\.venv\Scripts\python.exe scripts\smoke_class_analytics.py
 .\.venv\Scripts\python.exe scripts\smoke_demo_planner.py
+.\.venv\Scripts\python.exe scripts\smoke_competition_enhancements.py
 ```

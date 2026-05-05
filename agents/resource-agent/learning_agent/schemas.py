@@ -905,6 +905,327 @@ class DemoScenarioResponse(BaseModel):
     summary: str
 
 
+class RagEvaluationRequest(BaseModel):
+    courseId: str | None = None
+    courseTitle: str = ""
+    question: str
+    answer: str
+    expectedAnswer: str = ""
+    contexts: list[str] = Field(default_factory=list)
+    citations: list[KnowledgeMatch] = Field(default_factory=list)
+    topK: int = Field(default=8, ge=1, le=20)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class RagMetricScore(BaseModel):
+    name: str
+    score: float = Field(ge=0, le=1)
+    evidence: str
+    recommendation: str
+
+
+class RagEvaluationResponse(BaseModel):
+    overallScore: int = Field(ge=0, le=100)
+    faithfulness: float = Field(ge=0, le=1)
+    answerRelevancy: float = Field(ge=0, le=1)
+    contextPrecision: float = Field(ge=0, le=1)
+    contextRecall: float = Field(ge=0, le=1)
+    groundedness: float = Field(ge=0, le=1)
+    citationCoverage: float = Field(ge=0, le=1)
+    metricBreakdown: list[RagMetricScore]
+    unsupportedClaims: list[str]
+    improvementActions: list[str]
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
+class AgentRunStepRecord(BaseModel):
+    order: int = Field(ge=1)
+    agentName: str
+    inputSummary: str = ""
+    outputSummary: str = ""
+    durationMs: int = Field(default=0, ge=0)
+    status: str = "success"
+    citations: list[str] = Field(default_factory=list)
+
+
+class AgentRunRecordRequest(BaseModel):
+    runId: str | None = None
+    taskName: str
+    endpoint: str
+    studentProfileId: str | None = None
+    courseId: str | None = None
+    provider: str = "offline"
+    fallbackUsed: bool = False
+    requestPayload: dict[str, Any] = Field(default_factory=dict)
+    responsePayload: dict[str, Any] = Field(default_factory=dict)
+    steps: list[AgentRunStepRecord] = Field(default_factory=list)
+    qualityGates: list[AgentQualityGate] = Field(default_factory=list)
+    fallbackEvents: list[str] = Field(default_factory=list)
+
+
+class AgentRunRecordResponse(BaseModel):
+    runId: str
+    taskName: str
+    endpoint: str
+    createdAt: datetime
+    provider: str
+    fallbackUsed: bool
+    stepCount: int = Field(ge=0)
+    qualityGateSummary: list[str]
+    replayMarkdown: str
+    record: dict[str, Any]
+
+
+class HumanReviewRequest(BaseModel):
+    courseId: str | None = None
+    courseTitle: str = ""
+    resourceTitle: str
+    targetAudience: str = "高校学生"
+    content: str
+    citations: list[KnowledgeMatch] = Field(default_factory=list)
+    rubric: list[str] = Field(default_factory=list)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class HumanReviewDecision(BaseModel):
+    autoApproved: bool
+    needsTeacherReview: bool
+    riskLevel: str
+    confidenceScore: float = Field(ge=0, le=1)
+
+
+class HumanReviewResponse(BaseModel):
+    decision: HumanReviewDecision
+    riskReasons: list[str]
+    revisionSuggestions: list[str]
+    publishChecklist: list[str]
+    requiredReviewerRoles: list[str]
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
+class VoicePackageRequest(BaseModel):
+    courseId: str | None = None
+    courseTitle: str = ""
+    topic: str
+    script: str
+    targetDurationMinutes: int = Field(default=5, ge=1, le=30)
+    voiceStyle: str = "清晰讲解型"
+    audience: str = "高校学生"
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class VoiceSegment(BaseModel):
+    order: int = Field(ge=1)
+    startSecond: int = Field(ge=0)
+    endSecond: int = Field(ge=0)
+    narration: str
+    subtitle: str
+    visualCue: str
+
+
+class VoicePackageResponse(BaseModel):
+    packageTitle: str
+    estimatedDurationSeconds: int = Field(ge=1)
+    voiceConfig: dict[str, Any]
+    segments: list[VoiceSegment]
+    subtitleSrt: str
+    productionChecklist: list[str]
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
+class OcrQuestionRequest(BaseModel):
+    courseId: str | None = None
+    courseTitle: str = ""
+    imageName: str = ""
+    ocrText: str = ""
+    imageBase64: str = ""
+    studentProfileSummary: str = ""
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class ExtractedQuestion(BaseModel):
+    id: str
+    questionType: str
+    stem: str
+    options: list[str] = Field(default_factory=list)
+    knowledgePoints: list[str] = Field(default_factory=list)
+    solutionSteps: list[str]
+    confidenceScore: float = Field(ge=0, le=1)
+
+
+class OcrQuestionResponse(BaseModel):
+    extractedText: str
+    questions: list[ExtractedQuestion]
+    detectedKnowledgePoints: list[str]
+    nextAgentCalls: list[AgentCallRecommendation]
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
+class GraphRagQueryRequest(BaseModel):
+    courseId: str | None = None
+    courseTitle: str = ""
+    query: str
+    mode: Literal["local", "global", "hybrid"] = "hybrid"
+    weaknessSignals: list[str] = Field(default_factory=list)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class GraphRagPathStep(BaseModel):
+    order: int = Field(ge=1)
+    concept: str
+    relation: str
+    evidence: str
+
+
+class GraphRagQueryResponse(BaseModel):
+    answerOutline: str
+    queryMode: str
+    expandedConcepts: list[str]
+    retrievalPath: list[GraphRagPathStep]
+    localCitations: list[KnowledgeMatch]
+    globalSummary: str
+    confidenceScore: float = Field(ge=0, le=1)
+    followUpQueries: list[str]
+    summary: str
+
+
+class ErrorBookRequest(BaseModel):
+    studentProfileId: str
+    courseId: str
+    courseTitle: str
+    topic: str = "错题本分析"
+    attempts: list[AssessmentAttemptRecord]
+    recentWeaknesses: list[str] = Field(default_factory=list)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class ErrorCluster(BaseModel):
+    name: str
+    questionIds: list[str]
+    knowledgePoints: list[str]
+    rootCause: str
+    correctionStrategy: str
+    priority: int = Field(ge=1)
+
+
+class ReviewScheduleItem(BaseModel):
+    dayOffset: int = Field(ge=0)
+    task: str
+    targetKnowledgePoint: str
+    successCriteria: str
+
+
+class ErrorBookResponse(BaseModel):
+    errorBookTitle: str
+    masteryTrend: str
+    errorClusters: list[ErrorCluster]
+    reviewSchedule: list[ReviewScheduleItem]
+    personalizedRemediation: list[str]
+    nextAssessmentPlan: list[str]
+    citations: list[KnowledgeMatch]
+    profileDimensionUpdates: list[ProfileDimensionUpdate]
+    summary: str
+
+
+class CourseResourceInventoryItem(BaseModel):
+    title: str
+    resourceType: str
+    knowledgePoints: list[str]
+    estimatedMinutes: int = Field(default=10, ge=1)
+
+
+class CourseAssessmentInventoryItem(BaseModel):
+    title: str
+    questionType: str
+    knowledgePoints: list[str]
+    difficulty: str = "中"
+
+
+class CourseCoverageRequest(BaseModel):
+    courseId: str
+    courseTitle: str
+    chapters: list[str]
+    resourceInventory: list[CourseResourceInventoryItem] = Field(default_factory=list)
+    assessmentInventory: list[CourseAssessmentInventoryItem] = Field(default_factory=list)
+    targetResourceTypes: list[str] = Field(default_factory=lambda: ["讲解文档", "思维导图", "练习题", "实操案例", "视频脚本"])
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class CourseCoverageGap(BaseModel):
+    knowledgePoint: str
+    missingResourceTypes: list[str]
+    missingAssessmentTypes: list[str]
+    severity: str
+    suggestedAgent: str
+
+
+class CourseCoverageRadarItem(BaseModel):
+    dimension: str
+    score: int = Field(ge=0, le=100)
+    evidence: str
+
+
+class CourseCoverageResponse(BaseModel):
+    courseId: str
+    courseTitle: str
+    resourceCoverageScore: int = Field(ge=0, le=100)
+    assessmentCoverageScore: int = Field(ge=0, le=100)
+    coverageRadar: list[CourseCoverageRadarItem]
+    gaps: list[CourseCoverageGap]
+    buildPlan: list[str]
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
+class DefensePackRequest(BaseModel):
+    projectName: str
+    competitionTrack: str = "软件杯 A3"
+    implementedFeatures: list[str] = Field(default_factory=list)
+    techStack: list[str] = Field(default_factory=list)
+    innovationPoints: list[str] = Field(default_factory=list)
+    riskConcerns: list[str] = Field(default_factory=list)
+    apiStatus: dict[str, Any] = Field(default_factory=dict)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class DefenseQAItem(BaseModel):
+    question: str
+    answer: str
+    evidence: str
+
+
+class DefenseFeatureMatrixItem(BaseModel):
+    scoringPoint: str
+    implementedEvidence: str
+    demoEndpoint: str
+    differentiator: str
+
+
+class DefensePackResponse(BaseModel):
+    packTitle: str
+    openingScript: str
+    featureMatrix: list[DefenseFeatureMatrixItem]
+    qaPairs: list[DefenseQAItem]
+    apiChecklist: list[str]
+    openSourceNotes: list[str]
+    riskResponses: list[str]
+    finalDemoScript: list[str]
+    citations: list[KnowledgeMatch]
+    summary: str
+
+
 class HealthResponse(BaseModel):
     service: str
     status: Literal["UP", "DEGRADED"]

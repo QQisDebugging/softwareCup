@@ -72,6 +72,7 @@ python scripts/smoke_assessment_item_analysis.py
 python scripts/smoke_project_review.py
 python scripts/smoke_class_analytics.py
 python scripts/smoke_demo_planner.py
+python scripts/smoke_competition_enhancements.py
 python scripts/smoke_full_ai_agents.py
 ```
 
@@ -101,6 +102,17 @@ python scripts/smoke_full_ai_agents.py
 - `POST /agents/code/project-review`
 - `POST /agents/class/analytics`
 - `POST /agents/demo/scenario-plan`
+- `POST /agents/evaluation/rag-quality`
+- `POST /agents/runs/record`
+- `GET /agents/runs/recent`
+- `GET /agents/runs/{runId}`
+- `POST /agents/review/human-gate`
+- `POST /agents/multimodal/voice-package`
+- `POST /agents/document/ocr-question`
+- `POST /agents/knowledge/graphrag-query`
+- `POST /agents/assessment/error-book`
+- `POST /agents/course/coverage`
+- `POST /agents/demo/defense-pack`
 
 知识库接口：
 
@@ -122,9 +134,23 @@ Invoke-RestMethod -Method Post -Uri http://localhost:9001/knowledge/ingest -Cont
 
 ```powershell
 $env:RESOURCE_AGENT_PROVIDER='xfyun_spark'
+$env:XFYUN_APP_ID='你的 AppID'
+$env:XFYUN_API_PASSWORD='你的 APIPassword'
 $env:XFYUN_API_KEY='你的 API Key'
 $env:XFYUN_API_SECRET='你的 API Secret'
 $env:XFYUN_MODEL='generalv3.5'
 ```
 
-未配置密钥或调用失败时，系统会使用离线模板生成器继续返回结构化学习资源，保证比赛演示链路不中断。
+HTTP 调用优先使用 `XFYUN_API_PASSWORD`；如果只拿到旧版 `APIKey/APISecret`，也可以继续配置 `XFYUN_API_KEY` 和 `XFYUN_API_SECRET`。未配置密钥或调用失败时，系统会使用离线模板生成器继续返回结构化学习资源，保证比赛演示链路不中断。`GET /agents/providers/status` 会返回当前凭据模式、模型、fallback 状态和最近错误。
+
+## 国赛增强能力
+
+- RAG 质量评测：`/agents/evaluation/rag-quality` 输出 faithfulness、answerRelevancy、contextPrecision、contextRecall、groundedness 和 citationCoverage。
+- Agent 运行记录：`/agents/runs/record` 写入本地 JSONL，`/agents/runs/{runId}` 支持答辩回放。
+- 教师人审门禁：`/agents/review/human-gate` 输出 autoApproved、needsTeacherReview、riskReasons、publishChecklist。
+- 多模态语音包：`/agents/multimodal/voice-package` 输出旁白分段、SRT 字幕和讯飞 TTS 对接配置。
+- OCR 题目解析：`/agents/document/ocr-question` 把 OCR 文本解析为题目、知识点、解题步骤和后续 Agent 调用。
+- GraphRAG 查询：`/agents/knowledge/graphrag-query` 输出扩展概念、检索路径、local citations 和 global summary。
+- 错题本：`/agents/assessment/error-book` 聚类错题、生成间隔复习计划和画像更新。
+- 课程覆盖率：`/agents/course/coverage` 检查章节资源类型、测评题型、缺口和建设计划。
+- 答辩包：`/agents/demo/defense-pack` 生成开场稿、评分点矩阵、Q&A、API 清单、开源说明和风险应答。

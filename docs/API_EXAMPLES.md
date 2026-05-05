@@ -19,6 +19,95 @@ $profile = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/profile
 } | ConvertTo-Json)
 ```
 
+## 国赛增强接口样例
+
+以下样例假设 `$course` 和 `$profile` 已按本文后续步骤创建；如果只测 Python 服务，可手动替换为固定字符串。
+
+```powershell
+$aiBase = 'http://localhost:9001'
+$ragEval = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/evaluation/rag-quality" -ContentType 'application/json' -Body (@{
+  courseId = $course.id
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  question = '为什么 Controller 不应该直接访问 Repository？'
+  answer = '因为 Controller 应只负责请求响应，业务规则在 Service，数据访问在 Repository。这样更容易测试，也能降低耦合。'
+  expectedAnswer = '需要说明分层职责、测试性和耦合风险。'
+  contexts = @('Controller 负责请求响应，Service 负责业务规则，Repository 负责数据访问。')
+} | ConvertTo-Json -Depth 12)
+
+$humanGate = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/review/human-gate" -ContentType 'application/json' -Body (@{
+  courseId = $course.id
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  resourceTitle = 'REST API 分层讲解'
+  content = 'Controller 负责请求响应，Service 负责业务规则，Repository 负责数据访问。发布前需要展示引用证据。'
+  rubric = @('必须有引用证据', '必须说明分层职责')
+} | ConvertTo-Json -Depth 12)
+
+$voicePackage = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/multimodal/voice-package" -ContentType 'application/json' -Body (@{
+  courseId = $course.id
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  topic = 'REST API 分层'
+  script = '第一步介绍 Controller。第二步介绍 Service。第三步介绍 Repository。'
+  targetDurationMinutes = 3
+} | ConvertTo-Json -Depth 12)
+
+$ocrQuestion = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/document/ocr-question" -ContentType 'application/json' -Body (@{
+  courseId = $course.id
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  imageName = 'rest-api-question.png'
+  ocrText = '1. Spring Boot 中 Controller 的主要职责是什么？A. 数据访问 B. 请求响应 C. 物理存储 D. 编译代码'
+} | ConvertTo-Json -Depth 12)
+
+$graphRag = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/knowledge/graphrag-query" -ContentType 'application/json' -Body (@{
+  courseId = $course.id
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  query = 'Controller 直接访问 Repository 为什么不好？'
+  weaknessSignals = @('MVC 分层职责')
+} | ConvertTo-Json -Depth 12)
+
+$errorBook = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/assessment/error-book" -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  attempts = @(
+    @{ questionId = 'q1'; knowledgePoint = 'MVC 分层职责'; questionType = '选择题'; score = 3; maxScore = 10; correct = $false; answerSummary = '混淆 Controller 和 Repository'; feedback = '分层职责错误' },
+    @{ questionId = 'q2'; knowledgePoint = 'REST API 边界'; questionType = '简答题'; score = 6; maxScore = 10; correct = $false; answerSummary = '接口边界描述不完整'; feedback = '缺少状态码' }
+  )
+} | ConvertTo-Json -Depth 12)
+
+$coverage = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/course/coverage" -ContentType 'application/json' -Body (@{
+  courseId = $course.id
+  courseTitle = 'Java Web 应用开发与软件工程实践'
+  chapters = @('MVC 分层职责', 'REST API 边界', '异常响应')
+  resourceInventory = @(
+    @{ title = 'MVC 图解'; resourceType = '思维导图'; knowledgePoints = @('MVC 分层职责'); estimatedMinutes = 10 }
+  )
+  assessmentInventory = @(
+    @{ title = 'MVC 选择题'; questionType = '选择题'; knowledgePoints = @('MVC 分层职责'); difficulty = '中' }
+  )
+} | ConvertTo-Json -Depth 12)
+
+$defensePack = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/demo/defense-pack" -ContentType 'application/json' -Body (@{
+  projectName = '个性化学习多智能体系统'
+  implementedFeatures = @('对话式画像', 'RAG 资源生成', '防幻觉评测', '错题本', '班级分析')
+  techStack = @('FastAPI', 'LangGraph', 'LangChain', 'RAG', 'Embedding')
+  riskConcerns = @('讯飞 API 不可用', '评委追问防幻觉')
+  apiStatus = @{ activeProvider = 'offline'; fallbackProvider = 'offline' }
+} | ConvertTo-Json -Depth 12)
+
+$runRecord = Invoke-RestMethod -Method Post -Uri "$aiBase/agents/runs/record" -ContentType 'application/json' -Body (@{
+  taskName = 'RAG 质量评测演示'
+  endpoint = '/agents/evaluation/rag-quality'
+  provider = 'offline'
+  requestPayload = @{ question = '为什么需要引用？' }
+  responsePayload = @{ overallScore = $ragEval.overallScore }
+  steps = @(
+    @{ order = 1; agentName = 'rag_evaluation_agent'; inputSummary = 'question+answer'; outputSummary = $ragEval.summary; durationMs = 0; status = 'success' }
+  )
+} | ConvertTo-Json -Depth 12)
+
+Invoke-RestMethod "$aiBase/agents/runs/$($runRecord.runId)"
+```
+
 创建后会自动生成不少于 8 个结构化画像维度：
 
 - `KNOWLEDGE_FOUNDATION`：知识基础
