@@ -81,11 +81,73 @@ $task = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/tasks/reso
   studentProfileId = $profile.profile.id
   courseId = $course.id
   topic = 'Spring Boot Controller 与 REST API'
-  resourceType = '微课讲义'
+  resourceType = '课程讲解文档'
   modality = '文本+图解脚本'
   prompt = '面向 Java 基础较弱的大二学生，用项目案例讲解 Controller、DTO 和 Service 分层。'
 } | ConvertTo-Json)
 
 Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)
 Invoke-RestMethod http://localhost:8080/api/courses/$($course.id)/resources
+```
+## 多智能体任务链与学习闭环
+
+查询智能体定义和固定资源类型：
+
+```powershell
+Invoke-RestMethod http://localhost:8080/api/agents
+Invoke-RestMethod http://localhost:8080/api/resource-types
+```
+
+创建资源生成任务时，`resourceType` 建议使用固定枚举或中文名称，例如 `课程讲解文档`、`知识点思维导图`、`练习题/测验`、`拓展阅读`、`实操案例`、`视频讲解脚本/动画脚本`。
+
+```powershell
+$task = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/tasks/resource-generation -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  topic = 'Spring Boot Controller 与 REST API'
+  resourceType = '课程讲解文档'
+  modality = '文本+图解脚本'
+  prompt = '面向 Java 基础较弱的大二学生，用项目案例讲解 Controller、DTO 和 Service 分层。'
+} | ConvertTo-Json)
+
+Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)
+Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)/steps
+Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)/model-invocations
+Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)/audits
+Invoke-RestMethod "http://localhost:8080/api/learning/paths?studentProfileId=$($profile.profile.id)"
+Invoke-RestMethod "http://localhost:8080/api/learning/recommendations?studentProfileId=$($profile.profile.id)"
+```
+
+SSE 进度接口：
+
+```powershell
+curl.exe -N http://localhost:8080/api/tasks/$($task.id)/events
+```
+
+记录学习行为和测验结果：
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/events -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  resourceId = $task.createdResourceId
+  eventType = 'RESOURCE_VIEW'
+  durationSeconds = 780
+  feedbackScore = 4
+  eventPayload = '完成 Controller 示例阅读'
+} | ConvertTo-Json)
+
+Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/quiz-attempts -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  resourceId = $task.createdResourceId
+  score = 78
+  maxScore = 100
+  correctCount = 8
+  totalCount = 10
+  weakPoints = 'Controller 与 Service 职责边界'
+} | ConvertTo-Json)
+
+Invoke-RestMethod "http://localhost:8080/api/learning/mastery?studentProfileId=$($profile.profile.id)&courseId=$($course.id)"
+Invoke-RestMethod "http://localhost:8080/api/learning/evaluation-reports?studentProfileId=$($profile.profile.id)&courseId=$($course.id)"
 ```
