@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableConfigurationProperties({AgentProperties.class, StorageProperties.class})
@@ -20,5 +22,22 @@ public class ApplicationConfig {
                 .baseUrl(properties.getResourceBaseUrl())
                 .requestFactory(requestFactory)
                 .build();
+    }
+
+    @Bean
+    WebMvcConfigurer apiCorsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/api/**")
+                        .allowedOriginPatterns(
+                                "http://localhost:*",
+                                "http://127.0.0.1:*",
+                                "http://[::1]:*")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+                        .allowedHeaders("*")
+                        .maxAge(3600);
+            }
+        };
     }
 }

@@ -8,44 +8,35 @@ public record QuizAttemptResponse(
         String studentProfileId,
         String courseId,
         String resourceId,
+        String topic,
         BigDecimal score,
         BigDecimal maxScore,
         Integer correctCount,
         Integer totalCount,
         String weakPoints,
-        Instant submittedAt) {
+        String masteryLevel,
+        String questionsJson,
+        String answersJson,
+        String gradingJson,
+        Instant submittedAt,
+        Instant createdAt) {
     public static QuizAttemptResponse from(QuizAttempt attempt) {
         return new QuizAttemptResponse(
                 attempt.getId(),
                 attempt.getStudentProfileId(),
                 attempt.getCourseId(),
                 attempt.getResourceId(),
+                attempt.getTopic(),
                 attempt.getScore(),
                 attempt.getMaxScore(),
                 attempt.getCorrectCount(),
                 attempt.getTotalCount(),
                 attempt.getWeakPoints(),
-                attempt.getSubmittedAt());
+                attempt.getMasteryLevel(),
+                attempt.getQuestionsJson(),
+                attempt.getAnswersJson(),
+                attempt.getGradingJson(),
+                attempt.getSubmittedAt(),
+                attempt.getCreatedAt());
     }
-}
-package com.qqisdebugging.softwarecup.backend.learning;
-
-import com.qqisdebugging.softwarecup.backend.agent.AssessmentAnswer;
-import com.qqisdebugging.softwarecup.backend.agent.AssessmentGradeAgentResponse;
-import com.qqisdebugging.softwarecup.backend.agent.AssessmentQuestion;
-import java.time.Instant;
-import java.util.List;
-
-public record QuizAttemptResponse(
-        String id,
-        String studentProfileId,
-        String courseId,
-        String topic,
-        Integer score,
-        Integer maxScore,
-        String masteryLevel,
-        List<AssessmentQuestion> questions,
-        List<AssessmentAnswer> answers,
-        AssessmentGradeAgentResponse grading,
-        Instant createdAt) {
 }

@@ -11,6 +11,8 @@ import com.qqisdebugging.softwarecup.backend.learning.LearningService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.List;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -158,7 +160,10 @@ public class GenerationTaskRunner {
                     context.task().getTopic(),
                     resourceType,
                     modality,
-                    context.task().getPrompt()));
+                    context.task().getPrompt(),
+                    List.of(),
+                    List.of(context.course().getDescription(), context.course().getSyllabusJson()),
+                    Arrays.stream(ResourceType.values()).map(ResourceType::displayName).toList()));
             transactions.recordInvocation(
                     taskId,
                     step.getId(),

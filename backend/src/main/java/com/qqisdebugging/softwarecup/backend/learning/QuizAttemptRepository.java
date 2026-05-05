@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, String> {
     List<QuizAttempt> findTop20ByStudentProfileIdAndCourseIdOrderBySubmittedAtDesc(String studentProfileId, String courseId);
+
+    List<QuizAttempt> findTop30ByStudentProfileIdOrderByCreatedAtDesc(String studentProfileId);
 }

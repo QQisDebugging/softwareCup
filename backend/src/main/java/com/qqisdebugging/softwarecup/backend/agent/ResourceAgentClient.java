@@ -1,5 +1,7 @@
 package com.qqisdebugging.softwarecup.backend.agent;
 
+import java.util.Map;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -41,5 +43,14 @@ public class ResourceAgentClient {
                 .body(request)
                 .retrieve()
                 .body(AssessmentGradeAgentResponse.class);
+    }
+
+    public Map<String, Object> proxy(String agentPath, Map<String, Object> request) {
+        return resourceAgentRestClient.post()
+                .uri(agentPath)
+                .body(request)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {
+                });
     }
 }

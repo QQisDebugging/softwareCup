@@ -210,7 +210,7 @@ public class LearningService {
         if (paths.isEmpty()) {
             return;
         }
-        List<LearningPathNode> nodes = nodeRepository.findByPathIdOrderByNodeOrderAsc(paths.getFirst().getId());
+        List<LearningPathNode> nodes = nodeRepository.findByPathIdOrderByNodeOrderAsc(paths.get(0).getId());
         for (LearningPathNode node : nodes) {
             if (node.getResourceId() == null || node.getResourceId().isBlank()) {
                 node.attachResource(resourceId);
