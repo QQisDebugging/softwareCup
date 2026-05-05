@@ -13,6 +13,8 @@ public record GenerationTaskResponse(
         String resultSummary,
         String errorMessage,
         String createdResourceId,
+        Integer progressPercent,
+        String currentStep,
         Instant createdAt,
         Instant updatedAt) {
     static GenerationTaskResponse from(GenerationTask task) {
@@ -27,6 +29,8 @@ public record GenerationTaskResponse(
                 task.getResultSummary(),
                 task.getErrorMessage(),
                 task.getCreatedResourceId(),
+                task.getProgressPercent(),
+                task.getCurrentStep(),
                 task.getCreatedAt(),
                 task.getUpdatedAt());
     }

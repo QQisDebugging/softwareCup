@@ -81,7 +81,7 @@ $task = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/tasks/reso
   studentProfileId = $profile.profile.id
   courseId = $course.id
   topic = 'Spring Boot Controller 与 REST API'
-  resourceType = '微课讲义'
+  resourceType = '课程讲解文档'
   modality = '文本+图解脚本'
   prompt = '面向 Java 基础较弱的大二学生，用项目案例讲解 Controller、DTO 和 Service 分层。'
 } | ConvertTo-Json)

@@ -6,19 +6,22 @@ public record LearningEventResponse(
         String id,
         String studentProfileId,
         String courseId,
+        String resourceId,
         String eventType,
-        String topic,
-        String payloadJson,
+        Integer durationSeconds,
+        Integer feedbackScore,
+        String eventPayload,
         Instant createdAt) {
-
     public static LearningEventResponse from(LearningEvent event) {
         return new LearningEventResponse(
                 event.getId(),
                 event.getStudentProfileId(),
                 event.getCourseId(),
+                event.getResourceId(),
                 event.getEventType(),
-                event.getTopic(),
-                event.getPayloadJson(),
+                event.getDurationSeconds(),
+                event.getFeedbackScore(),
+                event.getEventPayload(),
                 event.getCreatedAt());
     }
 }

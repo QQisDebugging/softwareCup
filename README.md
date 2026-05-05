@@ -74,3 +74,23 @@ Python 智能体新增学习路径、知识图谱、防幻觉审计、教师诊�
 ## 讯飞工具接入说明
 
 比赛要求选用科大讯飞相关工具。当前 Python 主程支持通过 `RESOURCE_AGENT_PROVIDER=xfyun_spark` 接入讯飞星火；未配置密钥或调用失败时会自动降级到本地生成器，保证演示链路不中断。真实密钥通过本地 `.env` 或系统环境变量注入，不提交到仓库。
+## 多智能体与学习闭环接口
+
+当前后端已经把资源生成从单个 `resource-agent` 升级为可观测的多智能体任务链。一次资源生成任务会依次记录：画像分析、知识诊断、路径规划、文档生成、题库生成、思维导图生成、实操案例生成和安全审核。
+
+新增接口：
+
+- `GET /api/agents`
+- `GET /api/resource-types`
+- `GET /api/tasks/{taskId}/steps`
+- `GET /api/tasks/{taskId}/events`
+- `GET /api/tasks/{taskId}/model-invocations`
+- `GET /api/tasks/{taskId}/audits`
+- `GET /api/learning/paths?studentProfileId=...`
+- `GET /api/learning/recommendations?studentProfileId=...`
+- `POST /api/learning/events`
+- `POST /api/learning/quiz-attempts`
+- `GET /api/learning/mastery?studentProfileId=...&courseId=...`
+- `GET /api/learning/evaluation-reports?studentProfileId=...&courseId=...`
+
+固定资源类型覆盖 6 类：课程讲解文档、知识点思维导图、练习题/测验、拓展阅读、实操案例、视频讲解脚本/动画脚本。
