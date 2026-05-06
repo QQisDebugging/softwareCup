@@ -9,7 +9,9 @@ import com.qqisdebugging.softwarecup.backend.course.LearningResourceRepository;
 import com.qqisdebugging.softwarecup.backend.course.ResourceType;
 import com.qqisdebugging.softwarecup.backend.profile.ProfileService;
 import com.qqisdebugging.softwarecup.backend.profile.StudentProfile;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -146,10 +148,76 @@ public class GenerationTaskTransactions {
     }
 
     @Transactional
+    public LearningResource replaceResourceContent(String resourceId, String revisedContent) {
+        LearningResource resource = resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new NotFoundException("Learning resource not found: " + resourceId));
+        resource.replaceContent(revisedContent);
+        return resourceRepository.save(resource);
+    }
+
+    @Transactional
     public void markSucceeded(String taskId, String resourceId, String summary) {
         GenerationTask task = requireTask(taskId);
         task.markSucceeded(resourceId, summary);
         taskRepository.save(task);
+    }
+
+    @Transactional
+    public void saveAgentAudits(
+            String taskId,
+            String resourceId,
+            Course course,
+            LearningResource resource,
+            Map<String, Object> auditResponse) {
+        int score = intValue(auditResponse.get("overallScore"), 0);
+        double citationCoverage = doubleValue(auditResponse.get("citationCoverage"), 0.0);
+        int unsupportedCount = collectionSize(auditResponse.get("unsupportedClaims"));
+        int riskyCount = collectionSize(auditResponse.get("riskyClaims"));
+        int citationCount = collectionSize(auditResponse.get("citations"));
+        String summary = valueOrFallback(textValue(auditResponse.get("summary")), "内容审核智能体已完成审核。");
+
+        boolean evidenceReview = citationCount == 0 || citationCoverage < 0.40;
+        boolean accuracyReview = unsupportedCount > 0 || score < 75;
+        boolean safetyReview = riskyCount > 0 || score < 60;
+        boolean finalReview = evidenceReview || accuracyReview || safetyReview;
+
+        auditRepository.saveAll(List.of(
+                new GenerationAudit(
+                        taskId,
+                        resourceId,
+                        "COURSE_EVIDENCE",
+                        evidenceReview ? "REVIEW_REQUIRED" : "PASSED",
+                        "课程资料证据审核：课程=" + course.getTitle()
+                                + "；引用片段=" + citationCount
+                                + "；引用覆盖率=" + citationCoverage
+                                + "；" + summary,
+                        evidenceReview),
+                new GenerationAudit(
+                        taskId,
+                        resourceId,
+                        "ACADEMIC_ACCURACY",
+                        accuracyReview ? "REVIEW_REQUIRED" : "PASSED",
+                        "学术准确性审核：未支撑断言=" + unsupportedCount
+                                + "；综合可信分=" + score
+                                + "；已将证据不足内容写入修订提示或要求教师复核。",
+                        accuracyReview),
+                new GenerationAudit(
+                        taskId,
+                        resourceId,
+                        "CONTENT_SAFETY",
+                        safetyReview ? "REVIEW_REQUIRED" : "PASSED",
+                        "内容安全审核：风险内容=" + riskyCount
+                                + "；已过滤密钥泄露、代写作弊、绝对化承诺和敏感违规表达。",
+                        safetyReview),
+                new GenerationAudit(
+                        taskId,
+                        resourceId,
+                        "HUMAN_REVIEW_GATE",
+                        finalReview ? "REVIEW_REQUIRED" : "PASSED",
+                        finalReview
+                                ? "存在证据覆盖不足、事实性断言待复核或安全风险，前端应展示人工复核标识。"
+                                : "证据覆盖、学术准确性和内容安全均通过自动审核。",
+                        finalReview)));
     }
 
     @Transactional
@@ -213,6 +281,43 @@ public class GenerationTaskTransactions {
     private TaskStep requireStep(String stepId) {
         return taskStepRepository.findById(stepId)
                 .orElseThrow(() -> new NotFoundException("Task step not found: " + stepId));
+    }
+
+    private int collectionSize(Object value) {
+        if (value instanceof Collection<?> collection) {
+            return collection.size();
+        }
+        return 0;
+    }
+
+    private int intValue(Object value, int fallback) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        try {
+            return value == null ? fallback : Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return fallback;
+        }
+    }
+
+    private double doubleValue(Object value, double fallback) {
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        try {
+            return value == null ? fallback : Double.parseDouble(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return fallback;
+        }
+    }
+
+    private String textValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isBlank() ? null : text;
     }
 
     private String valueOrFallback(String value, String fallback) {

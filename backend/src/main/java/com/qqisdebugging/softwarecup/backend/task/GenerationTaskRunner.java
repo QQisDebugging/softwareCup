@@ -12,7 +12,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -85,7 +87,7 @@ public class GenerationTaskRunner {
                     "资源=" + resource.getTitle() + "；学习路径=" + path.title(),
                     "已生成 6 页 PPT 课件/课堂讲稿大纲：学习目标、先修诊断、流程拆解、易错点、实操任务和画像更新。");
 
-            runSafetyReviewStep(taskId, context, resource);
+            resource = runSafetyReviewStep(taskId, context, resource);
 
             learningService.recommendGeneratedResource(
                     context.profile(),
@@ -214,12 +216,54 @@ public class GenerationTaskRunner {
         return resource;
     }
 
-    private void runSafetyReviewStep(
+    private LearningResource runSafetyReviewStep(
             String taskId,
             GenerationTaskTransactions.ResourceGenerationContext context,
             LearningResource resource) {
         TaskStep step = transactions.startStep(taskId, "SAFETY_REVIEWER", "资源=" + resource.getTitle());
         publish(taskId, "STEP_STARTED", step.getProgressPercent() - 8, step.getStepName(), step.getStatus(), step.getInputSummary());
+        long start = System.nanoTime();
+        try {
+            Map<String, Object> auditResponse = resourceAgentClient.proxy("/agents/safety/audit", auditRequest(context, resource));
+            LearningResource reviewedResource = applyAuditRevision(resource, auditResponse);
+            transactions.saveAgentAudits(taskId, reviewedResource.getId(), context.course(), reviewedResource, auditResponse);
+            transactions.recordInvocation(
+                    taskId,
+                    step.getId(),
+                    agentProperties.getProvider(),
+                    agentProperties.getModel(),
+                    promptHash(resource.getContent()),
+                    "调用内容安全审核智能体：事实性断言、引用覆盖、敏感违规信息过滤",
+                    elapsedMs(start),
+                    "SUCCEEDED",
+                    false,
+                    null);
+            TaskStep done = transactions.succeedStep(taskId, step.getId(), auditOutputSummary(auditResponse));
+            publish(taskId, "STEP_SUCCEEDED", done.getProgressPercent(), done.getStepName(), done.getStatus(), done.getOutputSummary());
+            return reviewedResource;
+        } catch (Exception ex) {
+            String message = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+            transactions.recordInvocation(
+                    taskId,
+                    step.getId(),
+                    agentProperties.getProvider(),
+                    agentProperties.getModel(),
+                    promptHash(resource.getContent()),
+                    "内容安全审核智能体调用失败，准备进入本地审核兜底",
+                    elapsedMs(start),
+                    "FAILED",
+                    false,
+                    message);
+            runFallbackSafetyReviewStep(taskId, context, resource, step);
+            return resource;
+        }
+    }
+
+    private void runFallbackSafetyReviewStep(
+            String taskId,
+            GenerationTaskTransactions.ResourceGenerationContext context,
+            LearningResource resource,
+            TaskStep step) {
         long start = System.nanoTime();
         transactions.saveAudits(taskId, resource.getId(), context.course(), resource);
         transactions.recordInvocation(
@@ -235,6 +279,76 @@ public class GenerationTaskRunner {
                 null);
         TaskStep done = transactions.succeedStep(taskId, step.getId(), "已完成课程引用、学术准确性和内容安全审核。");
         publish(taskId, "STEP_SUCCEEDED", done.getProgressPercent(), done.getStepName(), done.getStatus(), done.getOutputSummary());
+    }
+
+    private Map<String, Object> auditRequest(
+            GenerationTaskTransactions.ResourceGenerationContext context,
+            LearningResource resource) {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("studentProfileId", context.profile().getId());
+        request.put("courseId", context.course().getId());
+        request.put("courseTitle", context.course().getTitle());
+        request.put("topic", context.task().getTopic());
+        request.put("content", resource.getContent());
+        request.put("documentTexts", List.of(context.course().getDescription(), context.course().getSyllabusJson()));
+        return request;
+    }
+
+    private LearningResource applyAuditRevision(LearningResource resource, Map<String, Object> auditResponse) {
+        String revisedContent = textValue(auditResponse.get("revisedContent"));
+        if (!shouldUseRevisedContent(auditResponse, revisedContent, resource.getContent())) {
+            return resource;
+        }
+        return transactions.replaceResourceContent(resource.getId(), revisedContent);
+    }
+
+    private boolean shouldUseRevisedContent(
+            Map<String, Object> auditResponse,
+            String revisedContent,
+            String originalContent) {
+        if (revisedContent == null || revisedContent.equals(originalContent)) {
+            return false;
+        }
+        int score = intValue(auditResponse.get("overallScore"), 100);
+        return score < 90
+                || collectionSize(auditResponse.get("unsupportedClaims")) > 0
+                || collectionSize(auditResponse.get("riskyClaims")) > 0;
+    }
+
+    private String auditOutputSummary(Map<String, Object> auditResponse) {
+        int score = intValue(auditResponse.get("overallScore"), 0);
+        int unsupported = collectionSize(auditResponse.get("unsupportedClaims"));
+        int risky = collectionSize(auditResponse.get("riskyClaims"));
+        return "内容安全审核完成：可信分=" + score
+                + "；未支撑断言=" + unsupported
+                + "；风险内容=" + risky
+                + "。证据不足或风险内容已写入审核记录和资源修订稿。";
+    }
+
+    private int collectionSize(Object value) {
+        if (value instanceof java.util.Collection<?> collection) {
+            return collection.size();
+        }
+        return 0;
+    }
+
+    private int intValue(Object value, int fallback) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        try {
+            return value == null ? fallback : Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return fallback;
+        }
+    }
+
+    private String textValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isBlank() ? null : text;
     }
 
     private ResourceAgentResponse fallbackResource(

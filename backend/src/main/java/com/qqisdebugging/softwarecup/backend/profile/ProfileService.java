@@ -1,5 +1,6 @@
 package com.qqisdebugging.softwarecup.backend.profile;
 
+import com.qqisdebugging.softwarecup.backend.agent.AgentArtifactService;
 import com.qqisdebugging.softwarecup.backend.common.NotFoundException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -17,14 +18,17 @@ public class ProfileService {
     private final StudentProfileRepository profileRepository;
     private final ProfileDimensionRepository dimensionRepository;
     private final ProfileHistoryRepository historyRepository;
+    private final AgentArtifactService agentArtifactService;
 
     public ProfileService(
             StudentProfileRepository profileRepository,
             ProfileDimensionRepository dimensionRepository,
-            ProfileHistoryRepository historyRepository) {
+            ProfileHistoryRepository historyRepository,
+            AgentArtifactService agentArtifactService) {
         this.profileRepository = profileRepository;
         this.dimensionRepository = dimensionRepository;
         this.historyRepository = historyRepository;
+        this.agentArtifactService = agentArtifactService;
     }
 
     @Transactional
@@ -39,9 +43,12 @@ public class ProfileService {
                 request.constraintsText(),
                 summary);
         StudentProfile saved = profileRepository.save(profile);
+        List<ProfileDimensionRequest> agentDimensions = inferDimensionsWithAgent(saved.getId(), request, summary);
         upsertDimensions(
                 saved,
-                mergeInitialDimensions(defaultDimensions(request, summary), request.dimensions()),
+                mergeInitialDimensions(
+                        mergeInitialDimensions(defaultDimensions(request, summary), agentDimensions),
+                        request.dimensions()),
                 "DIMENSION_CREATED",
                 "dialogue_profile_builder",
                 "对话式学习画像初始构建");
@@ -166,6 +173,54 @@ public class ProfileService {
                         new BigDecimal("0.60")));
     }
 
+    private List<ProfileDimensionRequest> inferDimensionsWithAgent(String profileId, BuildProfileRequest request, String summary) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("studentProfileId", profileId);
+        payload.put("courseTitle", request.major());
+        payload.put("declaredMajor", request.major());
+        payload.put("currentLevel", request.currentLevel());
+        payload.put("learningGoal", request.learningGoal());
+        payload.put("topic", request.learningGoal());
+        payload.put("preferences", request.preferences());
+        payload.put("constraintsText", request.constraintsText());
+        payload.put("dialogueTurns", request.dialogueTurns());
+        payload.put("documentTexts", List.of(summary));
+        try {
+            Map<String, Object> response = agentArtifactService.invokeAndStore(
+                    "PROFILE_INFERENCE_MAIN_FLOW",
+                    "/agents/profile/infer",
+                    payload);
+            return parseAgentDimensions(response.get("dimensions"));
+        } catch (RuntimeException ex) {
+            return List.of();
+        }
+    }
+
+    private List<ProfileDimensionRequest> parseAgentDimensions(Object rawDimensions) {
+        if (!(rawDimensions instanceof List<?> items)) {
+            return List.of();
+        }
+        List<ProfileDimensionRequest> dimensions = new ArrayList<>();
+        for (Object item : items) {
+            if (!(item instanceof Map<?, ?> map)) {
+                continue;
+            }
+            String key = stringValue(map.get("dimensionKey"));
+            String value = stringValue(map.get("value"));
+            if (key == null || value == null) {
+                continue;
+            }
+            dimensions.add(new ProfileDimensionRequest(
+                    key,
+                    stringValue(map.get("dimensionName")),
+                    value,
+                    stringValue(map.get("evidence")),
+                    decimalValue(map.get("confidenceScore")),
+                    valueOrFallback(stringValue(map.get("source")), "profile_inference_agent")));
+        }
+        return dimensions;
+    }
+
     private List<ProfileDimensionRequest> mergeInitialDimensions(
             List<ProfileDimensionRequest> defaults,
             List<ProfileDimensionRequest> overrides) {
@@ -282,6 +337,28 @@ public class ProfileService {
 
     private String inferMasteryWeakness(String currentLevel, String summary) {
         return "当前水平：" + currentLevel + "；薄弱点将结合资源浏览、练习得分和答疑记录持续更新。";
+    }
+
+    private String stringValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isBlank() ? null : text;
+    }
+
+    private BigDecimal decimalValue(Object value) {
+        if (value == null) {
+            return DEFAULT_CONFIDENCE;
+        }
+        if (value instanceof Number number) {
+            return BigDecimal.valueOf(number.doubleValue());
+        }
+        try {
+            return new BigDecimal(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return DEFAULT_CONFIDENCE;
+        }
     }
 
     private String requireText(String value, String message) {

@@ -30,6 +30,8 @@ $profile = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/profile
 - `RESOURCE_PREFERENCE`：资源偏好
 - `MASTERY_WEAKNESS`：掌握度/薄弱点
 
+默认流程会先调用 Python `ProfileInferenceAgent` 做自然语言画像抽取，并在 `agent_artifacts` 中记录 `PROFILE_INFERENCE_MAIN_FLOW` 产物；如果 Python 服务不可用，后端会降级使用规则画像，接口仍可返回完整画像。
+
 学习行为写入后还会自动维护：
 
 - `LEARNING_BEHAVIOR_PATTERN`：学习行为模式
@@ -96,6 +98,8 @@ Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)/model-invocations
 Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)/audits
 Invoke-RestMethod http://localhost:8080/api/courses/$($course.id)/resources
 ```
+
+`/api/tasks/{taskId}/audits` 会返回课程证据、学术准确性、内容安全和 `HUMAN_REVIEW_GATE` 四类审核记录。资源生成任务会强制调用 Python `ContentAuditAgent`；如果发现未支撑断言、绝对化承诺、密钥泄露、代写作弊或敏感违规表达，会写入 `REVIEW_REQUIRED` 并把修订稿写回资源正文。
 
 资源类型固定覆盖 7 类，可直接给前端做筛选项：
 
