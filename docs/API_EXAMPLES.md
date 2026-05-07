@@ -177,6 +177,14 @@ $pathPlan = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learni
 Invoke-RestMethod "http://localhost:8080/api/agent-artifacts?studentProfileId=$($profile.profile.id)"
 ```
 
+## 初赛评委模式报告
+
+```powershell
+Invoke-RestMethod "http://localhost:8080/api/demo/readiness-report?studentProfileId=$($profile.profile.id)&courseId=$($course.id)&taskId=$($task.id)"
+```
+
+该接口会聚合画像维度、画像历史、智能体数量、资源类型数量、任务步骤、模型调用、内容审核、学习路径、资源推荐、学习行为、测评记录、掌握度、评估报告和 Agent 产物，按赛题要求输出达成状态、分数、证据接口和推荐演示顺序。适合给前端做“评委模式/答辩看板”。
+
 ## Python 智能体增强接口：先修诊断、资源策展、档案报告、链路追踪
 
 这些接口目前由 Python 主程直接提供，Java 后端可按 `docs/JAVA_VUE3_INTEGRATION_GUIDE.md` 中的建议封装为 `/api/learning/*`。
