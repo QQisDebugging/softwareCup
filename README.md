@@ -97,5 +97,8 @@ Python 智能体新增学习路径、知识图谱、防幻觉审计、教师诊�
 - `POST /api/learning/quiz-attempts`
 - `GET /api/learning/mastery?studentProfileId=...&courseId=...`
 - `GET /api/learning/evaluation-reports?studentProfileId=...&courseId=...`
+- `GET /api/demo/readiness-report?studentProfileId=...&courseId=...&taskId=...`
 
 固定资源类型覆盖 7 类：课程讲解文档、知识点思维导图、练习题/测验、拓展阅读、实操案例、视频讲解脚本/动画脚本、PPT课件/课堂讲稿。
+
+`/api/demo/readiness-report` 是初赛评委模式接口，会把赛题基本功能、可选加分项和非功能要求映射成量化指标、达成状态、证据接口和推荐演示顺序。前端可把它做成答辩看板，PPT/视频中也可以截图展示“8 维画像、9 个智能体、7 类资源、防幻觉审核、学习闭环”这些能力的真实数据证据。
