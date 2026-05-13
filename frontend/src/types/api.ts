@@ -279,5 +279,7 @@ export interface AgentTool {
   title: string
   endpoint: string
   category: string
+  description?: string
+  proxyTarget?: string
   samplePayload: ApiRecord
 }

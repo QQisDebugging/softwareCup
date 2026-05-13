@@ -75,10 +75,10 @@ onMounted(() => {
         </div>
         <div class="topbar-actions">
           <StatusPill
-            :status="app.backendOnline ? '后端在线' : app.healthError ? '后端离线' : '检测中'"
+            :status="app.checking ? '检测中' : app.backendOnline ? '后端在线' : app.healthError ? '后端离线' : '待检测'"
             :tone="app.backendOnline ? 'ok' : app.healthError ? 'danger' : 'warn'"
           />
-          <button class="icon-button" title="刷新后端状态" @click="app.refreshHealth">
+          <button class="icon-button" title="刷新后端状态" :disabled="app.checking" @click="app.refreshHealth">
             <RefreshCw :size="18" />
           </button>
         </div>

@@ -1,4 +1,14 @@
+import { hasMeaningfulValue, safeStringify } from '@/utils/format'
+
+function notifyEmptyDownload() {
+  window.alert('暂无可下载内容，请先完成一次查询或生成。')
+}
+
 export function downloadText(filename: string, text: string, type = 'text/plain;charset=utf-8') {
+  if (!hasMeaningfulValue(text)) {
+    notifyEmptyDownload()
+    return false
+  }
   const blob = new Blob([text], { type })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -6,10 +16,15 @@ export function downloadText(filename: string, text: string, type = 'text/plain;
   link.download = filename
   link.click()
   URL.revokeObjectURL(url)
+  return true
 }
 
 export function downloadJson(filename: string, value: unknown) {
-  downloadText(filename, JSON.stringify(value, null, 2), 'application/json;charset=utf-8')
+  if (!hasMeaningfulValue(value)) {
+    notifyEmptyDownload()
+    return false
+  }
+  return downloadText(filename, safeStringify(value), 'application/json;charset=utf-8')
 }
 
 export function safeFilePart(value: string) {
@@ -17,7 +32,7 @@ export function safeFilePart(value: string) {
 }
 
 export function jsonToMarkdown(title: string, value: unknown) {
-  return `# ${title}\n\n\`\`\`json\n${JSON.stringify(value, null, 2)}\n\`\`\`\n`
+  return `# ${title}\n\n\`\`\`json\n${safeStringify(value)}\n\`\`\`\n`
 }
 
 export async function copyText(value: string) {

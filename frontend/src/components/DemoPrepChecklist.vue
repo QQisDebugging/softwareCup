@@ -11,16 +11,19 @@ const javaStatus = ref<ProbeStatus>('checking')
 const pythonStatus = ref<ProbeStatus>('checking')
 const copied = ref('')
 const checking = ref(false)
+const javaError = ref('')
+const pythonError = ref('')
 
 const pythonHealthUrl = 'http://localhost:9001/health'
 const javaHealthUrl = `${apiBaseUrl}/health`
+const apiLooksDefault = computed(() => apiBaseUrl === 'http://localhost:8080/api')
 
 const commands = [
   {
     key: 'python',
     title: '启动 Python Agent',
     command:
-      'cd D:\\competiton\\software\\softwareCup\\agents\\resource-agent\n.\\.venv\\Scripts\\Activate.ps1\nuvicorn main:app --host 0.0.0.0 --port 9001 --reload',
+      'cd D:\\competiton\\software\\softwareCup\\agents\\resource-agent\n.\\.venv\\Scripts\\python.exe -m uvicorn main:app --host 0.0.0.0 --port 9001 --reload',
   },
   {
     key: 'backend',
@@ -39,19 +42,42 @@ const pythonText = computed(() =>
   pythonStatus.value === 'up' ? 'Agent 在线' : pythonStatus.value === 'checking' ? '检测中' : '需要启动 Python Agent',
 )
 
+async function probePythonAgent() {
+  try {
+    const response = await fetch(pythonHealthUrl, { method: 'GET', cache: 'no-store' })
+    if (!response.ok) throw new Error(String(response.status))
+    return { ok: true, corsLimited: false }
+  } catch {
+    try {
+      await fetch(pythonHealthUrl, { method: 'GET', mode: 'no-cors', cache: 'no-store' })
+      return { ok: true, corsLimited: true }
+    } catch {
+      return { ok: false, corsLimited: false }
+    }
+  }
+}
+
 async function checkServices() {
   checking.value = true
   javaStatus.value = 'checking'
   pythonStatus.value = 'checking'
+  javaError.value = ''
+  pythonError.value = ''
   const [javaResult, pythonResult] = await Promise.allSettled([
     healthApi.getHealth(),
-    fetch(pythonHealthUrl, { method: 'GET' }).then((response) => {
-      if (!response.ok) throw new Error(String(response.status))
-      return response.json()
-    }),
+    probePythonAgent(),
   ])
   javaStatus.value = javaResult.status === 'fulfilled' && String(javaResult.value.status || '').toUpperCase() === 'UP' ? 'up' : 'down'
-  pythonStatus.value = pythonResult.status === 'fulfilled' ? 'up' : 'down'
+  pythonStatus.value = pythonResult.status === 'fulfilled' && pythonResult.value.ok ? 'up' : 'down'
+  if (javaStatus.value === 'down') {
+    javaError.value = 'Spring Boot 未连通，请在 backend 目录启动后端。'
+  }
+  if (pythonResult.status === 'fulfilled' && pythonResult.value.corsLimited) {
+    pythonError.value = 'Agent 端口可访问，但浏览器读取健康详情受 CORS 限制；主链路仍通过 Java 后端代理。'
+  }
+  if (pythonStatus.value === 'down') {
+    pythonError.value = 'Python Agent 未连通，请在 resource-agent 目录启动 uvicorn。'
+  }
   checking.value = false
 }
 
@@ -74,6 +100,7 @@ onMounted(checkServices)
         <div>
           <strong>Java 后端</strong>
           <small>{{ javaHealthUrl }}</small>
+          <small v-if="javaError" class="status-help">{{ javaError }}</small>
         </div>
         <StatusPill :status="javaText" :tone="javaStatus === 'up' ? 'ok' : javaStatus === 'checking' ? 'warn' : 'danger'" />
       </div>
@@ -82,6 +109,7 @@ onMounted(checkServices)
         <div>
           <strong>Python Agent</strong>
           <small>{{ pythonHealthUrl }}</small>
+          <small v-if="pythonError" class="status-help">{{ pythonError }}</small>
         </div>
         <StatusPill :status="pythonText" :tone="pythonStatus === 'up' ? 'ok' : pythonStatus === 'checking' ? 'warn' : 'danger'" />
       </div>
@@ -90,7 +118,9 @@ onMounted(checkServices)
         <div>
           <strong>前端 API 地址</strong>
           <small>{{ apiBaseUrl }}</small>
+          <small v-if="!apiLooksDefault" class="status-help">如不是本机联调，请检查 frontend/.env.development。</small>
         </div>
+        <StatusPill :status="apiLooksDefault ? '已配置' : '需确认'" :tone="apiLooksDefault ? 'ok' : 'warn'" />
         <button class="ghost-button" :disabled="checking" @click="checkServices"><RefreshCw :size="16" />重新检测</button>
       </div>
     </div>
@@ -111,7 +141,7 @@ onMounted(checkServices)
 
     <div v-if="javaStatus === 'down' || pythonStatus === 'down'" class="notice warn-notice">
       <XCircle :size="18" />
-      <span>如果接口返回空或失败，先按上面的顺序启动 Python Agent、Spring Boot 后端，再刷新前端页面。</span>
+      <span>如果接口返回空或失败，请分别打开独立 PowerShell 终端启动 Python Agent、Spring Boot 后端，再刷新前端页面。</span>
     </div>
   </div>
 </template>

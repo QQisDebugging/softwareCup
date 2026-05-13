@@ -1,6 +1,6 @@
-import { get } from '@/api/http'
+import { asObject, get } from '@/api/http'
 import type { HealthResponse } from '@/types/api'
 
 export const healthApi = {
-  getHealth: () => get<HealthResponse>('/health'),
+  getHealth: async () => asObject<HealthResponse>(await get<unknown>('/health'), { service: 'software-cup-learning-backend', status: 'UNKNOWN' }),
 }
