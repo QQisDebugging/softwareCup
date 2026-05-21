@@ -25,6 +25,7 @@
 - 项目审查：`ProjectReviewAgent` 审查多文件项目代码，输出文件指标、风险等级、分层缺陷、测试缺口、安全提示、质量门禁和重构任务。
 - 班级分析：`ClassAnalyticsAgent` 汇总学生快照，输出班级趋势、学生风险画像、班级掌握度、参与度、干预分组和资源缺口。
 - 演示规划：`DemoScenarioPlannerAgent` 根据时间限制和可用端点生成演示时间轴、场景话术、风险预案、备用方案和成功指标。
+- 国赛增强：`competition_enhancements.py` 增加 RAG 质量评测、Agent run 回放、人审门禁、讯飞 TTS 语音包、OCR 题目解析、GraphRAG 查询、错题本、课程覆盖率和答辩材料包。
 - 个性化路径：生成结果中包含按画像层级调整的学习步骤、资源推送建议和画像更新建议。
 - 防幻觉：输出 RAG 资料来源、质量检查和空检索降级提示。
 - 响应体验：保留普通 JSON 接口，并新增 Markdown 流式接口。
@@ -56,6 +57,7 @@
 - `learning_agent/project_review.py`：项目级代码审查 Agent，支撑 AI 辅助编程和工程实践反馈。
 - `learning_agent/class_analytics.py`：班级学习分析 Agent，支撑教师端学情看板和分层干预。
 - `learning_agent/demo_planner.py`：演示规划 Agent，支撑答辩脚本、录屏顺序和风险预案。
+- `learning_agent/competition_enhancements.py`：国赛增强 Agent 集合，支撑 RAG 评测、run 持久化、人审、语音包、OCR、GraphRAG、错题本、课程覆盖和答辩包。
 
 ## 稳定性优化
 
@@ -64,6 +66,8 @@
 - FastAPI 使用 lifespan 加载默认知识库，避免 startup 弃用告警。
 - 后端异步生成任务调整为事务提交后启动，避免异步线程提前读取未提交任务。
 - Python 返回的 `title/resourceType/modality/targetLevel` 会按 Java 落库字段长度裁剪，降低大模型长标题导致任务失败的风险。
+- `llm.py` 同时支持讯飞 `XFYUN_API_PASSWORD` 和 `XFYUN_API_KEY/XFYUN_API_SECRET` 两种凭据模式，`/agents/providers/status` 会返回当前凭据模式、fallback 状态和最近错误。
+- Agent run 记录写入 `agents/resource-agent/data/agent_runs.jsonl`，该目录被 `.gitignore` 排除，适合演示回放但不会污染仓库。
 
 ## 与 Java 后端的兼容性
 
@@ -108,6 +112,7 @@ python scripts/smoke_assessment_item_analysis.py
 python scripts/smoke_project_review.py
 python scripts/smoke_class_analytics.py
 python scripts/smoke_demo_planner.py
+python scripts/smoke_competition_enhancements.py
 python scripts/smoke_full_ai_agents.py
 uvicorn main:app --host 0.0.0.0 --port 9001 --reload
 ```
