@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LearningEventRepository extends JpaRepository<LearningEvent, String> {
     List<LearningEvent> findTop50ByStudentProfileIdOrderByCreatedAtDesc(String studentProfileId);
+
+    List<LearningEvent> findTop100ByStudentProfileIdOrderByCreatedAtDesc(String studentProfileId);
 }

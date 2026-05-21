@@ -11,6 +11,7 @@ from learning_agent.resource_templates import (
     infer_target_level,
     limit_text,
     mermaid_map,
+    ppt_outline,
     project_case,
     video_script,
 )
@@ -121,12 +122,13 @@ class ResourceGenerationWorkflow:
             "拓展阅读材料",
             "代码/项目实操案例",
             "多模态视频或动画脚本",
+            "PPT课件/课堂讲稿",
         ]
         plan = []
         for item in requested + defaults:
             if item not in plan:
                 plan.append(item)
-        return {"resource_plan": plan[:6]}
+        return {"resource_plan": plan[:8]}
 
     def _resource_writers(self, state: GenerationState) -> GenerationState:
         request = state["request"]
@@ -255,7 +257,10 @@ class ResourceGenerationWorkflow:
 {project_case(request.topic, request.courseTitle)}
 
 ## 多模态视频或动画脚本
-{video_script(request.topic, request.modality)}"""
+{video_script(request.topic, request.modality)}
+
+## PPT课件/课堂讲稿
+{ppt_outline(request.topic, request.courseTitle, target_level)}"""
 
     def _learning_path(self, request: ResourceAgentRequest, target_level: str) -> str:
         return f"""## 个性化学习路径

@@ -50,17 +50,17 @@ class ResourceCurationAgent:
             " ".join(request.resourceTypes),
             " ".join(request.weaknesses),
             " ".join(request.candidateResources),
-            "资源 推荐 策展 题库 实训 视频 文档",
+            "资源 推荐 策展 题库 实训 视频 文档 PPT 课件",
         ])
 
     def _default_resource_types(self, request: ResourceCurationRequest, target_level: str) -> list[str]:
         if "高阶" in target_level:
-            return ["拓展阅读", "项目实训", "代码实操", "综合测评", "同伴讲解任务"]
+            return ["拓展阅读", "项目实训", "代码实操", "综合测评", "PPT课件", "同伴讲解任务"]
         if "实践" in target_level:
-            return ["讲解文档", "实操案例", "代码练习", "错题复盘卡", "短视频脚本"]
+            return ["讲解文档", "实操案例", "代码练习", "错题复盘卡", "短视频脚本", "PPT课件"]
         if request.weaknesses:
-            return ["基础讲解文档", "知识点思维导图", "入口诊断题", "错题复盘卡", "短视频脚本"]
-        return ["讲解文档", "知识点思维导图", "练习题", "实操案例", "拓展阅读"]
+            return ["基础讲解文档", "知识点思维导图", "入口诊断题", "错题复盘卡", "短视频脚本", "PPT课件"]
+        return ["讲解文档", "知识点思维导图", "练习题", "实操案例", "拓展阅读", "PPT课件"]
 
     def _curated_resources(
         self,
@@ -99,6 +99,8 @@ class ResourceCurationAgent:
         if any(keyword in resource_type for keyword in ["项目", "实训", "代码", "实操"]):
             base += 10
         if any(keyword in resource_type for keyword in ["视频", "短视频", "分镜"]):
+            base += 4
+        if any(keyword in resource_type for keyword in ["PPT", "课件", "讲稿"]):
             base += 4
         if remaining <= 0:
             return max(8, min(base, 25))

@@ -119,6 +119,12 @@ Invoke-RestMethod "$aiBase/agents/runs/$($runRecord.runId)"
 - `RESOURCE_PREFERENCE`：资源偏好
 - `MASTERY_WEAKNESS`：掌握度/薄弱点
 
+默认流程会先调用 Python `ProfileInferenceAgent` 做自然语言画像抽取，并在 `agent_artifacts` 中记录 `PROFILE_INFERENCE_MAIN_FLOW` 产物；如果 Python 服务不可用，后端会降级使用规则画像，接口仍可返回完整画像。
+
+学习行为写入后还会自动维护：
+
+- `LEARNING_BEHAVIOR_PATTERN`：学习行为模式
+
 ## 查询画像维度和演化历史
 
 ```powershell
@@ -176,7 +182,18 @@ $task = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/tasks/reso
 } | ConvertTo-Json)
 
 Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)
+Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)/steps
+Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)/model-invocations
+Invoke-RestMethod http://localhost:8080/api/tasks/$($task.id)/audits
 Invoke-RestMethod http://localhost:8080/api/courses/$($course.id)/resources
+```
+
+`/api/tasks/{taskId}/audits` 会返回课程证据、学术准确性、内容安全和 `HUMAN_REVIEW_GATE` 四类审核记录。资源生成任务会强制调用 Python `ContentAuditAgent`；如果发现未支撑断言、绝对化承诺、密钥泄露、代写作弊或敏感违规表达，会写入 `REVIEW_REQUIRED` 并把修订稿写回资源正文。
+
+资源类型固定覆盖 7 类，可直接给前端做筛选项：
+
+```powershell
+Invoke-RestMethod http://localhost:8080/api/resource-types
 ```
 
 ## 学习闭环：辅导、测评、画像自动更新
@@ -216,6 +233,46 @@ Invoke-RestMethod http://localhost:8080/api/learning/events?studentProfileId=$($
 Invoke-RestMethod http://localhost:8080/api/learning/tutoring?studentProfileId=$($profile.profile.id)
 Invoke-RestMethod http://localhost:8080/api/learning/attempts?studentProfileId=$($profile.profile.id)
 ```
+
+普通学习行为也会写回画像、掌握度和阶段评估：
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/events -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  resourceId = $task.createdResourceId
+  eventType = 'FEEDBACK'
+  durationSeconds = 300
+  feedbackScore = 2
+  eventPayload = '{}'
+} | ConvertTo-Json)
+```
+
+## 查询 Agent 产物与证据
+
+高级 Agent 代理接口会自动保存结构化产物、引用、安全摘要、traceId 和耗时：
+
+```powershell
+$pathPlan = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/learning/path-plans -ContentType 'application/json' -Body (@{
+  studentProfileId = $profile.profile.id
+  courseId = $course.id
+  studentProfileSummary = $profile.profile.dialogueSummary
+  courseTitle = $course.title
+  topic = 'Spring Boot Controller 与 REST API'
+  traceId = 'demo-trace-001'
+  documentTexts = @('Controller 负责请求响应，Service 负责业务规则。')
+} | ConvertTo-Json -Depth 8)
+
+Invoke-RestMethod "http://localhost:8080/api/agent-artifacts?studentProfileId=$($profile.profile.id)"
+```
+
+## 初赛评委模式报告
+
+```powershell
+Invoke-RestMethod "http://localhost:8080/api/demo/readiness-report?studentProfileId=$($profile.profile.id)&courseId=$($course.id)&taskId=$($task.id)"
+```
+
+该接口会聚合画像维度、画像历史、智能体数量、资源类型数量、任务步骤、模型调用、内容审核、学习路径、资源推荐、学习行为、测评记录、掌握度、评估报告和 Agent 产物，按赛题要求输出达成状态、分数、证据接口和推荐演示顺序。适合给前端做“评委模式/答辩看板”。
 
 ## Python 智能体增强接口：先修诊断、资源策展、档案报告、链路追踪
 

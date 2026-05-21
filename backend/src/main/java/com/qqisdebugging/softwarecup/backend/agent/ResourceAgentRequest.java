@@ -1,5 +1,7 @@
 package com.qqisdebugging.softwarecup.backend.agent;
 
+import java.util.List;
+
 public record ResourceAgentRequest(
         String taskId,
         String studentProfileId,
@@ -9,5 +11,8 @@ public record ResourceAgentRequest(
         String topic,
         String resourceType,
         String modality,
-        String prompt) {
+        String prompt,
+        List<String> knowledgeBasePaths,
+        List<String> documentTexts,
+        List<String> targetResourceTypes) {
 }

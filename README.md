@@ -76,7 +76,11 @@ Python 智能体新增学习路径、知识图谱、防幻觉审计、教师诊�
 比赛要求选用科大讯飞相关工具。当前 Python 主程支持通过 `RESOURCE_AGENT_PROVIDER=xfyun_spark` 接入讯飞星火；未配置密钥或调用失败时会自动降级到本地生成器，保证演示链路不中断。真实密钥通过本地 `.env` 或系统环境变量注入，不提交到仓库。
 ## 多智能体与学习闭环接口
 
-当前后端已经把资源生成从单个 `resource-agent` 升级为可观测的多智能体任务链。一次资源生成任务会依次记录：画像分析、知识诊断、路径规划、文档生成、题库生成、思维导图生成、实操案例生成和安全审核。
+当前后端已经把资源生成从单个 `resource-agent` 升级为可观测的多智能体任务链。一次资源生成任务会依次记录：画像分析、知识诊断、路径规划、文档生成、题库生成、思维导图生成、实操案例生成、PPT 课件生成和安全审核。
+
+`POST /api/profiles/dialogue` 会优先调用 Python `ProfileInferenceAgent` 抽取 8 个画像维度，并把本次画像智能体产物写入 `agent_artifacts`；Python 服务不可用时自动降级为后端规则画像，保证演示链路不断。
+
+资源生成完成后会强制调用 `ContentAuditAgent` 做引用覆盖、事实性断言、敏感违规表达和人工复核门禁检查。审核结果写入 `generation_audits`，风险或证据不足时会把 `revisedContent` 写回资源正文，并产生 `HUMAN_REVIEW_GATE` 记录。
 
 新增接口：
 
@@ -86,11 +90,15 @@ Python 智能体新增学习路径、知识图谱、防幻觉审计、教师诊�
 - `GET /api/tasks/{taskId}/events`
 - `GET /api/tasks/{taskId}/model-invocations`
 - `GET /api/tasks/{taskId}/audits`
+- `GET /api/agent-artifacts?studentProfileId=...`
 - `GET /api/learning/paths?studentProfileId=...`
 - `GET /api/learning/recommendations?studentProfileId=...`
 - `POST /api/learning/events`
 - `POST /api/learning/quiz-attempts`
 - `GET /api/learning/mastery?studentProfileId=...&courseId=...`
 - `GET /api/learning/evaluation-reports?studentProfileId=...&courseId=...`
+- `GET /api/demo/readiness-report?studentProfileId=...&courseId=...&taskId=...`
 
-固定资源类型覆盖 6 类：课程讲解文档、知识点思维导图、练习题/测验、拓展阅读、实操案例、视频讲解脚本/动画脚本。
+固定资源类型覆盖 7 类：课程讲解文档、知识点思维导图、练习题/测验、拓展阅读、实操案例、视频讲解脚本/动画脚本、PPT课件/课堂讲稿。
+
+`/api/demo/readiness-report` 是初赛评委模式接口，会把赛题基本功能、可选加分项和非功能要求映射成量化指标、达成状态、证据接口和推荐演示顺序。前端可把它做成答辩看板，PPT/视频中也可以截图展示“8 维画像、9 个智能体、7 类资源、防幻觉审核、学习闭环”这些能力的真实数据证据。

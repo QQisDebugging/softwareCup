@@ -117,6 +117,13 @@ public class LearningResource {
         return content;
     }
 
+    public void replaceContent(String content) {
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("Resource content cannot be blank");
+        }
+        this.content = content;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }

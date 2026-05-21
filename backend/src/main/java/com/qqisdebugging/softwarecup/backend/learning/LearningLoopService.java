@@ -4,12 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qqisdebugging.softwarecup.backend.agent.AgentKnowledgeMatch;
-import com.qqisdebugging.softwarecup.backend.agent.AssessmentAnswer;
 import com.qqisdebugging.softwarecup.backend.agent.AssessmentGenerateAgentRequest;
 import com.qqisdebugging.softwarecup.backend.agent.AssessmentGenerateAgentResponse;
 import com.qqisdebugging.softwarecup.backend.agent.AssessmentGradeAgentRequest;
 import com.qqisdebugging.softwarecup.backend.agent.AssessmentGradeAgentResponse;
-import com.qqisdebugging.softwarecup.backend.agent.AssessmentQuestion;
 import com.qqisdebugging.softwarecup.backend.agent.ProfileDimensionUpdate;
 import com.qqisdebugging.softwarecup.backend.agent.ResourceAgentClient;
 import com.qqisdebugging.softwarecup.backend.agent.TutoringAgentRequest;
@@ -193,7 +191,7 @@ public class LearningLoopService {
     public List<QuizAttemptResponse> listQuizAttempts(String studentProfileId) {
         profileService.requireProfile(studentProfileId);
         return quizAttemptRepository.findTop30ByStudentProfileIdOrderByCreatedAtDesc(studentProfileId).stream()
-                .map(this::toQuizAttemptResponse)
+                .map(QuizAttemptResponse::from)
                 .toList();
     }
 
@@ -212,21 +210,6 @@ public class LearningLoopService {
                 session.getProvider(),
                 session.getFallbackUsed(),
                 session.getCreatedAt());
-    }
-
-    private QuizAttemptResponse toQuizAttemptResponse(QuizAttempt attempt) {
-        return new QuizAttemptResponse(
-                attempt.getId(),
-                attempt.getStudentProfileId(),
-                attempt.getCourseId(),
-                attempt.getTopic(),
-                attempt.getScore(),
-                attempt.getMaxScore(),
-                attempt.getMasteryLevel(),
-                readJson(attempt.getQuestionsJson(), new TypeReference<List<AssessmentQuestion>>() {}),
-                readJson(attempt.getAnswersJson(), new TypeReference<List<AssessmentAnswer>>() {}),
-                readJson(attempt.getGradingJson(), new TypeReference<AssessmentGradeAgentResponse>() {}),
-                attempt.getCreatedAt());
     }
 
     private List<ProfileDimensionRequest> toProfileDimensionRequests(List<ProfileDimensionUpdate> updates) {

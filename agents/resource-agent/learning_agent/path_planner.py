@@ -136,7 +136,7 @@ class PathPlannerAgent:
         weak_points: list[str],
         target_level: str,
     ) -> list[ResourceRecommendation]:
-        resource_types = ["讲解文档", "知识点思维导图", "短视频脚本", "实操案例", "自适应测评"]
+        resource_types = ["讲解文档", "知识点思维导图", "短视频脚本", "实操案例", "自适应测评", "PPT课件"]
         return [
             ResourceRecommendation(
                 priority=index + 1,

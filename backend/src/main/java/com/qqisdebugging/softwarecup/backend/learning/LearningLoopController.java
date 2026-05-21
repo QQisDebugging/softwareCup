@@ -34,7 +34,7 @@ public class LearningLoopController {
         return learningLoopService.gradeAssessment(request);
     }
 
-    @GetMapping("/events")
+    @GetMapping("/agent-events")
     List<LearningEventResponse> listEvents(@RequestParam String studentProfileId) {
         return learningLoopService.listEvents(studentProfileId);
     }

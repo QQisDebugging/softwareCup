@@ -3,6 +3,7 @@ package com.qqisdebugging.softwarecup.backend.learning;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
@@ -33,6 +34,12 @@ public class LearningEvent {
     @Column(columnDefinition = "text")
     private String eventPayload;
 
+    @Column(length = 180)
+    private String topic;
+
+    @Column(nullable = false, columnDefinition = "text")
+    private String payloadJson = "{}";
+
     @Column(nullable = false)
     private Instant createdAt;
 
@@ -54,12 +61,30 @@ public class LearningEvent {
         this.durationSeconds = durationSeconds;
         this.feedbackScore = feedbackScore;
         this.eventPayload = eventPayload;
+        this.payloadJson = valueOrDefault(eventPayload, "{}");
     }
 
-    @jakarta.persistence.PrePersist
+    public LearningEvent(
+            String studentProfileId,
+            String courseId,
+            String eventType,
+            String topic,
+            String payloadJson) {
+        this.studentProfileId = studentProfileId;
+        this.courseId = courseId;
+        this.eventType = eventType;
+        this.topic = topic;
+        this.payloadJson = valueOrDefault(payloadJson, "{}");
+        this.eventPayload = this.payloadJson;
+    }
+
+    @PrePersist
     void prePersist() {
         if (id == null) {
             id = UUID.randomUUID().toString();
+        }
+        if (payloadJson == null || payloadJson.isBlank()) {
+            payloadJson = valueOrDefault(eventPayload, "{}");
         }
         createdAt = Instant.now();
     }
@@ -96,84 +121,6 @@ public class LearningEvent {
         return eventPayload;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-}
-package com.qqisdebugging.softwarecup.backend.learning;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import java.time.Instant;
-import java.util.UUID;
-
-@Entity
-@Table(name = "learning_events")
-public class LearningEvent {
-    @Id
-    @Column(length = 36)
-    private String id;
-
-    @Column(nullable = false, length = 36)
-    private String studentProfileId;
-
-    @Column(length = 36)
-    private String courseId;
-
-    @Column(nullable = false, length = 80)
-    private String eventType;
-
-    @Column(length = 180)
-    private String topic;
-
-    @Column(nullable = false, columnDefinition = "text")
-    private String payloadJson;
-
-    @Column(nullable = false)
-    private Instant createdAt;
-
-    protected LearningEvent() {
-    }
-
-    public LearningEvent(
-            String studentProfileId,
-            String courseId,
-            String eventType,
-            String topic,
-            String payloadJson) {
-        this.studentProfileId = studentProfileId;
-        this.courseId = courseId;
-        this.eventType = eventType;
-        this.topic = topic;
-        this.payloadJson = payloadJson;
-    }
-
-    @jakarta.persistence.PrePersist
-    void prePersist() {
-        if (id == null) {
-            id = UUID.randomUUID().toString();
-        }
-        createdAt = Instant.now();
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public String getStudentProfileId() {
-        return studentProfileId;
-    }
-
-    public String getCourseId() {
-        return courseId;
-    }
-
-    public String getEventType() {
-        return eventType;
-    }
-
     public String getTopic() {
         return topic;
     }
@@ -184,5 +131,9 @@ public class LearningEvent {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    private String valueOrDefault(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
     }
 }

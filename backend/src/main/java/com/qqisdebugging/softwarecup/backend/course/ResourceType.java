@@ -9,7 +9,8 @@ public enum ResourceType {
     QUIZ_PRACTICE("练习题/测验"),
     EXTENDED_READING("拓展阅读"),
     PRACTICE_CASE("实操案例"),
-    VIDEO_ANIMATION_SCRIPT("视频讲解脚本/动画脚本");
+    VIDEO_ANIMATION_SCRIPT("视频讲解脚本/动画脚本"),
+    PPT_COURSEWARE("PPT课件/课堂讲稿");
 
     private final String displayName;
 
@@ -45,6 +46,10 @@ public enum ResourceType {
                     }
                     if (text.contains("视频") || text.contains("动画") || text.contains("脚本")) {
                         return VIDEO_ANIMATION_SCRIPT;
+                    }
+                    if (text.contains("PPT") || text.contains("课件") || text.contains("课堂讲稿")
+                            || text.toLowerCase(Locale.ROOT).contains("slide")) {
+                        return PPT_COURSEWARE;
                     }
                     return COURSE_EXPLANATION_DOCUMENT;
                 });

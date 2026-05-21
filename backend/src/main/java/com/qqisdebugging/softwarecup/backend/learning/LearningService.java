@@ -4,11 +4,18 @@ import com.qqisdebugging.softwarecup.backend.common.NotFoundException;
 import com.qqisdebugging.softwarecup.backend.course.Course;
 import com.qqisdebugging.softwarecup.backend.course.CourseService;
 import com.qqisdebugging.softwarecup.backend.course.LearningResource;
+import com.qqisdebugging.softwarecup.backend.course.LearningResourceRepository;
+import com.qqisdebugging.softwarecup.backend.course.ResourceType;
+import com.qqisdebugging.softwarecup.backend.profile.ProfileDimensionRequest;
+import com.qqisdebugging.softwarecup.backend.profile.ProfileDimensionType;
 import com.qqisdebugging.softwarecup.backend.profile.ProfileService;
 import com.qqisdebugging.softwarecup.backend.profile.StudentProfile;
+import com.qqisdebugging.softwarecup.backend.profile.UpdateProfileDimensionsRequest;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +28,7 @@ public class LearningService {
     private final QuizAttemptRepository quizAttemptRepository;
     private final KnowledgeMasteryRepository masteryRepository;
     private final EvaluationReportRepository evaluationReportRepository;
+    private final LearningResourceRepository resourceRepository;
     private final ProfileService profileService;
     private final CourseService courseService;
 
@@ -32,6 +40,7 @@ public class LearningService {
             QuizAttemptRepository quizAttemptRepository,
             KnowledgeMasteryRepository masteryRepository,
             EvaluationReportRepository evaluationReportRepository,
+            LearningResourceRepository resourceRepository,
             ProfileService profileService,
             CourseService courseService) {
         this.pathRepository = pathRepository;
@@ -41,6 +50,7 @@ public class LearningService {
         this.quizAttemptRepository = quizAttemptRepository;
         this.masteryRepository = masteryRepository;
         this.evaluationReportRepository = evaluationReportRepository;
+        this.resourceRepository = resourceRepository;
         this.profileService = profileService;
         this.courseService = courseService;
     }
@@ -130,6 +140,7 @@ public class LearningService {
                 request.durationSeconds(),
                 request.feedbackScore(),
                 request.eventPayload()));
+        updateLearningStateFromEvent(request);
         return LearningEventResponse.from(event);
     }
 
@@ -205,12 +216,109 @@ public class LearningService {
         masteryRepository.save(mastery);
     }
 
+    private void updateLearningStateFromEvent(CreateLearningEventRequest request) {
+        LearningResource resource = null;
+        if (hasText(request.resourceId())) {
+            resource = resourceRepository.findById(request.resourceId()).orElse(null);
+        }
+        String eventType = valueOrFallback(request.eventType(), "LEARNING_EVENT");
+        String eventTypeUpper = eventType.toUpperCase(Locale.ROOT);
+        String resourceName = resource == null ? "未绑定具体资源" : resource.getTitle();
+        String resourceTypeName = resource == null
+                ? "学习资源"
+                : ResourceType.normalize(resource.getResourceType()).displayName();
+        BigDecimal behaviorScore = inferBehaviorScore(eventTypeUpper, request.feedbackScore());
+        if (resource != null) {
+            upsertMastery(
+                    request.studentProfileId(),
+                    request.courseId(),
+                    resource.getTitle(),
+                    behaviorScore,
+                    "学习事件 `" + eventType + "` 自动更新；资源类型=" + resourceTypeName
+                            + "；停留=" + valueOrFallback(request.durationSeconds(), 0) + " 秒"
+                            + "；反馈=" + valueOrFallback(request.feedbackScore(), -1) + "。");
+        }
+
+        List<ProfileDimensionRequest> updates = new ArrayList<>();
+        String evidence = "学习事件自动分析：eventType=" + eventType
+                + "，resource=" + resourceName
+                + "，durationSeconds=" + valueOrFallback(request.durationSeconds(), 0)
+                + "，feedbackScore=" + valueOrFallback(request.feedbackScore(), -1);
+        updates.add(new ProfileDimensionRequest(
+                ProfileDimensionType.LEARNING_BEHAVIOR_PATTERN.name(),
+                ProfileDimensionType.LEARNING_BEHAVIOR_PATTERN.displayName(),
+                behaviorValue(eventTypeUpper, resourceTypeName, request.durationSeconds(), request.feedbackScore()),
+                evidence,
+                new BigDecimal("0.68"),
+                "learning_event_analyzer"));
+        if (request.feedbackScore() != null && request.feedbackScore() <= 2) {
+            updates.add(new ProfileDimensionRequest(
+                    ProfileDimensionType.MASTERY_WEAKNESS.name(),
+                    ProfileDimensionType.MASTERY_WEAKNESS.displayName(),
+                    "最近在 `" + resourceName + "` 学习反馈偏低，建议追加讲解文档、PPT课件和分层练习进行补救。",
+                    evidence,
+                    new BigDecimal("0.73"),
+                    "learning_event_analyzer"));
+        }
+        profileService.updateDimensions(
+                request.studentProfileId(),
+                new UpdateProfileDimensionsRequest(updates, "学习行为记录触发画像随学随新"));
+
+        if (eventTypeUpper.contains("COMPLETE") || eventTypeUpper.contains("FINISH") || eventTypeUpper.contains("FEEDBACK")) {
+            evaluationReportRepository.save(new EvaluationReport(
+                    request.studentProfileId(),
+                    request.courseId(),
+                    "学习行为事件触发阶段性评估更新。",
+                    behaviorScore,
+                    request.feedbackScore() != null && request.feedbackScore() >= 4
+                            ? "当前资源反馈较好，可继续推送同类型资源。"
+                            : "已产生可用于画像更新的学习行为证据。",
+                    request.feedbackScore() != null && request.feedbackScore() <= 2
+                            ? "资源理解或匹配度偏低，需要补救资源。"
+                            : "仍需结合测验和答疑记录进一步验证掌握度。",
+                    "根据事件类型、停留时长和反馈分动态调整后续资源优先级。"));
+        }
+    }
+
+    private BigDecimal inferBehaviorScore(String eventType, Integer feedbackScore) {
+        if (feedbackScore != null) {
+            return BigDecimal.valueOf(Math.max(0, Math.min(5, feedbackScore)))
+                    .divide(BigDecimal.valueOf(5), 2, RoundingMode.HALF_UP);
+        }
+        if (eventType.contains("COMPLETE") || eventType.contains("FINISH")) {
+            return new BigDecimal("0.72");
+        }
+        if (eventType.contains("QUIZ") || eventType.contains("SUBMIT")) {
+            return new BigDecimal("0.64");
+        }
+        if (eventType.contains("VIEW") || eventType.contains("OPEN")) {
+            return new BigDecimal("0.48");
+        }
+        return new BigDecimal("0.50");
+    }
+
+    private String behaviorValue(String eventType, String resourceTypeName, Integer durationSeconds, Integer feedbackScore) {
+        String stage;
+        if (eventType.contains("COMPLETE") || eventType.contains("FINISH")) {
+            stage = "完成型学习行为";
+        } else if (eventType.contains("VIEW") || eventType.contains("OPEN")) {
+            stage = "浏览型学习行为";
+        } else if (eventType.contains("FEEDBACK")) {
+            stage = "反馈型学习行为";
+        } else {
+            stage = "过程型学习行为";
+        }
+        return stage + "；最近资源类型=" + resourceTypeName
+                + "；停留=" + valueOrFallback(durationSeconds, 0) + " 秒"
+                + "；反馈=" + valueOrFallback(feedbackScore, -1);
+    }
+
     private void attachResourceToLatestPath(String studentProfileId, String courseId, String resourceId) {
         List<LearningPath> paths = pathRepository.findByStudentProfileIdAndCourseIdOrderByCreatedAtDesc(studentProfileId, courseId);
         if (paths.isEmpty()) {
             return;
         }
-        List<LearningPathNode> nodes = nodeRepository.findByPathIdOrderByNodeOrderAsc(paths.getFirst().getId());
+        List<LearningPathNode> nodes = nodeRepository.findByPathIdOrderByNodeOrderAsc(paths.get(0).getId());
         for (LearningPathNode node : nodes) {
             if (node.getResourceId() == null || node.getResourceId().isBlank()) {
                 node.attachResource(resourceId);
@@ -221,5 +329,13 @@ public class LearningService {
 
     private String valueOrFallback(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private Integer valueOrFallback(Integer value, Integer fallback) {
+        return value == null ? fallback : value;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }

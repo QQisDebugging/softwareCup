@@ -18,6 +18,8 @@ def estimate_minutes(resource_type: str, modality: str, resource_count: int) -> 
         base += 6
     if "实操" in resource_type or "项目" in resource_type:
         base += 8
+    if "PPT" in resource_type or "课件" in resource_type:
+        base += 4
     return min(max(base, 15), 90)
 
 
@@ -124,3 +126,14 @@ def video_script(topic: str, modality: str) -> str:
 **镜头 3（45 秒）**：演示一个小案例，标注关键代码/步骤和易错点。
 
 **镜头 4（20 秒）**：给出自测题和下一步学习资源，提醒学生提交反馈以更新画像。"""
+
+
+def ppt_outline(topic: str, course_title: str, target_level: str) -> str:
+    return f"""| 页码 | 页面主题 | 讲解要点 | 互动设计 | 素材提示 |
+| --- | --- | --- | --- | --- |
+| 1 | `{topic}` 学习目标 | 对齐 `{course_title}` 的课程任务，说明本节要解决的核心问题 | 让学生用一句话描述当前困惑 | 课程场景图、问题气泡 |
+| 2 | 先修基础检查 | 列出 3 个必须掌握的术语和常见断点 | 1 分钟自测，标记不熟悉的术语 | 术语卡片、流程入口 |
+| 3 | 核心流程拆解 | 按输入、处理、输出解释关键流程，适配 `{target_level}` 学习层级 | 让学生补全流程中的缺失步骤 | 分层结构图、箭头流程 |
+| 4 | 易错点对比 | 对比正确做法与常见误区，突出判断依据 | 现场判断 2 个伪代码片段 | 红绿对照、代码片段 |
+| 5 | 实操任务说明 | 明确任务背景、交付物、验收标准和复盘问题 | 学生选择自己的实践切入点 | 项目看板、验收清单 |
+| 6 | 复盘与画像更新 | 汇总错题、耗时、反馈和下一步资源推送 | 提交学习反馈用于动态画像更新 | 雷达图、学习路径节点 |"""

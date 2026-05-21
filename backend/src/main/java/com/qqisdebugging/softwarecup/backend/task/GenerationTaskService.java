@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
 public class GenerationTaskService {
@@ -43,7 +44,7 @@ public class GenerationTaskService {
                 request.courseId(),
                 request.topic(),
                 request.prompt()));
-        runAfterCommit(task.getId(), request.resourceType(), request.modality());
+        runAfterCommit(task.getId(), resourceType.name(), request.modality());
         return GenerationTaskResponse.from(task);
     }
 
