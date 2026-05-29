@@ -89,3 +89,30 @@ Python 智能体全量 smoke：
 cd agents/resource-agent
 .\.venv\Scripts\python.exe scripts\smoke_full_ai_agents.py
 ```
+
+## 新增国赛增强功能
+
+1. RAG 质量评测
+   - `/agents/evaluation/rag-quality` 输出 faithfulness、answerRelevancy、contextPrecision、contextRecall、groundedness、citationCoverage。
+   - 用于答辩时证明“不是只返回引用，而是能量化检索和生成质量”。
+2. Agent run 持久化与回放
+   - `/agents/runs/record` 写入运行步骤、provider、fallback、质量门禁和 replayMarkdown。
+   - `/agents/runs/{runId}` 可在答辩中复现一次 AI 任务链路。
+3. 教师 Human-in-the-loop 审核
+   - `/agents/review/human-gate` 输出 autoApproved、needsTeacherReview、riskReasons、publishChecklist。
+   - 让生成资源进入教师审核，而不是直接发布给学生。
+4. 多模态语音包和 OCR 题目解析
+   - `/agents/multimodal/voice-package` 输出 TTS 配置、旁白分段和 SRT 字幕。
+   - `/agents/document/ocr-question` 把 OCR 文本结构化为题目、知识点、解题步骤和后续 Agent 调用。
+5. GraphRAG、错题本、课程覆盖率和答辩包
+   - `/agents/knowledge/graphrag-query` 支持概念扩展和检索路径说明。
+   - `/agents/assessment/error-book` 支持错题聚类和间隔复习计划。
+   - `/agents/course/coverage` 支持课程资源/测评覆盖率检查。
+   - `/agents/demo/defense-pack` 生成答辩 Q&A、评分点矩阵、API 清单、开源说明和风险应答。
+
+增强 smoke：
+
+```powershell
+cd agents/resource-agent
+.\.venv\Scripts\python.exe scripts\smoke_competition_enhancements.py
+```

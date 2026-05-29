@@ -10,6 +10,7 @@ artifacts/
 agents/**/.venv/
 agents/**/__pycache__/
 agents/**/*.pyc
+agents/resource-agent/data/
 
 reference/**/node_modules/
 reference/**/__pycache__/

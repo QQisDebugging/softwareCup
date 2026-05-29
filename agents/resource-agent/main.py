@@ -9,6 +9,17 @@ from learning_agent.agent_trace import AgentTraceAgent
 from learning_agent.assessment_item_analysis import AssessmentItemAnalysisAgent
 from learning_agent.class_analytics import ClassAnalyticsAgent
 from learning_agent.config import AgentSettings
+from learning_agent.competition_enhancements import (
+    AgentRunStore,
+    CourseCoverageAgent,
+    DefensePackAgent,
+    ErrorBookAgent,
+    GraphRagQueryAgent,
+    HumanReviewAgent,
+    OcrQuestionAgent,
+    RagEvaluationAgent,
+    VoicePackageAgent,
+)
 from learning_agent.demo_planner import DemoScenarioPlannerAgent
 from learning_agent.documents import DocumentLoader
 from learning_agent.embeddings import HashingEmbeddingModel
@@ -29,6 +40,8 @@ from learning_agent.schemas import (
     AssessmentGradeResponse,
     AgentTraceRequest,
     AgentTraceResponse,
+    AgentRunRecordRequest,
+    AgentRunRecordResponse,
     AssessmentItemAnalysisRequest,
     AssessmentItemAnalysisResponse,
     ClassAnalyticsRequest,
@@ -41,15 +54,27 @@ from learning_agent.schemas import (
     ContentAuditResponse,
     CourseDiagnosisRequest,
     CourseDiagnosisResponse,
+    CourseCoverageRequest,
+    CourseCoverageResponse,
     DemoScenarioRequest,
     DemoScenarioResponse,
+    DefensePackRequest,
+    DefensePackResponse,
+    ErrorBookRequest,
+    ErrorBookResponse,
+    GraphRagQueryRequest,
+    GraphRagQueryResponse,
     HealthResponse,
+    HumanReviewRequest,
+    HumanReviewResponse,
     KnowledgeGraphRequest,
     KnowledgeGraphResponse,
     KnowledgeIngestRequest,
     KnowledgeIngestResponse,
     KnowledgeSearchRequest,
     KnowledgeSearchResponse,
+    OcrQuestionRequest,
+    OcrQuestionResponse,
     LearningPathPlanRequest,
     LearningPathPlanResponse,
     LearningEventAnalysisRequest,
@@ -62,6 +87,8 @@ from learning_agent.schemas import (
     PrerequisiteDiagnosisResponse,
     ProjectReviewRequest,
     ProjectReviewResponse,
+    RagEvaluationRequest,
+    RagEvaluationResponse,
     ResourceAgentRequest,
     ResourceAgentResponse,
     ResourceCurationRequest,
@@ -70,6 +97,8 @@ from learning_agent.schemas import (
     StoryboardResponse,
     TutoringRequest,
     TutoringResponse,
+    VoicePackageRequest,
+    VoicePackageResponse,
 )
 from learning_agent.storyboard import StoryboardAgent
 from learning_agent.tutoring import TutoringAgent
@@ -102,6 +131,15 @@ assessment_item_analysis_agent = AssessmentItemAnalysisAgent(settings=settings, 
 project_review_agent = ProjectReviewAgent(settings=settings, vector_store=vector_store)
 class_analytics_agent = ClassAnalyticsAgent(settings=settings, vector_store=vector_store)
 demo_scenario_planner_agent = DemoScenarioPlannerAgent(settings=settings, vector_store=vector_store)
+rag_evaluation_agent = RagEvaluationAgent(settings=settings, vector_store=vector_store)
+agent_run_store = AgentRunStore(settings=settings)
+human_review_agent = HumanReviewAgent(settings=settings, vector_store=vector_store)
+voice_package_agent = VoicePackageAgent(settings=settings, vector_store=vector_store)
+ocr_question_agent = OcrQuestionAgent(settings=settings, vector_store=vector_store)
+graphrag_query_agent = GraphRagQueryAgent(settings=settings, vector_store=vector_store)
+error_book_agent = ErrorBookAgent(settings=settings, vector_store=vector_store)
+course_coverage_agent = CourseCoverageAgent(settings=settings, vector_store=vector_store)
+defense_pack_agent = DefensePackAgent(settings=settings, vector_store=vector_store)
 
 
 @asynccontextmanager
@@ -387,14 +425,140 @@ def plan_demo_scenario(request: DemoScenarioRequest) -> DemoScenarioResponse:
     return demo_scenario_planner_agent.plan(request)
 
 
+@app.post("/agents/evaluation/rag-quality", response_model=RagEvaluationResponse)
+def evaluate_rag_quality(request: RagEvaluationRequest) -> RagEvaluationResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + request.contexts + [request.question, request.answer, request.expectedAnswer],
+        source="request.rag_evaluation.documentTexts",
+        title_prefix=f"rag-eval-{request.courseId or 'course'}-inline",
+        metadata={"courseId": request.courseId or ""},
+    )
+    return rag_evaluation_agent.evaluate(request)
+
+
+@app.post("/agents/runs/record", response_model=AgentRunRecordResponse)
+def record_agent_run(request: AgentRunRecordRequest) -> AgentRunRecordResponse:
+    return agent_run_store.record(request)
+
+
+@app.get("/agents/runs/recent", response_model=list[AgentRunRecordResponse])
+def recent_agent_runs(limit: int = 20) -> list[AgentRunRecordResponse]:
+    return agent_run_store.recent(limit=max(1, min(100, limit)))
+
+
+@app.get("/agents/runs/{run_id}", response_model=AgentRunRecordResponse)
+def get_agent_run(run_id: str) -> AgentRunRecordResponse:
+    run = agent_run_store.get(run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail=f"Agent run `{run_id}` not found.")
+    return run
+
+
+@app.post("/agents/review/human-gate", response_model=HumanReviewResponse)
+def human_review_gate(request: HumanReviewRequest) -> HumanReviewResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + [request.content, *request.rubric],
+        source="request.human_review.documentTexts",
+        title_prefix=f"human-review-{request.courseId or 'course'}-inline",
+        metadata={"courseId": request.courseId or ""},
+    )
+    return human_review_agent.review(request)
+
+
+@app.post("/agents/multimodal/voice-package", response_model=VoicePackageResponse)
+def build_voice_package(request: VoicePackageRequest) -> VoicePackageResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + [request.script],
+        source="request.voice_package.documentTexts",
+        title_prefix=f"voice-package-{request.courseId or 'course'}-inline",
+        metadata={"courseId": request.courseId or ""},
+    )
+    return voice_package_agent.build(request)
+
+
+@app.post("/agents/document/ocr-question", response_model=OcrQuestionResponse)
+def parse_ocr_question(request: OcrQuestionRequest) -> OcrQuestionResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + [request.ocrText, request.studentProfileSummary],
+        source="request.ocr_question.documentTexts",
+        title_prefix=f"ocr-question-{request.courseId or 'course'}-inline",
+        metadata={"courseId": request.courseId or "", "imageName": request.imageName},
+    )
+    return ocr_question_agent.extract(request)
+
+
+@app.post("/agents/knowledge/graphrag-query", response_model=GraphRagQueryResponse)
+def graphrag_query(request: GraphRagQueryRequest) -> GraphRagQueryResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + [request.query, *request.weaknessSignals],
+        source="request.graphrag.documentTexts",
+        title_prefix=f"graphrag-{request.courseId or 'course'}-inline",
+        metadata={"courseId": request.courseId or ""},
+    )
+    return graphrag_query_agent.query(request)
+
+
+@app.post("/agents/assessment/error-book", response_model=ErrorBookResponse)
+def analyze_error_book(request: ErrorBookRequest) -> ErrorBookResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + [
+            f"{attempt.questionId} {attempt.knowledgePoint} {attempt.answerSummary} {attempt.feedback}"
+            for attempt in request.attempts
+        ],
+        source="request.error_book.documentTexts",
+        title_prefix=f"error-book-{request.studentProfileId}-inline",
+        metadata={"studentProfileId": request.studentProfileId, "courseId": request.courseId},
+    )
+    return error_book_agent.analyze(request)
+
+
+@app.post("/agents/course/coverage", response_model=CourseCoverageResponse)
+def analyze_course_coverage(request: CourseCoverageRequest) -> CourseCoverageResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + request.chapters
+        + [
+            f"{item.title} {item.resourceType} {' '.join(item.knowledgePoints)}"
+            for item in request.resourceInventory
+        ]
+        + [
+            f"{item.title} {item.questionType} {' '.join(item.knowledgePoints)}"
+            for item in request.assessmentInventory
+        ],
+        source="request.course_coverage.documentTexts",
+        title_prefix=f"coverage-{request.courseId}-inline",
+        metadata={"courseId": request.courseId},
+    )
+    return course_coverage_agent.analyze(request)
+
+
+@app.post("/agents/demo/defense-pack", response_model=DefensePackResponse)
+def build_defense_pack(request: DefensePackRequest) -> DefensePackResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + request.implementedFeatures + request.techStack
+        + request.innovationPoints + request.riskConcerns,
+        source="request.defense_pack.documentTexts",
+        title_prefix="defense-pack-inline",
+        metadata={"projectName": request.projectName},
+    )
+    return defense_pack_agent.build(request)
+
+
 @app.get("/agents/providers/status")
 def provider_status() -> dict:
-    return {
-        "configuredProvider": settings.provider,
-        "activeProvider": workflow.provider_router.active_name,
-        "xfyunConfigured": bool(settings.xfyun_api_key and settings.xfyun_api_secret),
-        "fallbackProvider": "offline",
-    }
+    status = workflow.provider_router.status()
+    status["vectorDocuments"] = vector_store.document_count
+    status["vectorChunks"] = vector_store.chunk_count
+    status["xfyunAppIdConfigured"] = bool(settings.xfyun_app_id)
+    return status
+
 
 
 def ingest_generation_request_knowledge(request: ResourceAgentRequest) -> int:
