@@ -5,8 +5,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "softwarecup.agent")
 public class AgentProperties {
     private String resourceBaseUrl = "http://localhost:9001";
-    private String provider = "xunfei-spark";
-    private String model = "spark-lite-resource-agent";
+    private String provider = "offline";
+    private String model = "offline-resource-agent";
     private String fallbackProvider = "local-rule-engine";
     private String fallbackModel = "deterministic-template-v1";
     private int connectTimeoutMs = 3000;
