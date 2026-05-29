@@ -41,7 +41,6 @@ public class GenerationTaskRunner {
 
     @Async
     public void runResourceGeneration(String taskId, String resourceType, String modality) {
-        String currentStepId = null;
         try {
             transactions.initializeWorkflow(taskId);
             GenerationTaskTransactions.ResourceGenerationContext context = transactions.markRunningAndLoadContext(taskId);
@@ -97,10 +96,8 @@ public class GenerationTaskRunner {
             transactions.markSucceeded(taskId, resource.getId(), "多智能体资源生成、路径规划、推荐和安全审核完成");
             publish(taskId, "TASK_SUCCEEDED", 100, "任务完成", TaskStatus.SUCCEEDED.name(), "多智能体任务链执行完成");
         } catch (Exception ex) {
-            String message = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
-            if (currentStepId != null) {
-                transactions.failStepAndTask(taskId, currentStepId, message);
-            } else {
+            String message = exceptionMessage(ex);
+            if (!(ex instanceof StepFailedException)) {
                 transactions.markFailed(taskId, message);
             }
             publish(taskId, "TASK_FAILED", 100, "任务失败", TaskStatus.FAILED.name(), message);
@@ -109,44 +106,52 @@ public class GenerationTaskRunner {
 
     private void runRuleStep(String taskId, String agentKey, String inputSummary, String outputSummary) {
         TaskStep step = transactions.startStep(taskId, agentKey, inputSummary);
-        publish(taskId, "STEP_STARTED", step.getProgressPercent() - 8, step.getStepName(), step.getStatus(), inputSummary);
-        long start = System.nanoTime();
-        transactions.recordInvocation(
-                taskId,
-                step.getId(),
-                agentProperties.getFallbackProvider(),
-                agentProperties.getFallbackModel(),
-                promptHash(inputSummary),
-                inputSummary,
-                elapsedMs(start),
-                "SUCCEEDED",
-                false,
-                null);
-        TaskStep done = transactions.succeedStep(taskId, step.getId(), outputSummary);
-        publish(taskId, "STEP_SUCCEEDED", done.getProgressPercent(), done.getStepName(), done.getStatus(), outputSummary);
+        try {
+            publish(taskId, "STEP_STARTED", step.getProgressPercent() - 8, step.getStepName(), step.getStatus(), inputSummary);
+            long start = System.nanoTime();
+            transactions.recordInvocation(
+                    taskId,
+                    step.getId(),
+                    agentProperties.getFallbackProvider(),
+                    agentProperties.getFallbackModel(),
+                    promptHash(inputSummary),
+                    inputSummary,
+                    elapsedMs(start),
+                    "SUCCEEDED",
+                    false,
+                    null);
+            TaskStep done = transactions.succeedStep(taskId, step.getId(), outputSummary);
+            publish(taskId, "STEP_SUCCEEDED", done.getProgressPercent(), done.getStepName(), done.getStatus(), outputSummary);
+        } catch (Exception ex) {
+            throw failStartedStep(taskId, step, ex);
+        }
     }
 
     private LearningPathResponse runPathPlannerStep(
             String taskId,
             GenerationTaskTransactions.ResourceGenerationContext context) {
         TaskStep step = transactions.startStep(taskId, "PATH_PLANNER", "主题=" + context.task().getTopic());
-        publish(taskId, "STEP_STARTED", step.getProgressPercent() - 8, step.getStepName(), step.getStatus(), step.getInputSummary());
-        long start = System.nanoTime();
-        LearningPathResponse path = learningService.createInitialPath(context.profile(), context.course(), context.task().getTopic());
-        transactions.recordInvocation(
-                taskId,
-                step.getId(),
-                agentProperties.getFallbackProvider(),
-                agentProperties.getFallbackModel(),
-                promptHash(path.title()),
-                "生成学习路径：" + path.title(),
-                elapsedMs(start),
-                "SUCCEEDED",
-                false,
-                null);
-        TaskStep done = transactions.succeedStep(taskId, step.getId(), "已生成学习路径：" + path.title() + "，节点数=" + path.nodes().size());
-        publish(taskId, "STEP_SUCCEEDED", done.getProgressPercent(), done.getStepName(), done.getStatus(), done.getOutputSummary());
-        return path;
+        try {
+            publish(taskId, "STEP_STARTED", step.getProgressPercent() - 8, step.getStepName(), step.getStatus(), step.getInputSummary());
+            long start = System.nanoTime();
+            LearningPathResponse path = learningService.createInitialPath(context.profile(), context.course(), context.task().getTopic());
+            transactions.recordInvocation(
+                    taskId,
+                    step.getId(),
+                    agentProperties.getFallbackProvider(),
+                    agentProperties.getFallbackModel(),
+                    promptHash(path.title()),
+                    "生成学习路径：" + path.title(),
+                    elapsedMs(start),
+                    "SUCCEEDED",
+                    false,
+                    null);
+            TaskStep done = transactions.succeedStep(taskId, step.getId(), "已生成学习路径：" + path.title() + "，节点数=" + path.nodes().size());
+            publish(taskId, "STEP_SUCCEEDED", done.getProgressPercent(), done.getStepName(), done.getStatus(), done.getOutputSummary());
+            return path;
+        } catch (Exception ex) {
+            throw failStartedStep(taskId, step, ex);
+        }
     }
 
     private LearningResource runDocumentGeneratorStep(
@@ -155,65 +160,69 @@ public class GenerationTaskRunner {
             String resourceType,
             String modality) {
         TaskStep step = transactions.startStep(taskId, "DOCUMENT_GENERATOR", context.task().getPrompt());
-        publish(taskId, "STEP_STARTED", step.getProgressPercent() - 8, step.getStepName(), step.getStatus(), "调用资源生成服务");
-        ResourceAgentResponse response;
-        long start = System.nanoTime();
         try {
-            response = resourceAgentClient.generate(new ResourceAgentRequest(
-                    taskId,
-                    context.profile().getId(),
-                    context.course().getId(),
-                    context.profile().getDialogueSummary(),
-                    context.course().getTitle(),
-                    context.task().getTopic(),
-                    resourceType,
-                    modality,
-                    context.task().getPrompt(),
-                    List.of(),
-                    List.of(context.course().getDescription(), context.course().getSyllabusJson()),
-                    Arrays.stream(ResourceType.values()).map(ResourceType::displayName).toList()));
-            transactions.recordInvocation(
-                    taskId,
-                    step.getId(),
-                    agentProperties.getProvider(),
-                    agentProperties.getModel(),
-                    promptHash(context.task().getPrompt()),
-                    context.task().getTopic() + " / " + ResourceType.normalize(resourceType).displayName(),
-                    elapsedMs(start),
-                    "SUCCEEDED",
-                    false,
-                    null);
+            publish(taskId, "STEP_STARTED", step.getProgressPercent() - 8, step.getStepName(), step.getStatus(), "调用资源生成服务");
+            ResourceAgentResponse response;
+            long start = System.nanoTime();
+            try {
+                response = resourceAgentClient.generate(new ResourceAgentRequest(
+                        taskId,
+                        context.profile().getId(),
+                        context.course().getId(),
+                        context.profile().getDialogueSummary(),
+                        context.course().getTitle(),
+                        context.task().getTopic(),
+                        resourceType,
+                        modality,
+                        context.task().getPrompt(),
+                        List.of(),
+                        List.of(context.course().getDescription(), context.course().getSyllabusJson()),
+                        Arrays.stream(ResourceType.values()).map(ResourceType::displayName).toList()));
+                transactions.recordInvocation(
+                        taskId,
+                        step.getId(),
+                        agentProperties.getProvider(),
+                        agentProperties.getModel(),
+                        promptHash(context.task().getPrompt()),
+                        context.task().getTopic() + " / " + ResourceType.normalize(resourceType).displayName(),
+                        elapsedMs(start),
+                        "SUCCEEDED",
+                        false,
+                        null);
+            } catch (Exception ex) {
+                String message = exceptionMessage(ex);
+                transactions.recordInvocation(
+                        taskId,
+                        step.getId(),
+                        agentProperties.getProvider(),
+                        agentProperties.getModel(),
+                        promptHash(context.task().getPrompt()),
+                        context.task().getTopic() + " / " + ResourceType.normalize(resourceType).displayName(),
+                        elapsedMs(start),
+                        "FAILED",
+                        false,
+                        message);
+                long fallbackStart = System.nanoTime();
+                response = fallbackResource(context, resourceType, modality);
+                transactions.recordInvocation(
+                        taskId,
+                        step.getId(),
+                        agentProperties.getFallbackProvider(),
+                        agentProperties.getFallbackModel(),
+                        promptHash(response.content()),
+                        "资源生成服务失败后使用本地模板兜底",
+                        elapsedMs(fallbackStart),
+                        "SUCCEEDED",
+                        true,
+                        null);
+            }
+            LearningResource resource = transactions.saveGeneratedResource(taskId, context.course().getId(), resourceType, modality, response);
+            TaskStep done = transactions.succeedStep(taskId, step.getId(), "已生成资源：" + resource.getTitle() + "，类型=" + resource.getResourceType());
+            publish(taskId, "STEP_SUCCEEDED", done.getProgressPercent(), done.getStepName(), done.getStatus(), done.getOutputSummary());
+            return resource;
         } catch (Exception ex) {
-            String message = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
-            transactions.recordInvocation(
-                    taskId,
-                    step.getId(),
-                    agentProperties.getProvider(),
-                    agentProperties.getModel(),
-                    promptHash(context.task().getPrompt()),
-                    context.task().getTopic() + " / " + ResourceType.normalize(resourceType).displayName(),
-                    elapsedMs(start),
-                    "FAILED",
-                    false,
-                    message);
-            long fallbackStart = System.nanoTime();
-            response = fallbackResource(context, resourceType, modality);
-            transactions.recordInvocation(
-                    taskId,
-                    step.getId(),
-                    agentProperties.getFallbackProvider(),
-                    agentProperties.getFallbackModel(),
-                    promptHash(response.content()),
-                    "资源生成服务失败后使用本地模板兜底",
-                    elapsedMs(fallbackStart),
-                    "SUCCEEDED",
-                    true,
-                    null);
+            throw failStartedStep(taskId, step, ex);
         }
-        LearningResource resource = transactions.saveGeneratedResource(taskId, context.course().getId(), resourceType, modality, response);
-        TaskStep done = transactions.succeedStep(taskId, step.getId(), "已生成资源：" + resource.getTitle() + "，类型=" + resource.getResourceType());
-        publish(taskId, "STEP_SUCCEEDED", done.getProgressPercent(), done.getStepName(), done.getStatus(), done.getOutputSummary());
-        return resource;
     }
 
     private LearningResource runSafetyReviewStep(
@@ -221,42 +230,56 @@ public class GenerationTaskRunner {
             GenerationTaskTransactions.ResourceGenerationContext context,
             LearningResource resource) {
         TaskStep step = transactions.startStep(taskId, "SAFETY_REVIEWER", "资源=" + resource.getTitle());
-        publish(taskId, "STEP_STARTED", step.getProgressPercent() - 8, step.getStepName(), step.getStatus(), step.getInputSummary());
-        long start = System.nanoTime();
         try {
-            Map<String, Object> auditResponse = resourceAgentClient.proxy("/agents/safety/audit", auditRequest(context, resource));
-            LearningResource reviewedResource = applyAuditRevision(resource, auditResponse);
-            transactions.saveAgentAudits(taskId, reviewedResource.getId(), context.course(), reviewedResource, auditResponse);
-            transactions.recordInvocation(
-                    taskId,
-                    step.getId(),
-                    agentProperties.getProvider(),
-                    agentProperties.getModel(),
-                    promptHash(resource.getContent()),
-                    "调用内容安全审核智能体：事实性断言、引用覆盖、敏感违规信息过滤",
-                    elapsedMs(start),
-                    "SUCCEEDED",
-                    false,
-                    null);
-            TaskStep done = transactions.succeedStep(taskId, step.getId(), auditOutputSummary(auditResponse));
-            publish(taskId, "STEP_SUCCEEDED", done.getProgressPercent(), done.getStepName(), done.getStatus(), done.getOutputSummary());
-            return reviewedResource;
+            publish(taskId, "STEP_STARTED", step.getProgressPercent() - 8, step.getStepName(), step.getStatus(), step.getInputSummary());
+            long start = System.nanoTime();
+            try {
+                Map<String, Object> auditResponse = resourceAgentClient.proxy("/agents/safety/audit", auditRequest(context, resource));
+                LearningResource reviewedResource = applyAuditRevision(resource, auditResponse);
+                transactions.saveAgentAudits(taskId, reviewedResource.getId(), context.course(), reviewedResource, auditResponse);
+                transactions.recordInvocation(
+                        taskId,
+                        step.getId(),
+                        agentProperties.getProvider(),
+                        agentProperties.getModel(),
+                        promptHash(resource.getContent()),
+                        "调用内容安全审核智能体：事实性断言、引用覆盖、敏感违规信息过滤",
+                        elapsedMs(start),
+                        "SUCCEEDED",
+                        false,
+                        null);
+                TaskStep done = transactions.succeedStep(taskId, step.getId(), auditOutputSummary(auditResponse));
+                publish(taskId, "STEP_SUCCEEDED", done.getProgressPercent(), done.getStepName(), done.getStatus(), done.getOutputSummary());
+                return reviewedResource;
+            } catch (Exception ex) {
+                String message = exceptionMessage(ex);
+                transactions.recordInvocation(
+                        taskId,
+                        step.getId(),
+                        agentProperties.getProvider(),
+                        agentProperties.getModel(),
+                        promptHash(resource.getContent()),
+                        "内容安全审核智能体调用失败，准备进入本地审核兜底",
+                        elapsedMs(start),
+                        "FAILED",
+                        false,
+                        message);
+                runFallbackSafetyReviewStep(taskId, context, resource, step);
+                return resource;
+            }
         } catch (Exception ex) {
-            String message = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
-            transactions.recordInvocation(
-                    taskId,
-                    step.getId(),
-                    agentProperties.getProvider(),
-                    agentProperties.getModel(),
-                    promptHash(resource.getContent()),
-                    "内容安全审核智能体调用失败，准备进入本地审核兜底",
-                    elapsedMs(start),
-                    "FAILED",
-                    false,
-                    message);
-            runFallbackSafetyReviewStep(taskId, context, resource, step);
-            return resource;
+            throw failStartedStep(taskId, step, ex);
         }
+    }
+
+    private RuntimeException failStartedStep(String taskId, TaskStep step, Exception ex) {
+        String message = exceptionMessage(ex);
+        transactions.failStepAndTask(taskId, step.getId(), message);
+        return new StepFailedException(message, ex);
+    }
+
+    private String exceptionMessage(Exception ex) {
+        return ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
     }
 
     private void runFallbackSafetyReviewStep(
@@ -403,6 +426,12 @@ public class GenerationTaskRunner {
             return builder.toString();
         } catch (NoSuchAlgorithmException ex) {
             return Integer.toHexString((value == null ? "" : value).hashCode());
+        }
+    }
+
+    private static class StepFailedException extends RuntimeException {
+        StepFailedException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }

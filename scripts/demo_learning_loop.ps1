@@ -42,6 +42,44 @@ function Stop-ProcessTree {
     Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
 }
 
+function Repair-Utf8Mojibake {
+    param($Value)
+
+    if ($null -eq $Value) {
+        return $null
+    }
+    if ($Value -is [string]) {
+        if ($Value -notmatch "[\u00C2-\u00F4]") {
+            return $Value
+        }
+        try {
+            return [System.Text.Encoding]::UTF8.GetString(
+                [System.Text.Encoding]::GetEncoding("ISO-8859-1").GetBytes($Value)
+            )
+        } catch {
+            return $Value
+        }
+    }
+    if ($Value -is [System.Collections.IDictionary]) {
+        $fixed = [ordered]@{}
+        foreach ($key in $Value.Keys) {
+            $fixed[$key] = Repair-Utf8Mojibake $Value[$key]
+        }
+        return $fixed
+    }
+    if ($Value -is [pscustomobject]) {
+        $fixed = [ordered]@{}
+        foreach ($property in $Value.PSObject.Properties) {
+            $fixed[$property.Name] = Repair-Utf8Mojibake $property.Value
+        }
+        return [pscustomobject]$fixed
+    }
+    if ($Value -is [System.Collections.IEnumerable]) {
+        return @($Value | ForEach-Object { Repair-Utf8Mojibake $_ })
+    }
+    return $Value
+}
+
 if (-not (Test-Path $PythonExe)) {
     throw "Python venv not found: $PythonExe. Run agents/resource-agent setup first."
 }
@@ -179,7 +217,7 @@ try {
         events = $events
     }
     $resultPath = Join-Path $ArtifactDir "demo-learning-loop-result.json"
-    $result | ConvertTo-Json -Depth 30 | Set-Content -Encoding UTF8 $resultPath
+    Repair-Utf8Mojibake $result | ConvertTo-Json -Depth 30 | Set-Content -Encoding UTF8 $resultPath
 
     $summary | ConvertTo-Json -Depth 8
     Write-Host "Demo artifact: $resultPath"

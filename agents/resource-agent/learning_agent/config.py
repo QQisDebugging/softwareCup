@@ -34,7 +34,11 @@ class AgentSettings:
             "data/courses/java-web-software-engineering.json",
             "reference/题目说明.txt",
         ]
-        provider = os.getenv("RESOURCE_AGENT_PROVIDER", "offline").strip().lower()
+        provider = (
+            os.getenv("SOFTWARECUP_AGENT_PROVIDER")
+            or os.getenv("RESOURCE_AGENT_PROVIDER")
+            or "offline"
+        ).strip().lower()
         if provider not in {"offline", "xfyun_spark"}:
             provider = "offline"
         return cls(

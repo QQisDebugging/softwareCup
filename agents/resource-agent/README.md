@@ -30,7 +30,7 @@ Python AI 主程，供 Spring Boot 后端通过 HTTP 调用。当前实现覆盖
 - 班级学习分析：面向教师端输出班级趋势、学生风险画像、掌握度、参与度、干预分组、资源缺口和干预优先级。
 - 演示脚本规划：自动生成 7 分钟演示路径、时间轴 Markdown、场景话术、风险预案、备用方案和成功指标。
 - 防幻觉与安全：输出资料来源、质量检查、敏感内容过滤和空检索降级提示。
-- Provider：默认 `offline`，可通过环境变量切换到 `xfyun_spark`，失败时自动降级。
+- Provider：默认 `offline`，可通过 `SOFTWARECUP_AGENT_PROVIDER=xfyun_spark` 切换到讯飞星火，失败时自动降级。
 
 ## 启动
 
@@ -133,6 +133,7 @@ Invoke-RestMethod -Method Post -Uri http://localhost:9001/knowledge/ingest -Cont
 真实密钥只放环境变量，不提交到仓库。
 
 ```powershell
+$env:SOFTWARECUP_AGENT_PROVIDER='xfyun_spark'
 $env:RESOURCE_AGENT_PROVIDER='xfyun_spark'
 $env:XFYUN_APP_ID='你的 AppID'
 $env:XFYUN_API_PASSWORD='你的 APIPassword'
