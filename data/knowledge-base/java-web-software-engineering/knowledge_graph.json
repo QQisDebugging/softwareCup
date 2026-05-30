@@ -1,0 +1,26 @@
+{
+  "courseId": "java-web-software-engineering",
+  "nodes": [
+    {"id": "engineering-environment", "name": "工程环境", "chapter": "JW-CH01", "difficulty": 1, "estimatedMinutes": 40},
+    {"id": "http-rest-json", "name": "HTTP、REST API与JSON契约", "chapter": "JW-CH02", "difficulty": 2, "estimatedMinutes": 70},
+    {"id": "spring-controller", "name": "Spring Boot Controller", "chapter": "JW-CH03", "difficulty": 2, "estimatedMinutes": 70},
+    {"id": "jpa-repository", "name": "JPA与Repository", "chapter": "JW-CH04", "difficulty": 3, "estimatedMinutes": 80},
+    {"id": "flyway-migration", "name": "Flyway数据库迁移", "chapter": "JW-CH05", "difficulty": 2, "estimatedMinutes": 60},
+    {"id": "file-upload", "name": "文件上传与资源管理", "chapter": "JW-CH06", "difficulty": 3, "estimatedMinutes": 70},
+    {"id": "async-task-sse", "name": "异步任务与SSE进度追踪", "chapter": "JW-CH07", "difficulty": 4, "estimatedMinutes": 90},
+    {"id": "vue-api-integration", "name": "Vue3与后端接口联调", "chapter": "JW-CH08", "difficulty": 3, "estimatedMinutes": 70},
+    {"id": "testing-exception-logging", "name": "测试、异常处理与日志", "chapter": "JW-CH09", "difficulty": 3, "estimatedMinutes": 70},
+    {"id": "deployment-delivery", "name": "部署与演示交付", "chapter": "JW-CH10", "difficulty": 3, "estimatedMinutes": 60}
+  ],
+  "edges": [
+    {"from": "engineering-environment", "to": "http-rest-json", "relation": "prerequisite"},
+    {"from": "http-rest-json", "to": "spring-controller", "relation": "prerequisite"},
+    {"from": "spring-controller", "to": "jpa-repository", "relation": "prerequisite"},
+    {"from": "jpa-repository", "to": "flyway-migration", "relation": "prerequisite"},
+    {"from": "jpa-repository", "to": "file-upload", "relation": "prerequisite"},
+    {"from": "spring-controller", "to": "async-task-sse", "relation": "prerequisite"},
+    {"from": "http-rest-json", "to": "vue-api-integration", "relation": "prerequisite"},
+    {"from": "spring-controller", "to": "testing-exception-logging", "relation": "prerequisite"},
+    {"from": "testing-exception-logging", "to": "deployment-delivery", "relation": "prerequisite"}
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "courseId": "java-web-software-engineering",
+  "title": "Java Web 应用开发与软件工程实践",
+  "creditHours": 48,
+  "chapters": [
+    {"id": "JW-CH01", "order": 1, "title": "课程导论与工程环境", "estimatedHours": 4, "knowledgePoints": ["课程目标", "Git", "JDK", "Maven", "IDE"]},
+    {"id": "JW-CH02", "order": 2, "title": "HTTP、REST API 与 JSON 契约", "estimatedHours": 6, "knowledgePoints": ["HTTP方法", "状态码", "REST", "JSON契约"]},
+    {"id": "JW-CH03", "order": 3, "title": "Spring Boot 项目结构与 Controller", "estimatedHours": 6, "knowledgePoints": ["Spring Boot", "Controller", "DTO", "Validation"]},
+    {"id": "JW-CH04", "order": 4, "title": "数据库建模、JPA 与 Repository", "estimatedHours": 6, "knowledgePoints": ["实体建模", "JPA", "Repository", "事务"]},
+    {"id": "JW-CH05", "order": 5, "title": "Flyway 数据库迁移与初始化数据", "estimatedHours": 4, "knowledgePoints": ["Flyway", "迁移脚本", "初始化数据", "版本管理"]},
+    {"id": "JW-CH06", "order": 6, "title": "文件上传与资源管理", "estimatedHours": 4, "knowledgePoints": ["Multipart", "文件存储", "元数据", "安全限制"]},
+    {"id": "JW-CH07", "order": 7, "title": "异步任务、状态机与进度追踪", "estimatedHours": 6, "knowledgePoints": ["异步任务", "状态机", "SSE", "任务步骤"]},
+    {"id": "JW-CH08", "order": 8, "title": "前后端联调：Vue3、Axios 与接口封装", "estimatedHours": 4, "knowledgePoints": ["Vue3", "Axios", "API封装", "错误处理"]},
+    {"id": "JW-CH09", "order": 9, "title": "测试、异常处理与日志", "estimatedHours": 4, "knowledgePoints": ["接口测试", "异常处理", "日志", "调试"]},
+    {"id": "JW-CH10", "order": 10, "title": "部署、配置与演示交付", "estimatedHours": 4, "knowledgePoints": ["配置文件", "数据库切换", "部署", "演示验收"]}
+  ]
+}
