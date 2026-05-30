@@ -1,0 +1,19 @@
+{
+  "courseId": "java-web-software-engineering",
+  "resources": [
+    {"id": "JW-PROFILE", "type": "course_profile", "title": "课程画像", "path": "course_profile.md", "knowledgePoints": ["课程目标", "适用对象"]},
+    {"id": "JW-CH01-NOTE", "type": "chapter_note", "title": "课程导论与工程环境", "path": "chapters/01_course_intro_environment.md", "knowledgePoints": ["Git", "JDK", "Maven"]},
+    {"id": "JW-CH02-NOTE", "type": "chapter_note", "title": "HTTP、REST API 与 JSON 契约", "path": "chapters/02_http_rest_json.md", "knowledgePoints": ["HTTP方法", "REST", "JSON契约"]},
+    {"id": "JW-CH03-NOTE", "type": "chapter_note", "title": "Spring Boot 项目结构与 Controller", "path": "chapters/03_spring_boot_controller.md", "knowledgePoints": ["Spring Boot", "Controller", "DTO"]},
+    {"id": "JW-CH04-NOTE", "type": "chapter_note", "title": "数据库建模、JPA 与 Repository", "path": "chapters/04_jpa_repository.md", "knowledgePoints": ["实体建模", "JPA", "Repository"]},
+    {"id": "JW-CH05-NOTE", "type": "chapter_note", "title": "Flyway 数据库迁移与初始化数据", "path": "chapters/05_flyway_migration.md", "knowledgePoints": ["Flyway", "迁移脚本"]},
+    {"id": "JW-CH06-NOTE", "type": "chapter_note", "title": "文件上传与资源管理", "path": "chapters/06_file_upload.md", "knowledgePoints": ["Multipart", "文件存储"]},
+    {"id": "JW-CH07-NOTE", "type": "chapter_note", "title": "异步任务、状态机与进度追踪", "path": "chapters/07_async_task_sse.md", "knowledgePoints": ["异步任务", "SSE"]},
+    {"id": "JW-CH08-NOTE", "type": "chapter_note", "title": "前后端联调：Vue3、Axios 与接口封装", "path": "chapters/08_vue_api_integration.md", "knowledgePoints": ["Vue3", "Axios"]},
+    {"id": "JW-CH09-NOTE", "type": "chapter_note", "title": "测试、异常处理与日志", "path": "chapters/09_testing_exception_logging.md", "knowledgePoints": ["测试", "异常处理", "日志"]},
+    {"id": "JW-CH10-NOTE", "type": "chapter_note", "title": "部署、配置与演示交付", "path": "chapters/10_deployment_delivery.md", "knowledgePoints": ["配置", "部署", "演示"]},
+    {"id": "JW-KG", "type": "knowledge_graph", "title": "知识图谱", "path": "knowledge_graph.json", "knowledgePoints": ["前置关系"]},
+    {"id": "JW-QB", "type": "question_bank", "title": "题库", "path": "question_bank.json", "knowledgePoints": ["测评"]},
+    {"id": "JW-LABS", "type": "practice_cases", "title": "实操案例", "path": "practice_cases.json", "knowledgePoints": ["项目任务"]}
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "courseId": "java-web-software-engineering",
+  "cases": [
+    {
+      "id": "JW-LAB01",
+      "title": "实现健康检查接口",
+      "chapter": "JW-CH03",
+      "difficulty": "basic",
+      "task": "使用Spring Boot实现GET /api/health接口，返回服务状态、时间戳和版本信息。",
+      "outputs": ["Controller代码", "接口测试结果"]
+    },
+    {
+      "id": "JW-LAB02",
+      "title": "课程资源CRUD接口设计",
+      "chapter": "JW-CH04",
+      "difficulty": "medium",
+      "task": "设计课程和学习资源的数据表、实体类、Repository、Service和Controller。",
+      "outputs": ["数据库迁移脚本", "后端分层代码", "API测试用例"]
+    },
+    {
+      "id": "JW-LAB03",
+      "title": "异步任务进度追踪",
+      "chapter": "JW-CH07",
+      "difficulty": "advanced",
+      "task": "实现一个资源生成任务，记录任务状态、步骤进度，并通过SSE推送进度事件。",
+      "outputs": ["任务状态机设计", "SSE接口", "前端进度展示"]
+    }
+  ]
+}

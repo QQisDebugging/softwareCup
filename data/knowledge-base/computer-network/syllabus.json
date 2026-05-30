@@ -1,0 +1,63 @@
+{
+  "courseId": "computer-network",
+  "title": "计算机网络原理与协议分析",
+  "creditHours": 48,
+  "chapters": [
+    {
+      "id": "CN-CH01",
+      "order": 1,
+      "title": "概述",
+      "estimatedHours": 6,
+      "knowledgePoints": ["Internet", "网络边缘", "网络核心", "Internet/ISP结构", "速率", "带宽", "时延", "丢包", "吞吐量", "网络体系结构", "协议", "Internet历史和发展"]
+    },
+    {
+      "id": "CN-CH02",
+      "order": 2,
+      "title": "物理层",
+      "estimatedHours": 6,
+      "knowledgePoints": ["传输介质", "数据通信基础", "多路复用", "接入网技术", "物理层协议"]
+    },
+    {
+      "id": "CN-CH03",
+      "order": 3,
+      "title": "链路层",
+      "estimatedHours": 6,
+      "knowledgePoints": ["链路层功能", "差错控制", "流量控制", "可靠传输", "链路层协议"]
+    },
+    {
+      "id": "CN-CH04",
+      "order": 4,
+      "title": "广播链路与局域网",
+      "estimatedHours": 6,
+      "knowledgePoints": ["多路访问协议", "随机接入协议", "局域网", "以太网"]
+    },
+    {
+      "id": "CN-CH05",
+      "order": 5,
+      "title": "网络层",
+      "estimatedHours": 8,
+      "knowledgePoints": ["网络层服务类型", "数据平面", "转发", "IP", "ARP", "ICMP", "NAT", "控制平面", "路由", "RIP", "OSPF", "BGP"]
+    },
+    {
+      "id": "CN-CH06",
+      "order": 6,
+      "title": "传输层",
+      "estimatedHours": 7,
+      "knowledgePoints": ["进程之间的通信", "端口", "套接字", "可靠传输", "流量控制", "拥塞控制", "TCP", "UDP"]
+    },
+    {
+      "id": "CN-CH07",
+      "order": 7,
+      "title": "应用层",
+      "estimatedHours": 5,
+      "knowledgePoints": ["Web应用", "HTTP", "DNS", "DHCP"]
+    },
+    {
+      "id": "CN-CH08",
+      "order": 8,
+      "title": "WLAN",
+      "estimatedHours": 4,
+      "knowledgePoints": ["WLAN体系结构", "无线链路层帧格式", "无线多路访问协议"]
+    }
+  ]
+}

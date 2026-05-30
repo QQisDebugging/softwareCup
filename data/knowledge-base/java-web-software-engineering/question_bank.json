@@ -1,0 +1,25 @@
+{
+  "courseId": "java-web-software-engineering",
+  "items": [
+    {
+      "id": "JW-Q001",
+      "chapter": "JW-CH02",
+      "knowledgePoint": "REST API",
+      "type": "short_answer",
+      "difficulty": "basic",
+      "question": "设计REST接口时，为什么需要明确资源路径、HTTP方法和JSON响应结构？",
+      "answer": "明确资源路径、HTTP方法和JSON响应结构可以降低前后端协作成本，使接口语义清晰、调用方式稳定，也便于测试和维护。",
+      "profileSignals": ["接口设计概念薄弱"]
+    },
+    {
+      "id": "JW-Q002",
+      "chapter": "JW-CH05",
+      "knowledgePoint": "Flyway",
+      "type": "short_answer",
+      "difficulty": "medium",
+      "question": "Flyway迁移脚本相比让JPA自动建表有什么优势？",
+      "answer": "Flyway能把数据库结构变更显式版本化，便于团队协作、环境一致性和问题回溯；JPA自动建表更适合早期原型，不适合作为稳定交付依据。",
+      "profileSignals": ["数据库版本管理理解不足"]
+    }
+  ]
+}

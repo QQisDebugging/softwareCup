@@ -1,0 +1,75 @@
+{
+  "courseId": "computer-network",
+  "items": [
+    {
+      "id": "CN-Q001",
+      "chapter": "CN-CH01",
+      "knowledgePoint": "网络性能指标",
+      "type": "short_answer",
+      "difficulty": "basic",
+      "question": "简述带宽、吞吐量和时延的区别。",
+      "answer": "带宽描述链路理论传输能力，吞吐量描述实际单位时间成功传输的数据量，时延描述数据从发送端到接收端经历的时间。",
+      "profileSignals": ["性能指标概念混淆"]
+    },
+    {
+      "id": "CN-Q002",
+      "chapter": "CN-CH03",
+      "knowledgePoint": "差错控制",
+      "type": "short_answer",
+      "difficulty": "medium",
+      "question": "链路层为什么需要差错检测？它和可靠传输是什么关系？",
+      "answer": "差错检测用于发现帧在传输过程中的比特错误；可靠传输在差错检测基础上结合确认、重传、序号等机制提高交付可靠性。",
+      "profileSignals": ["链路层机制理解不完整"]
+    },
+    {
+      "id": "CN-Q003",
+      "chapter": "CN-CH05",
+      "knowledgePoint": "数据平面与控制平面",
+      "type": "short_answer",
+      "difficulty": "medium",
+      "question": "解释网络层数据平面和控制平面的区别，并各举两个协议或机制。",
+      "answer": "数据平面关注分组转发，如IP、ARP、ICMP、NAT；控制平面关注路由决策和路径计算，如RIP、OSPF、BGP。",
+      "profileSignals": ["网络层分工理解薄弱"]
+    },
+    {
+      "id": "CN-Q004",
+      "chapter": "CN-CH06",
+      "knowledgePoint": "进程之间的通信",
+      "type": "short_answer",
+      "difficulty": "basic",
+      "question": "传输层为什么强调进程之间的通信？端口号在其中起什么作用？",
+      "answer": "网络层主要负责主机到主机的通信，传输层需要把数据交付给主机上的具体应用进程。端口号用于标识发送端和接收端的应用进程。",
+      "profileSignals": ["主机通信与进程通信混淆"]
+    },
+    {
+      "id": "CN-Q005",
+      "chapter": "CN-CH06",
+      "knowledgePoint": "流量控制与拥塞控制",
+      "type": "short_answer",
+      "difficulty": "medium",
+      "question": "流量控制和拥塞控制的目标有什么区别？",
+      "answer": "流量控制关注发送方不要压垮接收方，主要与接收方缓存和处理能力有关；拥塞控制关注发送方不要让网络过载，主要与网络链路和路由器负载有关。",
+      "profileSignals": ["传输层控制机制混淆"]
+    },
+    {
+      "id": "CN-Q006",
+      "chapter": "CN-CH07",
+      "knowledgePoint": "HTTP、DNS、DHCP",
+      "type": "short_answer",
+      "difficulty": "basic",
+      "question": "访问一个网站时，DNS、DHCP、HTTP分别可能承担什么作用？",
+      "answer": "DHCP可为主机自动分配IP地址、网关和DNS服务器等参数；DNS把域名解析为IP地址；HTTP用于浏览器和Web服务器之间传输请求与响应。",
+      "profileSignals": ["应用层协议职责混淆"]
+    },
+    {
+      "id": "CN-Q007",
+      "chapter": "CN-CH08",
+      "knowledgePoint": "WLAN",
+      "type": "short_answer",
+      "difficulty": "medium",
+      "question": "WLAN为什么需要专门的无线多路访问机制？",
+      "answer": "无线介质共享、信号衰减、隐藏终端和冲突检测困难等问题，使WLAN不能简单照搬有线以太网的访问方式，需要适合无线环境的多路访问机制。",
+      "profileSignals": ["无线链路特性理解不足"]
+    }
+  ]
+}

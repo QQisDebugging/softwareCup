@@ -1,0 +1,286 @@
+{
+  "courseId": "computer-network",
+  "sourceDocuments": [
+    "D:\\计算机网络课程设计选题.pdf",
+    "D:\\选题说明及指导教师联系方式.pdf"
+  ],
+  "advisorPolicy": "指导教师姓名和联系方式不写入课程知识库。",
+  "schedule": "第18-19周",
+  "grading": {
+    "acceptance": 50,
+    "report": 50
+  },
+  "teamPolicy": {
+    "solo": true,
+    "teamSize": "2-3人",
+    "selfProposedTopicAllowed": true,
+    "selfProposedTopicConstraint": "需与网络开发密切相关"
+  },
+  "topics": [
+    {
+      "id": "CN-CD01",
+      "title": "实时网络通讯工具",
+      "category": "Socket通信类",
+      "difficulty": "medium",
+      "relatedChapters": ["CN-CH06", "CN-CH07"],
+      "knowledgePoints": ["Socket API", "客户端/服务器", "局域网通信", "并发通信"],
+      "objectives": [
+        "熟悉开发工具和操作系统应用程序编写过程",
+        "建立Socket编程基本概念",
+        "实现局域网内一对一即时通信"
+      ],
+      "requirements": [
+        "熟悉Socket API主要函数",
+        "完成服务端和客户端设计",
+        "支持基本文本消息传输",
+        "可扩展支持多个客户端同时通信"
+      ],
+      "deliverables": ["服务端程序", "客户端程序", "通信流程说明", "测试截图", "课程设计报告"],
+      "personalizationHints": ["适合希望练习Socket基础和并发通信的学生"]
+    },
+    {
+      "id": "CN-CD02",
+      "title": "网络文件传输",
+      "category": "Socket通信类",
+      "difficulty": "medium",
+      "relatedChapters": ["CN-CH06"],
+      "knowledgePoints": ["TCP字节流", "文件传输", "多线程", "鲁棒性"],
+      "objectives": [
+        "掌握网络文件传输方法",
+        "理解TCP连接基于字节流的特点",
+        "提升套接字传输速度和稳定性"
+      ],
+      "requirements": [
+        "实现单线程文件传输",
+        "可扩展为多线程传输",
+        "加入异常控制和传输状态提示",
+        "区分发送端和接收端职责"
+      ],
+      "deliverables": ["文件发送端", "文件接收端", "传输测试记录", "异常处理说明", "课程设计报告"],
+      "personalizationHints": ["适合对TCP可靠传输和工程鲁棒性感兴趣的学生"]
+    },
+    {
+      "id": "CN-CD03",
+      "title": "广播通信设计",
+      "category": "Socket通信类",
+      "difficulty": "medium",
+      "relatedChapters": ["CN-CH04", "CN-CH06"],
+      "knowledgePoints": ["广播通信", "Socket API", "局域网聊天室", "消息机制"],
+      "objectives": [
+        "掌握广播通信技术",
+        "理解基于Socket API的消息机制",
+        "实现局域网内广播聊天功能"
+      ],
+      "requirements": [
+        "实现网络消息广播程序",
+        "说明单播、广播、多播的区别",
+        "不依赖中心服务器转发所有消息",
+        "形成可用的局域网聊天室原型"
+      ],
+      "deliverables": ["广播通信程序", "局域网聊天室演示", "协议说明", "课程设计报告"],
+      "personalizationHints": ["适合对局域网通信和多路访问概念感兴趣的学生"]
+    },
+    {
+      "id": "CN-CD04",
+      "title": "网络版小游戏",
+      "category": "Socket通信类",
+      "difficulty": "medium",
+      "relatedChapters": ["CN-CH06", "CN-CH07"],
+      "knowledgePoints": ["Socket API", "客户端/服务器", "游戏状态同步", "双端协同"],
+      "objectives": [
+        "通过网络小游戏理解Socket通信",
+        "实现游戏双方的状态同步和协同操作"
+      ],
+      "requirements": [
+        "设计并实现一对一网络版小游戏",
+        "完成服务端和客户端设计",
+        "处理双方操作同步和胜负判断",
+        "不同游戏应对应不同设计方案"
+      ],
+      "deliverables": ["游戏服务端", "游戏客户端", "状态同步说明", "演示截图", "课程设计报告"],
+      "personalizationHints": ["适合喜欢交互体验和状态机设计的学生"]
+    },
+    {
+      "id": "CN-CD05",
+      "title": "网上图书馆的设计与实现",
+      "category": "Web应用类",
+      "difficulty": "medium",
+      "relatedChapters": ["CN-CH07"],
+      "knowledgePoints": ["Web应用", "数据库", "E-R模型", "脚本页面", "用户管理"],
+      "objectives": [
+        "熟悉Web应用设计方法",
+        "掌握关系型数据库基本操作",
+        "实现读者和图书管理业务"
+      ],
+      "requirements": [
+        "完成需求分析、E-R模型和关系模型分析",
+        "构建数据库、表或视图",
+        "设计前台脚本页面",
+        "考虑页面美观和数据库连接效率"
+      ],
+      "deliverables": ["需求分析", "数据库设计", "Web页面", "功能演示", "课程设计报告"],
+      "personalizationHints": ["适合需要练习Web与数据库综合开发的学生"]
+    },
+    {
+      "id": "CN-CD06",
+      "title": "网上书店的设计与实现",
+      "category": "Web应用类",
+      "difficulty": "medium",
+      "relatedChapters": ["CN-CH07"],
+      "knowledgePoints": ["Web应用", "数据库", "订单管理", "网络安全", "支付流程"],
+      "objectives": [
+        "熟悉Web应用设计方法",
+        "掌握关系型数据库操作",
+        "理解网上书店业务流程"
+      ],
+      "requirements": [
+        "完成需求分析和数据库建模",
+        "设计图书浏览、查询和订单相关功能",
+        "考虑系统上线运行需要的安全性和效率",
+        "分析销售款收取等业务流程的可行方案"
+      ],
+      "deliverables": ["数据库模型", "Web功能页面", "安全性说明", "测试记录", "课程设计报告"],
+      "personalizationHints": ["适合团队分工完成前端、后端和数据库模块"]
+    },
+    {
+      "id": "CN-CD07",
+      "title": "网上报名、查分系统的设计与实现",
+      "category": "Web应用类",
+      "difficulty": "medium",
+      "relatedChapters": ["CN-CH07"],
+      "knowledgePoints": ["Web应用", "数据库", "身份认证", "报名缴费", "统计功能"],
+      "objectives": [
+        "完成报名与查分业务的需求分析",
+        "掌握数据库驱动的Web系统开发流程",
+        "理解账号安全与数据查询服务"
+      ],
+      "requirements": [
+        "完成需求分析、E-R模型和关系模型分析",
+        "实现报名、查分和统计功能",
+        "考虑报名费收取的安全性",
+        "分析用户名和密码找回机制的风险"
+      ],
+      "deliverables": ["需求规格", "数据库设计", "报名查分功能", "安全分析", "课程设计报告"],
+      "personalizationHints": ["适合关注业务流程、安全性和数据查询的学生"]
+    },
+    {
+      "id": "CN-CD08",
+      "title": "基于Web的新闻发布系统",
+      "category": "Web应用类",
+      "difficulty": "medium",
+      "relatedChapters": ["CN-CH07"],
+      "knowledgePoints": ["Web应用", "动态网页", "后台管理", "新闻发布"],
+      "objectives": [
+        "分析Web新闻发布系统需求",
+        "实现新闻浏览和后台发布管理",
+        "掌握动态网页制作技术"
+      ],
+      "requirements": [
+        "分析现有新闻发布系统",
+        "完成数据库建模和页面设计",
+        "实现前台新闻浏览",
+        "实现后台管理员发布新闻"
+      ],
+      "deliverables": ["新闻浏览页面", "后台发布页面", "数据库设计", "对比分析", "课程设计报告"],
+      "personalizationHints": ["适合从Web应用场景理解HTTP和服务端动态页面的学生"]
+    },
+    {
+      "id": "CN-CD09",
+      "title": "网上留言簿的设计与实现",
+      "category": "Web应用类",
+      "difficulty": "basic",
+      "relatedChapters": ["CN-CH07"],
+      "knowledgePoints": ["Web应用", "留言管理", "搜索", "后台回复", "数据库"],
+      "objectives": [
+        "实现留言浏览、发布和搜索",
+        "实现后台管理和回复功能",
+        "理解面向用户互动的Web系统设计"
+      ],
+      "requirements": [
+        "完成留言簿需求分析和数据库设计",
+        "实现前台浏览、发布和搜索留言",
+        "实现后台管理员管理和回复留言",
+        "思考大量留言下的管理效率"
+      ],
+      "deliverables": ["留言前台", "管理后台", "数据库设计", "管理策略说明", "课程设计报告"],
+      "personalizationHints": ["适合Web基础薄弱但需要完整小系统练习的学生"]
+    },
+    {
+      "id": "CN-CD10",
+      "title": "嗅探器的设计与实现",
+      "category": "网络工具类",
+      "difficulty": "advanced",
+      "relatedChapters": ["CN-CH03", "CN-CH05", "CN-CH06"],
+      "knowledgePoints": ["Libpcap", "WinPcap", "原始套接字", "IP协议头", "TCP/UDP过滤", "流量统计"],
+      "objectives": [
+        "实现简单图形界面的Sniffer",
+        "能够解析IP层和传输层协议头",
+        "能够过滤TCP、UDP等数据包并统计流量"
+      ],
+      "requirements": [
+        "不限平台，可使用Libpcap、WinPcap或Linux原始套接字",
+        "主线程响应用户界面，工作线程完成抓包",
+        "输出文本方式传送的数据包内容",
+        "支持简单流量统计"
+      ],
+      "deliverables": ["嗅探器程序", "协议解析说明", "过滤和统计截图", "安全使用说明", "课程设计报告"],
+      "personalizationHints": ["适合编程能力强且关注协议底层分析的学生"]
+    },
+    {
+      "id": "CN-CD11",
+      "title": "端口扫描工具的设计与实现",
+      "category": "网络工具类",
+      "difficulty": "advanced",
+      "relatedChapters": ["CN-CH05", "CN-CH06", "CN-CH07"],
+      "knowledgePoints": ["端口扫描", "TCP端口", "UDP端口", "服务识别", "扫描隐蔽性", "扫描效率"],
+      "objectives": [
+        "实现简单图形界面的端口扫描工具",
+        "扫描指定IP主机或服务器开放端口",
+        "扫描指定IP范围内特定服务端口"
+      ],
+      "requirements": [
+        "支持指定主机端口扫描",
+        "支持指定IP地址范围和特定端口扫描",
+        "关注常见服务端口，如FTP 21、SMTP 25、DNS 53、SNMP 161",
+        "考虑扫描动作的隐蔽性和效率"
+      ],
+      "deliverables": ["端口扫描工具", "扫描结果截图", "效率和隐蔽性分析", "合法使用说明", "课程设计报告"],
+      "personalizationHints": ["适合对网络安全工具和服务识别感兴趣的学生"]
+    },
+    {
+      "id": "CN-CD12",
+      "title": "Web服务器设计与实现",
+      "category": "网络服务类",
+      "difficulty": "advanced",
+      "relatedChapters": ["CN-CH06", "CN-CH07"],
+      "knowledgePoints": ["HTTP", "Socket API", "多线程", "静态文件服务", "404响应", "服务器状态监控"],
+      "objectives": [
+        "掌握HTTP协议工作原理",
+        "实现简单HTTP Web服务器",
+        "理解多客户端访问与服务器运行状态监控"
+      ],
+      "requirements": [
+        "不限平台，熟悉Socket API主要函数",
+        "实现简单基于HTTP协议的Web服务器",
+        "响应静态html或htm文件请求",
+        "文件不存在时返回404错误提示",
+        "不涉及asp、aspx、php、jsp等动态页面解析",
+        "考虑多客户端访问和服务器性能"
+      ],
+      "deliverables": ["Web服务器程序", "HTTP请求响应示例", "并发访问测试", "状态监控说明", "课程设计报告"],
+      "personalizationHints": ["适合希望深入理解HTTP和服务器并发模型的学生"]
+    }
+  ],
+  "reportTemplate": [
+    "题目名称与成员分工",
+    "需求分析",
+    "系统总体设计",
+    "模块设计与关键流程",
+    "通信协议或数据库设计",
+    "关键代码说明",
+    "测试方案与结果",
+    "运行截图或抓包截图",
+    "问题分析与改进方向",
+    "总结"
+  ]
+}

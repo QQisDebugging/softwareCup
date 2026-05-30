@@ -1,0 +1,117 @@
+{
+  "courseId": "computer-network",
+  "cases": [
+    {
+      "id": "CN-LAB01",
+      "title": "访问网页过程的分层解释",
+      "chapter": "CN-CH01",
+      "difficulty": "basic",
+      "task": "以浏览器访问一个网页为例，说明应用层、传输层、网络层、链路层分别承担的工作。",
+      "outputs": ["分层过程说明", "协议与层次对应表"]
+    },
+    {
+      "id": "CN-LAB02",
+      "title": "本机网络参数观察",
+      "chapter": "CN-CH04",
+      "difficulty": "basic",
+      "task": "查看本机IP地址、MAC地址、默认网关，并解释这些参数在局域网通信中的作用。",
+      "outputs": ["网络参数截图或记录", "通信过程解释"]
+    },
+    {
+      "id": "CN-LAB03",
+      "title": "组网与路由器配置",
+      "chapter": "CN-CH05",
+      "difficulty": "medium",
+      "sourceDocument": "D:\\实验1组网与路由器配置.pdf",
+      "environment": ["Cisco Packet Tracer 7.0"],
+      "objectives": [
+        "掌握交换机和路由器的基本工作原理",
+        "能够完成局域网组网、IP地址配置和默认网关配置",
+        "能够配置路由器接口、静态路由和RIP动态路由",
+        "能够验证不同子网主机之间的网络层连通性"
+      ],
+      "relatedKnowledgePoints": ["局域网", "IP地址", "默认网关", "路由表", "静态路由", "RIP"],
+      "task": "在Cisco Packet Tracer中完成交换机组网、路由器连接主机、路由器直连、静态路由和动态路由配置，并根据学号规则完成指定拓扑的子网划分与互通验证。",
+      "steps": [
+        "使用交换机连接两台主机，为PC0配置192.168.0.2/24，为PC1配置192.168.0.3/24，使用ping验证同一局域网连通性。",
+        "使用单台路由器连接两个网段，为PC0配置192.168.1.2/24、默认网关192.168.1.1，为PC1配置192.168.2.2/24、默认网关192.168.2.1；为路由器FastEthernet0/0配置192.168.1.1/24，FastEthernet1/0配置192.168.2.1/24，并验证跨网段连通性。",
+        "使用两台路由器直连：Router0连接192.168.1.0/24和172.16.1.0/24，Router1连接192.168.2.0/24和172.16.1.0/24，完成串口和以太网接口配置。",
+        "在Router0上配置到192.168.2.0/24的静态路由，下一跳为172.16.1.2；在Router1上配置到192.168.1.0/24的静态路由，下一跳为172.16.1.1，并查看路由表。",
+        "删除静态路由后配置RIP动态路由，发布直连网络，查看路由表变化并再次验证主机互通。",
+        "根据实验任务拓扑，按学号后四位规则设置子网1网络号，完成子网地址分配、路由器串口IP配置、静态路由和动态路由两种方案。"
+      ],
+      "reportRequirements": [
+        "提交网络拓扑图",
+        "提交各主机、路由器接口、串口地址规划表",
+        "提交静态路由配置命令和路由表截图",
+        "提交RIP动态路由配置命令和路由表截图",
+        "提交不同子网主机之间ping连通性测试截图",
+        "说明静态路由和动态路由在配置复杂度、维护成本和适用场景上的区别"
+      ],
+      "outputs": ["Packet Tracer拓扑文件", "IP地址规划表", "路由配置记录", "连通性测试截图", "实验分析报告"],
+      "personalizationHints": [
+        "基础薄弱学生先生成IP地址、子网掩码、默认网关的图解说明",
+        "实践型学生优先生成Packet Tracer逐步配置清单",
+        "易错学生重点推送静态路由下一跳、RIP network发布范围和默认网关配置检查表"
+      ]
+    },
+    {
+      "id": "CN-LAB04",
+      "title": "TCP可靠传输机制分析",
+      "chapter": "CN-CH06",
+      "difficulty": "advanced",
+      "sourceDocument": "D:\\实验2TCP协议分析.pdf",
+      "environment": ["Windows", "Wireshark", "浏览器"],
+      "objectives": [
+        "掌握TCP报文段格式、序号和确认号",
+        "能够分析TCP三次握手、数据传输、ACK确认、流量控制和拥塞控制",
+        "能够使用Wireshark计算RTT、吞吐率并观察TCP时间序列图"
+      ],
+      "relatedKnowledgePoints": ["TCP", "三次握手", "序号", "确认号", "流量控制", "拥塞控制", "RTT", "吞吐率"],
+      "task": "使用浏览器向gaia.cs.umass.edu上传alice.txt文件，通过Wireshark捕获TCP分组，分析连接建立、HTTP POST、数据段、ACK、接收窗口、重传、RTT、吞吐率和拥塞窗口变化趋势。",
+      "steps": [
+        "确认实验环境未运行VPN，浏览器未默认使用HTTP/3或QUIC通信。",
+        "访问http://gaia.cs.umass.edu/wireshark-labs/alice.txt，保存alice.txt到本地。",
+        "打开http://gaia.cs.umass.edu/wireshark-labs/TCP-wireshark-file1.html，选择alice.txt文件但暂不上传。",
+        "启动Wireshark抓包，在浏览器点击Upload，将文件上传到服务器，上传成功后停止抓包。",
+        "在Wireshark显示过滤器中输入tcp，观察本地主机与服务器之间的TCP和HTTP消息。",
+        "定位三次握手、HTTP POST、承载数据的TCP段和ACK报文，记录raw sequence number与raw acknowledgement number。",
+        "通过TCP流图的时间序列图观察发送序号与时间的关系，分析是否存在重传、慢启动和拥塞避免阶段。"
+      ],
+      "reportRequirements": [
+        "记录客户端IP地址、MAC地址和TCP端口号，并附ipconfig或网络参数截图",
+        "记录服务器IP地址、服务器发送和接收TCP报文的端口号",
+        "给出三次握手中SYN、ACK标志位、raw序号和raw确认号",
+        "记录包含HTTP POST命令头的TCP报文段序号和有效载荷字节数",
+        "计算前两个数据段的发送时间、ACK接收时间、RTT，以及alpha=0.125时第二个ACK后的EstimatedRTT",
+        "记录前4个承载数据TCP段长度",
+        "分析前4个数据段传输过程中服务器通告窗口的最小值及其作用",
+        "判断是否存在重传报文段，并说明判断依据",
+        "计算TCP连接吞吐率并给出计算过程",
+        "结合TCP时间序列图分析慢启动、拥塞避免和实际窗口变化与理论算法的差异"
+      ],
+      "outputs": ["Wireshark抓包文件", "TCP三次握手分析表", "RTT与吞吐率计算过程", "TCP时间序列图", "实验分析报告"],
+      "personalizationHints": [
+        "基础薄弱学生先生成TCP报文段字段和三次握手图解",
+        "计算薄弱学生重点推送RTT、EstimatedRTT和吞吐率计算模板",
+        "进阶学生重点分析重传、接收窗口、慢启动和拥塞避免的实际表现"
+      ]
+    },
+    {
+      "id": "CN-LAB05",
+      "title": "访问网站中的应用层协议分析",
+      "chapter": "CN-CH07",
+      "difficulty": "basic",
+      "task": "描述一台新接入网络的主机访问网站时，DHCP、DNS和HTTP的先后关系与职责分工。",
+      "outputs": ["协议调用流程图", "HTTP请求响应说明"]
+    },
+    {
+      "id": "CN-LAB06",
+      "title": "WLAN接入过程与帧格式观察",
+      "chapter": "CN-CH08",
+      "difficulty": "medium",
+      "task": "分析笔记本或手机接入无线网络的过程，说明接入点、无线终端、链路层帧和无线多路访问机制的作用。",
+      "outputs": ["WLAN体系结构图", "无线接入过程说明"]
+    }
+  ]
+}
