@@ -1,0 +1,36 @@
+digraph G {
+  graph [rankdir=LR, bgcolor="transparent", pad="0.2", nodesep="0.45", ranksep="0.65"];
+  node [shape=box, style="rounded,filled", fontname="Microsoft YaHei", fontsize=14, color="#4b5563", fillcolor="#f8fafc"];
+  edge [fontname="Microsoft YaHei", fontsize=12, color="#64748b", arrowsize=0.8];
+
+  subgraph cluster_edge {
+    label="网络边缘：产生和消费数据";
+    fontname="Microsoft YaHei";
+    fontsize=15;
+    color="#93c5fd";
+    style="rounded";
+    client [label="用户终端\n电脑 / 手机 / 平板", fillcolor="#dbeafe"];
+    server [label="服务器\nWeb / 云服务", fillcolor="#dbeafe"];
+  }
+
+  access [label="接入网络\nWi-Fi / 以太网 / 蜂窝网络", fillcolor="#dcfce7"];
+
+  subgraph cluster_core {
+    label="网络核心：转发数据分组";
+    fontname="Microsoft YaHei";
+    fontsize=15;
+    color="#fbbf24";
+    style="rounded";
+    r1 [label="路由器 A", fillcolor="#fef3c7"];
+    r2 [label="路由器 B", fillcolor="#fef3c7"];
+    r3 [label="高速链路\n交换设备", fillcolor="#fef3c7"];
+  }
+
+  isp [label="ISP 层次结构\n接入 ISP -> 区域 ISP -> 骨干 ISP", fillcolor="#fce7f3"];
+  metrics [label="性能指标\n带宽 / 吞吐量 / 时延 / 丢包", fillcolor="#ede9fe"];
+  layers [label="分层思想\n应用层 -> 传输层 -> 网络层 -> 链路层 -> 物理层", fillcolor="#f1f5f9"];
+
+  client -> access -> r1 -> r2 -> r3 -> isp -> server [label="网页访问路径"];
+  metrics -> r2 [style=dashed, label="解释快慢"];
+  layers -> access [style=dashed, label="降低复杂度"];
+}

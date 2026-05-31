@@ -1,0 +1,17 @@
+digraph G {
+  graph [rankdir=LR, bgcolor="transparent", pad="0.2", nodesep="0.45", ranksep="0.65"];
+  node [shape=box, style="rounded,filled", fontname="Microsoft YaHei", fontsize=14, color="#4b5563", fillcolor="#f8fafc"];
+  edge [fontname="Microsoft YaHei", fontsize=12, color="#64748b", arrowsize=0.8];
+
+  device [label="新接入设备\n手机 / 笔记本", fillcolor="#dbeafe"];
+  dhcp [label="DHCP\n获取本机 IP\n子网掩码 / 网关 / DNS", fillcolor="#dcfce7"];
+  user [label="浏览器输入域名\nwww.example.com", fillcolor="#f8fafc"];
+  dns [label="DNS\n域名 -> IP 地址", fillcolor="#fef3c7"];
+  transport [label="传输层连接\nHTTP:80 / HTTPS:443", fillcolor="#ede9fe"];
+  httpReq [label="HTTP 请求\n方法 / URL / 请求头", fillcolor="#e0f2fe"];
+  httpResp [label="HTTP 响应\n状态码 / 响应头 / 响应体", fillcolor="#e0f2fe"];
+  page [label="浏览器解析\nHTML / CSS / JS / 图片", fillcolor="#dbeafe"];
+
+  device -> dhcp -> user -> dns -> transport -> httpReq -> httpResp -> page;
+  httpReq -> httpResp [label="请求-响应模式"];
+}

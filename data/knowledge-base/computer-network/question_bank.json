@@ -4,72 +4,1016 @@
     {
       "id": "CN-Q001",
       "chapter": "CN-CH01",
+      "knowledgePoint": "计算机网络功能",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "计算机网络的主要功能是（   ）。",
+      "options": [
+        "A. 计算机之间的互相制约",
+        "B. 数据通信和资源共享",
+        "C. 提高系统可靠性",
+        "D. 将负荷均匀地分配给网上各计算机系统"
+      ],
+      "answer": "B",
+      "explanation": "本章强调网络的核心目标是数据交换、资源共享和协同工作。",
+      "sourceRef": "计网题库.txt 单选题 212",
+      "profileSignals": ["不清楚计算机网络的基本目标"]
+    },
+    {
+      "id": "CN-Q002",
+      "chapter": "CN-CH01",
+      "knowledgePoint": "网络协议",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "计算机网络是按（   ）相互通信的。",
+      "options": [
+        "A. 信息交换方式",
+        "B. 分类标准",
+        "C. 网络协议",
+        "D. 传输装置"
+      ],
+      "answer": "C",
+      "explanation": "通信双方必须遵守共同协议，才能正确理解报文格式、顺序和语义。",
+      "sourceRef": "计网题库.txt 单选题 214",
+      "profileSignals": ["协议概念薄弱"]
+    },
+    {
+      "id": "CN-Q003",
+      "chapter": "CN-CH01",
+      "knowledgePoint": "网络体系结构",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "计算机网络的体系结构是指（   ）。",
+      "options": [
+        "A. 计算机网络的分层结构和协议的集合",
+        "B. 计算机网络的连接形式",
+        "C. 计算机网络的协议集合",
+        "D. 由通信线路连接起来的网络系统"
+      ],
+      "answer": "A",
+      "explanation": "体系结构体现分层思想以及各层协议的组织方式。",
+      "sourceRef": "计网题库.txt 单选题 211",
+      "profileSignals": ["分层体系结构理解不足"]
+    },
+    {
+      "id": "CN-Q004",
+      "chapter": "CN-CH01",
+      "knowledgePoint": "分层思想",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "计算机网络体系结构中，下层的目的是向上一层提供（   ）。",
+      "options": [
+        "A. 协议",
+        "B. 服务",
+        "C. 规则",
+        "D. 数据包"
+      ],
+      "answer": "B",
+      "explanation": "每一层通过明确接口向上层提供服务，这是分层结构降低复杂度的关键。",
+      "sourceRef": "计网题库.txt 单选题 216",
+      "profileSignals": ["层间服务关系不清"]
+    },
+    {
+      "id": "CN-Q005",
+      "chapter": "CN-CH01",
+      "knowledgePoint": "Internet 与 WWW",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "Internet 和 WWW 的关系是（   ）。",
+      "options": [
+        "A. 都表示互联网，只是名称不同",
+        "B. WWW 是 Internet 上的一个应用功能",
+        "C. Internet 和 WWW 没有关系",
+        "D. WWW 是 Internet 上的一个协议"
+      ],
+      "answer": "B",
+      "explanation": "Internet 是全球网络系统，WWW 是运行在 Internet 之上的典型应用。",
+      "sourceRef": "计网题库.txt 单选题 5",
+      "profileSignals": ["Internet 与具体应用混淆"]
+    },
+    {
+      "id": "CN-Q006",
+      "chapter": "CN-CH01",
+      "knowledgePoint": "Internet 基础",
+      "type": "true_false",
+      "difficulty": "basic",
+      "question": "Internet 是以 OSI/RM 协议将全球的各种网络连起来的国际互联网。",
+      "answer": "错误",
+      "explanation": "Internet 主要基于 TCP/IP 协议体系，不是以 OSI/RM 协议连接全球网络。",
+      "sourceRef": "计网题库.txt 判断题 17",
+      "profileSignals": ["OSI 模型与 Internet 实际协议体系混淆"]
+    },
+    {
+      "id": "CN-Q007",
+      "chapter": "CN-CH01",
+      "knowledgePoint": "协议要素",
+      "type": "true_false",
+      "difficulty": "basic",
+      "question": "组成网络协议的三个要素是语法、语义和同步。",
+      "answer": "正确",
+      "explanation": "语法规定格式，语义规定含义，同步规定通信顺序与时机。",
+      "sourceRef": "计网题库.txt 判断题 32",
+      "profileSignals": ["协议组成要素记忆不完整"]
+    },
+    {
+      "id": "CN-Q008",
+      "chapter": "CN-CH01",
       "knowledgePoint": "网络性能指标",
       "type": "short_answer",
       "difficulty": "basic",
       "question": "简述带宽、吞吐量和时延的区别。",
       "answer": "带宽描述链路理论传输能力，吞吐量描述实际单位时间成功传输的数据量，时延描述数据从发送端到接收端经历的时间。",
-      "profileSignals": ["性能指标概念混淆"]
+      "explanation": "这是第一章性能指标的核心辨析，不能把带宽直接等同于实际体验速度。",
+      "sourceRef": "讲义补充 第1章 1.4",
+      "profileSignals": ["带宽、吞吐量和时延混淆"]
     },
     {
-      "id": "CN-Q002",
+      "id": "CN-Q009",
+      "chapter": "CN-CH02",
+      "knowledgePoint": "双绞线",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "10M 以太网有三种接口标准，其中 10BASE-T 采用（   ）。",
+      "options": [
+        "A. 双绞线",
+        "B. 粗同轴电缆",
+        "C. 细同轴电缆",
+        "D. 光纤"
+      ],
+      "answer": "A",
+      "explanation": "10BASE-T 中的 T 表示 twisted pair，即双绞线。",
+      "sourceRef": "计网题库.txt 单选题 2",
+      "profileSignals": ["常见传输介质识别不足"]
+    },
+    {
+      "id": "CN-Q010",
+      "chapter": "CN-CH02",
+      "knowledgePoint": "全双工通信",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "采用全双工通信方式，数据传输的方向性结构为（   ）。",
+      "options": [
+        "A. 可以在两个方向上同时传输",
+        "B. 只能在一个方向上传输",
+        "C. 可以在两个方向上传输，但不能同时进行",
+        "D. 以上均不对"
+      ],
+      "answer": "A",
+      "explanation": "全双工表示通信双方可以同时发送和接收数据。",
+      "sourceRef": "计网题库.txt 单选题 15",
+      "profileSignals": ["单工、半双工、全双工概念混淆"]
+    },
+    {
+      "id": "CN-Q011",
+      "chapter": "CN-CH02",
+      "knowledgePoint": "时分复用",
+      "type": "single_choice",
+      "difficulty": "medium",
+      "question": "若信道的复用是以信息在一帧中的时间位置来区分不同信号，属于（   ）。",
+      "options": [
+        "A. 异步时分复用",
+        "B. 频分多路复用",
+        "C. 同步时分复用",
+        "D. 以上均不对"
+      ],
+      "answer": "C",
+      "explanation": "同步时分复用按照固定时间片或帧内位置为不同信号分配传输机会。",
+      "sourceRef": "计网题库.txt 单选题 40",
+      "profileSignals": ["多路复用类型混淆"]
+    },
+    {
+      "id": "CN-Q012",
+      "chapter": "CN-CH02",
+      "knowledgePoint": "信道带宽",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "信道上可传送信号的最高频率和最低频率之差称为（   ）。",
+      "options": [
+        "A. 波特率",
+        "B. 比特率",
+        "C. 吞吐量",
+        "D. 信道带宽"
+      ],
+      "answer": "D",
+      "explanation": "物理信道的频率范围差值就是信道带宽。",
+      "sourceRef": "计网题库.txt 单选题 115",
+      "profileSignals": ["带宽、比特率、波特率概念混淆"]
+    },
+    {
+      "id": "CN-Q013",
+      "chapter": "CN-CH02",
+      "knowledgePoint": "物理层特性",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "物理层的重要特性不包括（   ）。",
+      "options": [
+        "A. 机械特性",
+        "B. 结构特性",
+        "C. 电气特性",
+        "D. 功能特性"
+      ],
+      "answer": "B",
+      "explanation": "物理层常讨论机械、电气、功能、规程等接口与信号特性。",
+      "sourceRef": "计网题库.txt 单选题 157",
+      "profileSignals": ["物理层职责边界不清"]
+    },
+    {
+      "id": "CN-Q014",
+      "chapter": "CN-CH02",
+      "knowledgePoint": "光纤特点",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "下列不是光缆特点的是（   ）。",
+      "options": [
+        "A. 适合远距离传输",
+        "B. 抗雷电和电磁干扰性能好",
+        "C. 传输损耗小",
+        "D. 保密性差"
+      ],
+      "answer": "D",
+      "explanation": "光纤具有速率高、距离远、抗干扰强等特点，并不以保密性差为特点。",
+      "sourceRef": "计网题库.txt 单选题 160",
+      "profileSignals": ["不同传输介质特点混淆"]
+    },
+    {
+      "id": "CN-Q015",
+      "chapter": "CN-CH02",
+      "knowledgePoint": "双绞线类型",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "双绞线分为（   ）双绞线和（   ）双绞线两类。",
+      "options": [
+        "A. 基带、宽带",
+        "B. 基带、窄带",
+        "C. 屏蔽、非屏蔽",
+        "D. 屏蔽、基带"
+      ],
+      "answer": "C",
+      "explanation": "双绞线常见分类是屏蔽双绞线和非屏蔽双绞线。",
+      "sourceRef": "计网题库.txt 单选题 177",
+      "profileSignals": ["双绞线分类掌握不足"]
+    },
+    {
+      "id": "CN-Q016",
+      "chapter": "CN-CH02",
+      "knowledgePoint": "物理层复用",
+      "type": "true_false",
+      "difficulty": "basic",
+      "question": "物理层上的复用技术是将多路信号组合在一条物理信道上进行传输。",
+      "answer": "正确",
+      "explanation": "多路复用的核心价值是让多个通信信号共享同一传输介质，提高资源利用率。",
+      "sourceRef": "计网题库.txt 判断题 43",
+      "profileSignals": ["多路复用作用理解不足"]
+    },
+    {
+      "id": "CN-Q017",
+      "chapter": "CN-CH03",
+      "knowledgePoint": "链路层协议",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "HDLC 是哪一层的协议（   ）。",
+      "options": [
+        "A. 物理层",
+        "B. 数据链路层",
+        "C. 网络层",
+        "D. 高层"
+      ],
+      "answer": "B",
+      "explanation": "HDLC 属于数据链路层协议，关注帧传输与链路控制。",
+      "sourceRef": "计网题库.txt 单选题 3",
+      "profileSignals": ["链路层协议归属不清"]
+    },
+    {
+      "id": "CN-Q018",
+      "chapter": "CN-CH03",
+      "knowledgePoint": "流量控制",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "控制相邻两个结点间链路上的流量的工作在（   ）完成。",
+      "options": [
+        "A. 链路层",
+        "B. 物理层",
+        "C. 网络层",
+        "D. 运输层"
+      ],
+      "answer": "A",
+      "explanation": "链路层关注相邻节点之间一段链路上的帧传输与控制。",
+      "sourceRef": "计网题库.txt 单选题 34",
+      "profileSignals": ["链路层与传输层流量控制场景混淆"]
+    },
+    {
+      "id": "CN-Q019",
+      "chapter": "CN-CH03",
+      "knowledgePoint": "CRC",
+      "type": "single_choice",
+      "difficulty": "medium",
+      "question": "在数字通信中广泛采用 CRC 循环冗余码的原因是 CRC 可以（   ）。",
+      "options": [
+        "A. 检测出一位差错",
+        "B. 检测并纠正一位差错",
+        "C. 检测出多位突发性差错",
+        "D. 检测并纠正多位突发性差错"
+      ],
+      "answer": "C",
+      "explanation": "CRC 是常见差错检测方法，擅长检测突发错误，但本身不是纠错机制。",
+      "sourceRef": "计网题库.txt 单选题 51",
+      "profileSignals": ["把差错检测误认为差错纠正"]
+    },
+    {
+      "id": "CN-Q020",
+      "chapter": "CN-CH03",
+      "knowledgePoint": "自动请求重发",
+      "type": "single_choice",
+      "difficulty": "medium",
+      "question": "下述协议中，不属于自动请求重发技术的协议是（   ）。",
+      "options": [
+        "A. 停等协议",
+        "B. 网络控制消息协议",
+        "C. 后退 N 帧协议",
+        "D. 选择性重发协议"
+      ],
+      "answer": "B",
+      "explanation": "停等、后退 N 帧和选择性重发都可用于可靠传输；网络控制消息协议不是 ARQ 协议。",
+      "sourceRef": "计网题库.txt 单选题 112",
+      "profileSignals": ["可靠传输机制归类不清"]
+    },
+    {
+      "id": "CN-Q021",
       "chapter": "CN-CH03",
       "knowledgePoint": "差错控制",
+      "type": "true_false",
+      "difficulty": "basic",
+      "question": "循环冗余校验码 CRC 的作用是在数据链路层进行差错控制。",
+      "answer": "正确",
+      "explanation": "CRC 常用于帧尾部的差错检测字段，帮助接收方发现传输错误。",
+      "sourceRef": "计网题库.txt 判断题 8",
+      "profileSignals": ["CRC 使用场景不清"]
+    },
+    {
+      "id": "CN-Q022",
+      "chapter": "CN-CH03",
+      "knowledgePoint": "差错检测与纠正",
+      "type": "true_false",
+      "difficulty": "medium",
+      "question": "在计算机网络和数据通信中广泛使用的一种纠错码为循环冗余码。",
+      "answer": "错误",
+      "explanation": "CRC 主要用于差错检测，不是常规意义上的纠错码。",
+      "sourceRef": "计网题库.txt 判断题 36",
+      "profileSignals": ["差错检测与差错纠正混淆"]
+    },
+    {
+      "id": "CN-Q023",
+      "chapter": "CN-CH03",
+      "knowledgePoint": "滑动窗口",
+      "type": "true_false",
+      "difficulty": "medium",
+      "question": "滑动窗口控制机制允许发送站连续发送多个帧而不必每发送一个帧就等待应答。",
+      "answer": "正确",
+      "explanation": "滑动窗口提高了停止等待方式的效率，可允许一定数量的未确认帧在链路中传输。",
+      "sourceRef": "计网题库.txt 判断题 45",
+      "profileSignals": ["停止等待与滑动窗口机制混淆"]
+    },
+    {
+      "id": "CN-Q024",
+      "chapter": "CN-CH03",
+      "knowledgePoint": "可靠传输",
       "type": "short_answer",
       "difficulty": "medium",
       "question": "链路层为什么需要差错检测？它和可靠传输是什么关系？",
-      "answer": "差错检测用于发现帧在传输过程中的比特错误；可靠传输在差错检测基础上结合确认、重传、序号等机制提高交付可靠性。",
-      "profileSignals": ["链路层机制理解不完整"]
+      "answer": "差错检测用于发现帧在传输过程中的比特错误；可靠传输在差错检测基础上结合确认、重传、序号和定时器等机制提高交付可靠性。",
+      "explanation": "有差错检测不等于一定可靠，可靠传输还需要确认、重传等机制配合。",
+      "sourceRef": "讲义补充 第3章 3.4-3.6",
+      "profileSignals": ["链路层可靠传输机制理解不完整"]
     },
     {
-      "id": "CN-Q003",
+      "id": "CN-Q025",
+      "chapter": "CN-CH04",
+      "knowledgePoint": "MAC 子层",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "在局域网中，MAC 指的是（   ）。",
+      "options": [
+        "A. 逻辑链路控制子层",
+        "B. 介质访问控制子层",
+        "C. 物理层",
+        "D. 数据链路层"
+      ],
+      "answer": "B",
+      "explanation": "MAC 是 Media Access Control，负责介质访问控制。",
+      "sourceRef": "计网题库.txt 单选题 46",
+      "profileSignals": ["MAC 概念不清"]
+    },
+    {
+      "id": "CN-Q026",
+      "chapter": "CN-CH04",
+      "knowledgePoint": "共享介质冲突",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "在总线型局域网中，由于总线作为公共传输介质被多个结点共享，因此在工作过程中需要解决的问题是（   ）。",
+      "options": [
+        "A. 拥塞",
+        "B. 冲突",
+        "C. 交换",
+        "D. 互联"
+      ],
+      "answer": "B",
+      "explanation": "广播链路或共享介质中多个节点同时发送会产生冲突。",
+      "sourceRef": "计网题库.txt 单选题 62",
+      "profileSignals": ["共享介质访问问题理解不足"]
+    },
+    {
+      "id": "CN-Q027",
+      "chapter": "CN-CH04",
+      "knowledgePoint": "CSMA/CD",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "以太网 10BASE-5 使用的媒体访问控制方法是（   ）。",
+      "options": [
+        "A. CSMA",
+        "B. CSMA/CD",
+        "C. 令牌总线",
+        "D. FDDI"
+      ],
+      "answer": "B",
+      "explanation": "经典共享式以太网使用 CSMA/CD 进行载波监听和冲突检测。",
+      "sourceRef": "计网题库.txt 单选题 118",
+      "profileSignals": ["以太网介质访问方法掌握不足"]
+    },
+    {
+      "id": "CN-Q028",
+      "chapter": "CN-CH04",
+      "knowledgePoint": "MAC 地址",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "以太网卡的地址是（   ）位。",
+      "options": [
+        "A. 16",
+        "B. 32",
+        "C. 48",
+        "D. 64"
+      ],
+      "answer": "C",
+      "explanation": "以太网 MAC 地址通常为 48 位。",
+      "sourceRef": "计网题库.txt 单选题 120",
+      "profileSignals": ["MAC 地址基本形式不熟悉"]
+    },
+    {
+      "id": "CN-Q029",
+      "chapter": "CN-CH04",
+      "knowledgePoint": "局域网传输方式",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "局域网 LAN 所采用的传输方式为（   ）。",
+      "options": [
+        "A. 存储-转发式",
+        "B. 广播式",
+        "C. 电路交换式",
+        "D. 分散控制式"
+      ],
+      "answer": "B",
+      "explanation": "局域网常具有广播链路特点，一个节点发送的帧可能被同一局域网其他节点接收到。",
+      "sourceRef": "计网题库.txt 单选题 186",
+      "profileSignals": ["局域网基本通信特点不清"]
+    },
+    {
+      "id": "CN-Q030",
+      "chapter": "CN-CH04",
+      "knowledgePoint": "交换式局域网",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "交换式局域网的核心设备是（   ）。",
+      "options": [
+        "A. 中继器",
+        "B. 局域网交换机",
+        "C. 集线器",
+        "D. 路由器"
+      ],
+      "answer": "B",
+      "explanation": "现代局域网通常使用交换机根据目的 MAC 地址转发以太网帧。",
+      "sourceRef": "计网题库.txt 单选题 223",
+      "profileSignals": ["交换机作用理解不足"]
+    },
+    {
+      "id": "CN-Q031",
+      "chapter": "CN-CH04",
+      "knowledgePoint": "CSMA/CD",
+      "type": "fill_blank",
+      "difficulty": "basic",
+      "question": "广播工作方式的以太网避免和检测冲突的协议为（请写英文简写）：____。",
+      "answer": "CSMA/CD",
+      "explanation": "CSMA/CD 表示载波监听多路访问/冲突检测。",
+      "sourceRef": "计网题库.txt 填空题 10",
+      "profileSignals": ["CSMA/CD 缩写与含义不熟"]
+    },
+    {
+      "id": "CN-Q032",
+      "chapter": "CN-CH04",
+      "knowledgePoint": "MAC 与链路层",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "局域网中的 MAC 与 OSI 参考模型（   ）相对应。",
+      "options": [
+        "A. 物理层",
+        "B. 数据链路层",
+        "C. 网络层",
+        "D. 传输层"
+      ],
+      "answer": "B",
+      "explanation": "MAC 属于数据链路层相关概念，用于当前链路或局域网内寻址与介质访问控制。",
+      "sourceRef": "计网题库.txt 单选题 188",
+      "profileSignals": ["MAC 地址与 IP 地址所属层次混淆"]
+    },
+    {
+      "id": "CN-Q033",
+      "chapter": "CN-CH05",
+      "knowledgePoint": "路由器层次",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "从通信协议的角度来看，路由器是在哪个层次上实现网络互联（   ）。",
+      "options": [
+        "A. 物理层",
+        "B. 链路层",
+        "C. 网络层",
+        "D. 传输层"
+      ],
+      "answer": "C",
+      "explanation": "路由器根据网络层地址和转发表进行跨网络分组转发。",
+      "sourceRef": "计网题库.txt 单选题 18",
+      "profileSignals": ["路由器与交换机工作层次混淆"]
+    },
+    {
+      "id": "CN-Q034",
+      "chapter": "CN-CH05",
+      "knowledgePoint": "RIP",
+      "type": "single_choice",
+      "difficulty": "medium",
+      "question": "对于 RIP 协议，可以到达目标网络的跳数最多为（   ）。",
+      "options": [
+        "A. 12",
+        "B. 15",
+        "C. 16",
+        "D. 没有限制"
+      ],
+      "answer": "B",
+      "explanation": "RIP 使用跳数作为度量，15 跳以内可达，16 跳表示不可达。",
+      "sourceRef": "计网题库.txt 单选题 22",
+      "profileSignals": ["RIP 基本特点不熟"]
+    },
+    {
+      "id": "CN-Q035",
+      "chapter": "CN-CH05",
+      "knowledgePoint": "子网掩码",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "TCP/IP 上每台主机都需要用（   ）以区分网络号和主机号。",
+      "options": [
+        "A. IP 地址",
+        "B. IP 协议",
+        "C. 子网掩码",
+        "D. 主机名"
+      ],
+      "answer": "C",
+      "explanation": "子网掩码用于区分 IP 地址中的网络部分和主机部分。",
+      "sourceRef": "计网题库.txt 单选题 271",
+      "profileSignals": ["子网掩码作用不清"]
+    },
+    {
+      "id": "CN-Q036",
+      "chapter": "CN-CH05",
+      "knowledgePoint": "同一子网判断",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "要判断两台主机是否在同一个子网中，只要用子网掩码和主机的 IP 地址（   ）。",
+      "options": [
+        "A. 相“与”",
+        "B. 相“或”",
+        "C. 相“异或”",
+        "D. 相“比较”"
+      ],
+      "answer": "A",
+      "explanation": "分别将 IP 地址和子网掩码按位与，得到的网络地址相同则通常属于同一子网。",
+      "sourceRef": "计网题库.txt 单选题 116",
+      "profileSignals": ["不会用子网掩码判断网络地址"]
+    },
+    {
+      "id": "CN-Q037",
+      "chapter": "CN-CH05",
+      "knowledgePoint": "子网划分",
+      "type": "single_choice",
+      "difficulty": "medium",
+      "question": "某公司申请一个 C 类 IP 地址，需要分配给 8 个子公司，最大的一个子公司有 14 台计算机，每个子公司在一个网段中，则子网掩码应设为（   ）。",
+      "options": [
+        "A. 255.255.255.0",
+        "B. 255.255.255.128",
+        "C. 255.255.255.240",
+        "D. 255.255.255.224"
+      ],
+      "answer": "D",
+      "explanation": "需要至少 8 个子网，借 3 位可得到 8 个子网；剩余 5 位主机位，每个子网有 32 个地址、30 个可用主机地址，能容纳 14 台主机，因此为 /27，即 255.255.255.224。",
+      "sourceRef": "计网题库.txt 单选题 37",
+      "profileSignals": ["子网数量与主机容量权衡不清"]
+    },
+    {
+      "id": "CN-Q038",
+      "chapter": "CN-CH05",
+      "knowledgePoint": "子网掩码计算",
+      "type": "single_choice",
+      "difficulty": "medium",
+      "question": "如果借用一个 C 类 IP 地址的 3 位主机号部分划分子网，那么子网屏蔽码应该是（   ）。",
+      "options": [
+        "A. 255.255.255.192",
+        "B. 255.255.255.224",
+        "C. 255.255.255.240",
+        "D. 255.255.255.248"
+      ],
+      "answer": "B",
+      "explanation": "C 类默认 /24，借 3 位后变为 /27，最后一段掩码为 11100000，即 224。",
+      "sourceRef": "计网题库.txt 单选题 165",
+      "profileSignals": ["前缀长度与点分十进制掩码转换不熟"]
+    },
+    {
+      "id": "CN-Q039",
+      "chapter": "CN-CH05",
+      "knowledgePoint": "ARP",
+      "type": "true_false",
+      "difficulty": "basic",
+      "question": "TCP/IP 协议中的地址映射协议 ARP 的作用是将物理地址映射到 IP 地址。",
+      "answer": "错误",
+      "explanation": "ARP 的作用是把 IP 地址解析为当前局域网内可用的 MAC 地址，不是反向映射。",
+      "sourceRef": "计网题库.txt 判断题 40",
+      "profileSignals": ["ARP 映射方向混淆"]
+    },
+    {
+      "id": "CN-Q040",
       "chapter": "CN-CH05",
       "knowledgePoint": "数据平面与控制平面",
       "type": "short_answer",
       "difficulty": "medium",
       "question": "解释网络层数据平面和控制平面的区别，并各举两个协议或机制。",
-      "answer": "数据平面关注分组转发，如IP、ARP、ICMP、NAT；控制平面关注路由决策和路径计算，如RIP、OSPF、BGP。",
-      "profileSignals": ["网络层分工理解薄弱"]
+      "answer": "数据平面关注分组到达路由器后如何被转发，如 IP、ARP、ICMP、NAT；控制平面关注路由信息如何生成和维护，如 RIP、OSPF、BGP。",
+      "explanation": "转发是按表办事，路由是生成和维护这张表。",
+      "sourceRef": "讲义补充 第5章 5.3",
+      "profileSignals": ["网络层转发与路由混淆"]
     },
     {
-      "id": "CN-Q004",
+      "id": "CN-Q041",
       "chapter": "CN-CH06",
-      "knowledgePoint": "进程之间的通信",
-      "type": "short_answer",
+      "knowledgePoint": "端到端通信",
+      "type": "single_choice",
       "difficulty": "basic",
-      "question": "传输层为什么强调进程之间的通信？端口号在其中起什么作用？",
-      "answer": "网络层主要负责主机到主机的通信，传输层需要把数据交付给主机上的具体应用进程。端口号用于标识发送端和接收端的应用进程。",
-      "profileSignals": ["主机通信与进程通信混淆"]
+      "question": "在 TCP/IP 模型中，能提供端到端通信的是（   ）。",
+      "options": [
+        "A. 网络接口层",
+        "B. 网际层",
+        "C. 传输层",
+        "D. 应用层"
+      ],
+      "answer": "C",
+      "explanation": "传输层在网络层主机到主机通信基础上提供端到端进程通信服务。",
+      "sourceRef": "计网题库.txt 单选题 74",
+      "profileSignals": ["传输层职责不清"]
     },
     {
-      "id": "CN-Q005",
+      "id": "CN-Q042",
+      "chapter": "CN-CH06",
+      "knowledgePoint": "UDP",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "在 TCP/IP 协议簇中，UDP 协议工作在（   ）。",
+      "options": [
+        "A. 应用层",
+        "B. 传输层",
+        "C. 网络互联层",
+        "D. 网络接口层"
+      ],
+      "answer": "B",
+      "explanation": "UDP 是传输层协议，提供无连接、轻量的传输服务。",
+      "sourceRef": "计网题库.txt 单选题 77",
+      "profileSignals": ["UDP 所属层次不清"]
+    },
+    {
+      "id": "CN-Q043",
+      "chapter": "CN-CH06",
+      "knowledgePoint": "TCP",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "为应用程序之间的数据传送提供可靠连接的 TCP/IP 协议是（   ）。",
+      "options": [
+        "A. TCP 协议",
+        "B. IP 协议",
+        "C. ICMP 协议",
+        "D. UDP 协议"
+      ],
+      "answer": "A",
+      "explanation": "TCP 是面向连接的可靠传输协议，适合文件下载、Web 等需要可靠性的场景。",
+      "sourceRef": "计网题库.txt 单选题 153",
+      "profileSignals": ["TCP 与 UDP 特点混淆"]
+    },
+    {
+      "id": "CN-Q044",
+      "chapter": "CN-CH06",
+      "knowledgePoint": "端口号",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "标志一个特定的服务通常可以使用（   ）。",
+      "options": [
+        "A. MAC 地址",
+        "B. CPU 型号",
+        "C. 网络操作系统的种类",
+        "D. TCP 或 UDP 端口号"
+      ],
+      "answer": "D",
+      "explanation": "IP 地址定位主机，端口号用于定位主机上的具体服务或进程。",
+      "sourceRef": "计网题库.txt 单选题 245",
+      "profileSignals": ["IP 地址与端口号作用混淆"]
+    },
+    {
+      "id": "CN-Q045",
+      "chapter": "CN-CH06",
+      "knowledgePoint": "TCP 与 UDP",
+      "type": "true_false",
+      "difficulty": "basic",
+      "question": "TCP 是面向连接的，而 UDP 是面向无连接的。",
+      "answer": "正确",
+      "explanation": "TCP 建立连接并提供可靠传输，UDP 不建立连接，协议开销较小。",
+      "sourceRef": "计网题库.txt 判断题 19",
+      "profileSignals": ["TCP 与 UDP 基本特点混淆"]
+    },
+    {
+      "id": "CN-Q046",
+      "chapter": "CN-CH06",
+      "knowledgePoint": "TCP 与 UDP",
+      "type": "true_false",
+      "difficulty": "basic",
+      "question": "TCP/IP 协议中，TCP 提供简单的无连接服务，UDP 提供可靠的面向连接服务。",
+      "answer": "错误",
+      "explanation": "这句话把 TCP 和 UDP 的特点反过来了。",
+      "sourceRef": "计网题库.txt 判断题 11",
+      "profileSignals": ["TCP 与 UDP 特点反向记忆"]
+    },
+    {
+      "id": "CN-Q047",
+      "chapter": "CN-CH06",
+      "knowledgePoint": "端口号",
+      "type": "fill_blank",
+      "difficulty": "basic",
+      "question": "运输层的端口号是（   ）位的？",
+      "answer": "16",
+      "explanation": "TCP/UDP 端口号字段长度为 16 位，因此端口号范围为 0 到 65535。",
+      "sourceRef": "计网题库.txt 填空题 4",
+      "profileSignals": ["端口号基础知识不熟"]
+    },
+    {
+      "id": "CN-Q048",
       "chapter": "CN-CH06",
       "knowledgePoint": "流量控制与拥塞控制",
       "type": "short_answer",
       "difficulty": "medium",
       "question": "流量控制和拥塞控制的目标有什么区别？",
-      "answer": "流量控制关注发送方不要压垮接收方，主要与接收方缓存和处理能力有关；拥塞控制关注发送方不要让网络过载，主要与网络链路和路由器负载有关。",
+      "answer": "流量控制关注发送方不要压垮接收方，主要与接收方缓存和处理能力有关；拥塞控制关注发送方不要让网络过载，主要与链路、路由器队列和整体网络负载有关。",
+      "explanation": "流量控制照顾接收方，拥塞控制照顾网络内部。",
+      "sourceRef": "讲义补充 第6章 6.5-6.6",
       "profileSignals": ["传输层控制机制混淆"]
     },
     {
-      "id": "CN-Q006",
+      "id": "CN-Q049",
       "chapter": "CN-CH07",
-      "knowledgePoint": "HTTP、DNS、DHCP",
+      "knowledgePoint": "HTTP",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "在 Internet 上浏览时，浏览器和 WWW 服务器之间传输网页使用的协议是（   ）。",
+      "options": [
+        "A. IP",
+        "B. HTTP",
+        "C. FTP",
+        "D. Telnet"
+      ],
+      "answer": "B",
+      "explanation": "HTTP 负责浏览器与 Web 服务器之间的请求和响应。",
+      "sourceRef": "计网题库.txt 单选题 64",
+      "profileSignals": ["HTTP 与底层协议混淆"]
+    },
+    {
+      "id": "CN-Q050",
+      "chapter": "CN-CH07",
+      "knowledgePoint": "DNS",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "应用层 DNS 协议主要用于实现哪种网络服务功能（   ）。",
+      "options": [
+        "A. 域名到 IP 地址的映射",
+        "B. 网络硬件地址到 IP 地址的映射",
+        "C. 进程地址到 IP 地址的映射",
+        "D. 用户名到进程地址的映射"
+      ],
+      "answer": "A",
+      "explanation": "DNS 的职责是把域名解析为 IP 地址，网页内容传输由 HTTP 完成。",
+      "sourceRef": "计网题库.txt 单选题 94",
+      "profileSignals": ["DNS 作用理解错误"]
+    },
+    {
+      "id": "CN-Q051",
+      "chapter": "CN-CH07",
+      "knowledgePoint": "URL",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "URL 的作用是（   ）。",
+      "options": [
+        "A. 定位主机地址",
+        "B. 定位网页地址",
+        "C. 域名与 IP 的转换",
+        "D. 表示电子邮件地址"
+      ],
+      "answer": "B",
+      "explanation": "URL 用于定位 Web 资源，通常包含协议、主机名、路径等信息。",
+      "sourceRef": "计网题库.txt 单选题 10",
+      "profileSignals": ["URL 与域名、IP 地址混淆"]
+    },
+    {
+      "id": "CN-Q052",
+      "chapter": "CN-CH07",
+      "knowledgePoint": "WWW",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "WWW 的作用是（   ）。",
+      "options": [
+        "A. 信息浏览",
+        "B. 文件传输",
+        "C. 收发电子邮件",
+        "D. 远程登录"
+      ],
+      "answer": "A",
+      "explanation": "WWW 是 Internet 上用于信息浏览和超文本访问的典型应用。",
+      "sourceRef": "计网题库.txt 单选题 11",
+      "profileSignals": ["应用层服务类型混淆"]
+    },
+    {
+      "id": "CN-Q053",
+      "chapter": "CN-CH07",
+      "knowledgePoint": "HTTP",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "万维网的网址以 http 为前导，表示遵从（   ）协议。",
+      "options": [
+        "A. 超文本传输",
+        "B. 纯文本",
+        "C. TCP/IP",
+        "D. POP"
+      ],
+      "answer": "A",
+      "explanation": "HTTP 是 HyperText Transfer Protocol，即超文本传输协议。",
+      "sourceRef": "计网题库.txt 单选题 182",
+      "profileSignals": ["HTTP 名称和作用不熟"]
+    },
+    {
+      "id": "CN-Q054",
+      "chapter": "CN-CH07",
+      "knowledgePoint": "HTTP",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "互联网上的服务都是基于某种协议，WWW 服务基于的协议是（   ）。",
+      "options": [
+        "A. SNMP",
+        "B. HTTP",
+        "C. SMTP",
+        "D. TELNET"
+      ],
+      "answer": "B",
+      "explanation": "浏览器访问 Web 页面时，核心应用层协议是 HTTP 或 HTTPS。",
+      "sourceRef": "计网题库.txt 单选题 205",
+      "profileSignals": ["WWW 与 HTTP 关系不清"]
+    },
+    {
+      "id": "CN-Q055",
+      "chapter": "CN-CH07",
+      "knowledgePoint": "HTTP 客户/服务器模式",
+      "type": "true_false",
+      "difficulty": "basic",
+      "question": "在 Internet 的应用中，万维网 WWW 协议 HTTP 采用客户/服务器模式工作。",
+      "answer": "正确",
+      "explanation": "浏览器作为客户端发送请求，Web 服务器返回 HTTP 响应。",
+      "sourceRef": "计网题库.txt 判断题 37",
+      "profileSignals": ["HTTP 请求响应模式不清"]
+    },
+    {
+      "id": "CN-Q056",
+      "chapter": "CN-CH07",
+      "knowledgePoint": "DNS 与 DHCP",
       "type": "short_answer",
       "difficulty": "basic",
-      "question": "访问一个网站时，DNS、DHCP、HTTP分别可能承担什么作用？",
-      "answer": "DHCP可为主机自动分配IP地址、网关和DNS服务器等参数；DNS把域名解析为IP地址；HTTP用于浏览器和Web服务器之间传输请求与响应。",
+      "question": "访问一个网站时，DNS、DHCP、HTTP 分别可能承担什么作用？",
+      "answer": "DHCP 可为主机自动分配 IP 地址、子网掩码、默认网关和 DNS 服务器等参数；DNS 把域名解析为 IP 地址；HTTP 用于浏览器和 Web 服务器之间传输请求与响应。",
+      "explanation": "DHCP 解决主机如何接入网络，DNS 解决目标域名在哪里，HTTP 解决网页数据如何交换。",
+      "sourceRef": "讲义补充 第7章 7.5-7.8",
       "profileSignals": ["应用层协议职责混淆"]
     },
     {
-      "id": "CN-Q007",
+      "id": "CN-Q057",
       "chapter": "CN-CH08",
-      "knowledgePoint": "WLAN",
+      "knowledgePoint": "无线传输介质",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "下列不是无线传输介质的是（   ）。",
+      "options": [
+        "A. 无线电",
+        "B. 激光",
+        "C. 红外线",
+        "D. 光缆"
+      ],
+      "answer": "D",
+      "explanation": "光缆是有线传输介质；WLAN 使用无线信道进行通信。",
+      "sourceRef": "计网题库.txt 单选题 161",
+      "profileSignals": ["无线介质与有线介质混淆"]
+    },
+    {
+      "id": "CN-Q058",
+      "chapter": "CN-CH08",
+      "knowledgePoint": "有线网络与无线网络",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "question": "把计算机网络分为有线网和无线网的主要分类依据是（   ）。",
+      "options": [
+        "A. 网络成本",
+        "B. 网络的物理位置",
+        "C. 网络的传输介质",
+        "D. 网络的拓扑结构"
+      ],
+      "answer": "C",
+      "explanation": "WLAN 与有线以太网最直接的差异之一是传输介质不同。",
+      "sourceRef": "计网题库.txt 单选题 244",
+      "profileSignals": ["WLAN 与有线网络差异理解不足"]
+    },
+    {
+      "id": "CN-Q059",
+      "chapter": "CN-CH08",
+      "knowledgePoint": "AP",
+      "type": "short_answer",
+      "difficulty": "basic",
+      "question": "WLAN 中无线接入点 AP 的主要作用是什么？",
+      "answer": "AP 提供无线覆盖，允许无线终端接入，管理关联和认证，并在无线终端与后方有线网络之间转发数据。",
+      "explanation": "AP 不是简单的信号发射器，它承担无线接入管理和无线到有线网络的转发角色。",
+      "sourceRef": "讲义补充 第8章 8.2-8.3",
+      "profileSignals": ["AP、路由器和无线终端角色混淆"]
+    },
+    {
+      "id": "CN-Q060",
+      "chapter": "CN-CH08",
+      "knowledgePoint": "WLAN 与以太网",
       "type": "short_answer",
       "difficulty": "medium",
-      "question": "WLAN为什么需要专门的无线多路访问机制？",
-      "answer": "无线介质共享、信号衰减、隐藏终端和冲突检测困难等问题，使WLAN不能简单照搬有线以太网的访问方式，需要适合无线环境的多路访问机制。",
-      "profileSignals": ["无线链路特性理解不足"]
+      "question": "为什么不能把 WLAN 简单理解成“没有网线的以太网”？",
+      "answer": "WLAN 使用无线信道，存在衰减、干扰、共享、移动性和隐藏终端等问题，因此在帧格式和介质访问机制上都需要特殊设计。",
+      "explanation": "无线环境本身带来了有线以太网中不明显或更容易控制的问题。",
+      "sourceRef": "讲义补充 第8章 8.5-8.8",
+      "profileSignals": ["忽视无线信道特殊性"]
+    },
+    {
+      "id": "CN-Q061",
+      "chapter": "CN-CH08",
+      "knowledgePoint": "CSMA/CA",
+      "type": "short_answer",
+      "difficulty": "medium",
+      "question": "WLAN 为什么更强调 CSMA/CA，而不是像经典有线以太网那样强调 CSMA/CD？",
+      "answer": "无线终端发送时难以同时准确检测其他终端信号，也难以判断接收端附近是否发生冲突，还存在隐藏终端问题，所以 WLAN 更倾向于在发送前通过监听、等待和随机退避来避免冲突。",
+      "explanation": "CSMA/CA 的重点是冲突避免，CSMA/CD 的重点是冲突检测。",
+      "sourceRef": "讲义补充 第8章 8.8-8.9",
+      "profileSignals": ["CSMA/CD 与 CSMA/CA 适用场景混淆"]
+    },
+    {
+      "id": "CN-Q062",
+      "chapter": "CN-CH08",
+      "knowledgePoint": "隐藏终端",
+      "type": "short_answer",
+      "difficulty": "medium",
+      "question": "什么是 WLAN 中的隐藏终端问题？",
+      "answer": "两个无线终端彼此听不到对方信号，但都能和同一个 AP 通信；如果它们同时向 AP 发送数据，AP 处可能发生冲突。",
+      "explanation": "隐藏终端说明无线冲突问题不只取决于发送端是否能监听到信道空闲。",
+      "sourceRef": "讲义补充 第8章 8.7",
+      "profileSignals": ["隐藏终端问题理解不足"]
+    },
+    {
+      "id": "CN-Q063",
+      "chapter": "CN-CH08",
+      "knowledgePoint": "无线终端接入流程",
+      "type": "short_answer",
+      "difficulty": "basic",
+      "question": "手机连接校园 Wi-Fi 后，为什么不等于已经完成全部网络访问过程？",
+      "answer": "终端通常还需要完成扫描、选择 SSID、认证、关联，并通过 DHCP 获取 IP 地址、默认网关和 DNS 服务器等配置，随后才能进行 DNS 查询和 HTTP 访问。",
+      "explanation": "无线接入只是完整网络访问流程中的一部分，还需要网络层配置和应用层协议配合。",
+      "sourceRef": "讲义补充 第8章 8.4 与 第7章 7.8",
+      "profileSignals": ["把连接 Wi-Fi 信号等同于完成上网配置"]
+    },
+    {
+      "id": "CN-Q064",
+      "chapter": "CN-CH08",
+      "knowledgePoint": "WLAN 帧格式",
+      "type": "short_answer",
+      "difficulty": "medium",
+      "question": "为什么 WLAN 帧格式通常比普通以太网帧更复杂？",
+      "answer": "WLAN 帧除了承载数据，还需要携带地址、控制和管理信息，以支持无线终端接入、认证、关联、移动性和 AP 转发等无线场景。",
+      "explanation": "无线终端、AP 和分布式系统之间的关系使 WLAN 帧需要表达更多链路控制信息。",
+      "sourceRef": "讲义补充 第8章 8.6",
+      "profileSignals": ["WLAN 帧格式作用理解不足"]
     }
   ]
 }

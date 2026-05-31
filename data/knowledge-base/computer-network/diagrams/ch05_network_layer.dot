@@ -1,0 +1,25 @@
+digraph G {
+  graph [rankdir=LR, bgcolor="transparent", pad="0.2", nodesep="0.45", ranksep="0.65"];
+  node [shape=box, style="rounded,filled", fontname="Microsoft YaHei", fontsize=14, color="#4b5563", fillcolor="#f8fafc"];
+  edge [fontname="Microsoft YaHei", fontsize=12, color="#64748b", arrowsize=0.8];
+
+  host [label="校园网主机\n私有 IP", fillcolor="#dbeafe"];
+  subnet [label="子网掩码\n判断同一子网\n区分网络号/主机号", fillcolor="#ccfbf1"];
+  arp [label="ARP\n解析下一跳 MAC\n通常是默认网关", fillcolor="#dcfce7"];
+  gw [label="默认网关 / 出口设备", fillcolor="#fef3c7"];
+  nat [label="NAT\n私有地址 <-> 公网地址", fillcolor="#ffedd5"];
+  r1 [label="路由器 A\n按转发表转发", fillcolor="#ede9fe"];
+  r2 [label="路由器 B\n按转发表转发", fillcolor="#ede9fe"];
+  server [label="外部服务器\n公网 IP", fillcolor="#dbeafe"];
+  icmp [label="ICMP\nping / 差错报告 / TTL", fillcolor="#e0f2fe"];
+  control [label="控制平面\nRIP / OSPF / BGP\n生成和维护路由信息", fillcolor="#fce7f3"];
+  table [label="转发表\n数据平面按表办事", fillcolor="#f1f5f9"];
+
+  host -> subnet -> arp -> gw -> nat -> r1 -> r2 -> server [label="IP 数据报跨网络传输"];
+  subnet -> table [style=dashed, label="网络地址判断"];
+  control -> table [label="路由生成"];
+  table -> r1 [style=dashed];
+  table -> r2 [style=dashed];
+  icmp -> host [style=dashed, label="诊断可达性"];
+  icmp -> r2 [style=dashed];
+}

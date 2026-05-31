@@ -1,0 +1,24 @@
+digraph G {
+  graph [rankdir=LR, bgcolor="transparent", pad="0.2", nodesep="0.45", ranksep="0.65"];
+  node [shape=box, style="rounded,filled", fontname="Microsoft YaHei", fontsize=14, color="#4b5563", fillcolor="#f8fafc"];
+  edge [fontname="Microsoft YaHei", fontsize=12, color="#64748b", arrowsize=0.8];
+
+  h1 [label="主机 A\nIP + MAC", fillcolor="#dbeafe"];
+  h2 [label="主机 B\nIP + MAC", fillcolor="#dbeafe"];
+  h3 [label="主机 C\nIP + MAC", fillcolor="#dbeafe"];
+  shared [label="广播链路 / 共享介质\n多个节点竞争同一信道", fillcolor="#fee2e2"];
+  access [label="多路访问协议\n信道划分 / 随机接入 / 轮流协议", fillcolor="#fef3c7"];
+  csma [label="随机接入\nCSMA/CD\n监听 -> 发送 -> 冲突检测 -> 随机退避", fillcolor="#ffedd5"];
+  sw [label="交换机\n学习 MAC 与端口\n转发 / 泛洪", fillcolor="#dcfce7"];
+  gateway [label="默认网关\n通往外部网络的出口", fillcolor="#ede9fe"];
+  internet [label="外部 Internet", fillcolor="#f1f5f9"];
+
+  h1 -> shared;
+  h2 -> shared;
+  h3 -> shared;
+  shared -> access -> csma;
+  h1 -> sw [label="以太网帧"];
+  h2 -> sw;
+  sw -> gateway -> internet;
+  h1 -> h2 [style=dashed, label="同一局域网：使用目标 MAC"];
+}

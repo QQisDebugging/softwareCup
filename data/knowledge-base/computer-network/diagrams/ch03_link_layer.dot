@@ -1,0 +1,18 @@
+digraph G {
+  graph [rankdir=LR, bgcolor="transparent", pad="0.2", nodesep="0.45", ranksep="0.65"];
+  node [shape=box, style="rounded,filled", fontname="Microsoft YaHei", fontsize=14, color="#4b5563", fillcolor="#f8fafc"];
+  edge [fontname="Microsoft YaHei", fontsize=12, color="#64748b", arrowsize=0.8];
+
+  datagram [label="网络层数据报", fillcolor="#dbeafe"];
+  frame [label="封装成帧\n首部 + 数据 + 尾部", fillcolor="#dcfce7"];
+  neighbor [label="相邻节点传输\n主机 <-> 交换机\n交换机 <-> 路由器", fillcolor="#fef3c7"];
+  check [label="差错控制\nCRC / 校验和\n发现或纠正错误", fillcolor="#fee2e2"];
+  flow [label="流量控制\n匹配收发速率", fillcolor="#ede9fe"];
+  reliable [label="可靠传输\n确认 / 重传 / 序号 / 定时器", fillcolor="#e0f2fe"];
+  upper [label="交给上一层继续处理", fillcolor="#dbeafe"];
+
+  datagram -> frame -> neighbor -> check -> upper;
+  flow -> neighbor [style=dashed, label="防止接收方溢出"];
+  reliable -> neighbor [style=dashed, label="减少丢失影响"];
+  check -> reliable [label="检测不等于可靠", style=dotted];
+}

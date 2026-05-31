@@ -1,0 +1,33 @@
+digraph G {
+  graph [rankdir=LR, bgcolor="transparent", pad="0.2", nodesep="0.45", ranksep="0.65"];
+  node [shape=box, style="rounded,filled", fontname="Microsoft YaHei", fontsize=14, color="#4b5563", fillcolor="#f8fafc"];
+  edge [fontname="Microsoft YaHei", fontsize=12, color="#64748b", arrowsize=0.8];
+
+  bits1 [label="发送端比特流\n0 和 1", fillcolor="#dbeafe"];
+  encode [label="编码 / 调制\n把比特变成信号", fillcolor="#dcfce7"];
+
+  subgraph cluster_media {
+    label="传输介质";
+    fontname="Microsoft YaHei";
+    fontsize=15;
+    color="#93c5fd";
+    style="rounded";
+    twisted [label="双绞线\n低成本 / 短距离", fillcolor="#f8fafc"];
+    coax [label="同轴电缆\n抗干扰较好", fillcolor="#f8fafc"];
+    fiber [label="光纤\n高速 / 远距离", fillcolor="#f8fafc"];
+    wireless [label="无线信道\n灵活 / 易干扰", fillcolor="#f8fafc"];
+  }
+
+  decode [label="解码 / 解调\n从信号恢复比特", fillcolor="#dcfce7"];
+  bits2 [label="接收端比特流\n0 和 1", fillcolor="#dbeafe"];
+  mux [label="多路复用\n频分 / 时分 / 波分\n共享同一介质", fillcolor="#fef3c7"];
+  access [label="接入网\n终端接入校园网 / 运营商网络", fillcolor="#ede9fe"];
+
+  bits1 -> encode -> twisted -> decode -> bits2;
+  encode -> coax -> decode;
+  encode -> fiber -> decode;
+  encode -> wireless -> decode;
+  mux -> fiber [style=dashed, label="提高利用率"];
+  access -> twisted [style=dashed];
+  access -> wireless [style=dashed];
+}

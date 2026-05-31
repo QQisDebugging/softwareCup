@@ -1,0 +1,20 @@
+digraph G {
+  graph [rankdir=LR, bgcolor="transparent", pad="0.2", nodesep="0.45", ranksep="0.65"];
+  node [shape=box, style="rounded,filled", fontname="Microsoft YaHei", fontsize=14, color="#4b5563", fillcolor="#f8fafc"];
+  edge [fontname="Microsoft YaHei", fontsize=12, color="#64748b", arrowsize=0.8];
+
+  browser [label="客户端进程\n浏览器\n192.168.1.10:51520", fillcolor="#dbeafe"];
+  tcp [label="TCP\n连接 / 可靠传输\n流量控制 / 拥塞控制", fillcolor="#dcfce7"];
+  web [label="服务器进程\nWeb 服务\n203.0.113.8:443", fillcolor="#dbeafe"];
+
+  seq [label="可靠传输机制\n序号 -> 确认 -> 定时器 -> 重传", fillcolor="#fef3c7"];
+  flow [label="流量控制\n接收窗口\n照顾接收方", fillcolor="#ede9fe"];
+  congestion [label="拥塞控制\n控制进入网络的数据量\n照顾整个网络", fillcolor="#fce7f3"];
+  udp [label="UDP\n无连接 / 开销小 / 低延迟\n视频通话 / DNS / 实时游戏", fillcolor="#e0f2fe"];
+
+  browser -> tcp -> web [label="端口号定位进程"];
+  seq -> tcp [style=dashed];
+  flow -> tcp [style=dashed];
+  congestion -> tcp [style=dashed];
+  browser -> udp -> web [style=dashed, label="实时或轻量场景"];
+}

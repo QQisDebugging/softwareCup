@@ -1,0 +1,24 @@
+digraph G {
+  graph [rankdir=LR, bgcolor="transparent", pad="0.2", nodesep="0.45", ranksep="0.65"];
+  node [shape=box, style="rounded,filled", fontname="Microsoft YaHei", fontsize=14, color="#4b5563", fillcolor="#f8fafc"];
+  edge [fontname="Microsoft YaHei", fontsize=12, color="#64748b", arrowsize=0.8];
+
+  phone [label="无线终端\n手机 / 笔记本", fillcolor="#dbeafe"];
+  scan [label="扫描 SSID\n认证 / 关联", fillcolor="#dcfce7"];
+  ap [label="无线接入点 AP\n无线接入 + 转发到有线网络", fillcolor="#fef3c7"];
+  ds [label="分布式系统\n校园有线网络 / 交换机", fillcolor="#ede9fe"];
+  gateway [label="默认网关 / 出口路由器", fillcolor="#fce7f3"];
+  internet [label="Internet / Web 服务器", fillcolor="#f1f5f9"];
+
+  channel [label="无线信道特点\n共享 / 衰减 / 干扰 / 移动性", fillcolor="#fee2e2"];
+  hidden [label="隐藏终端\n终端彼此听不到\n但都会影响 AP", fillcolor="#ffedd5"];
+  csma [label="CSMA/CA\n监听信道 + 随机退避 + 确认\n强调冲突避免", fillcolor="#e0f2fe"];
+  frame [label="WLAN 帧\n地址 / 控制 / 管理 / 差错检测", fillcolor="#f8fafc"];
+
+  phone -> scan -> ap -> ds -> gateway -> internet;
+  channel -> ap [style=dashed];
+  hidden -> ap [style=dashed];
+  csma -> channel [style=dashed];
+  frame -> phone [style=dashed];
+  frame -> ap [style=dashed];
+}

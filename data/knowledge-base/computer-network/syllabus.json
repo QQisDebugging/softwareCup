@@ -36,7 +36,7 @@
       "order": 5,
       "title": "网络层",
       "estimatedHours": 8,
-      "knowledgePoints": ["网络层服务类型", "数据平面", "转发", "IP", "ARP", "ICMP", "NAT", "控制平面", "路由", "RIP", "OSPF", "BGP"]
+      "knowledgePoints": ["网络层服务类型", "数据平面", "转发", "IP", "IP地址", "子网划分", "子网掩码", "ARP", "ICMP", "NAT", "控制平面", "路由", "RIP", "OSPF", "BGP"]
     },
     {
       "id": "CN-CH06",
