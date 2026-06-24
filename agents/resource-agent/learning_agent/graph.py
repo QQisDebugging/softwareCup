@@ -17,6 +17,7 @@ from learning_agent.resource_templates import (
 )
 from learning_agent.safety import ContentSafetyReview
 from learning_agent.schemas import KnowledgeMatch, ResourceAgentRequest, ResourceAgentResponse
+from learning_agent.structured_output import as_list, as_text, complete_json
 from learning_agent.vector_store import InMemoryVectorStore
 
 try:
@@ -91,6 +92,82 @@ class ResourceGenerationWorkflow:
             state.update(node(state))
         return state
 
+    def _llm_profile_analysis(
+        self,
+        request: ResourceAgentRequest,
+        retrieved: list[KnowledgeMatch],
+    ) -> dict:
+        context = "\n".join(
+            f"- {match.title} ({match.source}, score={match.score}): {compact(match.text, 260)}"
+            for match in retrieved[:4]
+        )
+        system_prompt = (
+            "You are the profile analyst agent in a multi-agent learning-resource workflow. "
+            "Infer target learning level and concrete gaps from the learner profile and evidence. "
+            "Return strict JSON only."
+        )
+        user_prompt = f"""
+Return one JSON object in Chinese:
+{{
+  "targetLevel": "基础补强型/实践进阶型/高阶拓展型/自适应",
+  "learningGaps": ["specific gap 1", "specific gap 2", "specific gap 3"],
+  "evidenceNotes": ["short evidence note"]
+}}
+
+Course: {request.courseTitle}
+Topic: {request.topic}
+Learner profile: {request.studentProfileSummary}
+Teacher prompt: {request.prompt}
+Retrieved evidence:
+{context or "No retrieved evidence."}
+"""
+        return complete_json(self.provider_router, system_prompt, user_prompt, "resource profile analysis")
+
+    def _llm_resource_plan(
+        self,
+        request: ResourceAgentRequest,
+        retrieved: list[KnowledgeMatch],
+        target_level: str,
+        learning_gaps: list[str],
+    ) -> dict:
+        context = "\n".join(
+            f"- {match.title} ({match.source}, score={match.score}): {compact(match.text, 260)}"
+            for match in retrieved[:4]
+        )
+        requested = request.targetResourceTypes or [request.resourceType]
+        system_prompt = (
+            "You are the resource planning agent in a multi-agent workflow. "
+            "Select a coherent resource package that satisfies the requested modality and learner gaps. "
+            "Return strict JSON only."
+        )
+        user_prompt = f"""
+Return one JSON object in Chinese:
+{{
+  "resourcePlan": ["ordered resource type 1", "ordered resource type 2"],
+  "planningRationale": ["why this order", "how it uses evidence"]
+}}
+
+Constraints:
+- Include at least 5 and at most 8 resource types.
+- Include requested types when relevant: {requested}
+- Cover explanation, diagram/structure, practice, feedback, and review.
+- Do not claim unsupported external facts.
+
+Course: {request.courseTitle}
+Topic: {request.topic}
+Resource type: {request.resourceType}
+Modality: {request.modality}
+Target level: {target_level}
+Learning gaps: {learning_gaps}
+Teacher prompt: {request.prompt}
+Retrieved evidence:
+{context or "No retrieved evidence."}
+"""
+        return complete_json(self.provider_router, system_prompt, user_prompt, "resource planning")
+
+    def _normalized_strings(self, value: object) -> list[str]:
+        return [as_text(item) for item in as_list(value) if as_text(item)]
+
     def _retrieve_context(self, state: GenerationState) -> GenerationState:
         request = state["request"]
         query = build_query(request)
@@ -100,6 +177,12 @@ class ResourceGenerationWorkflow:
     def _profile_analyst(self, state: GenerationState) -> GenerationState:
         request = state["request"]
         profile_text = request.studentProfileSummary
+        analysis = self._llm_profile_analysis(request, state.get("retrieved", []))
+        return {
+            "target_level": as_text(analysis.get("targetLevel"), infer_target_level(profile_text)),
+            "learning_gaps": self._normalized_strings(analysis.get("learningGaps"))
+            or ["需要通过练习反馈继续识别易错点"],
+        }
         target_level = infer_target_level(profile_text)
         gaps = []
         if any(keyword in profile_text for keyword in ["弱", "薄弱", "不熟", "不会"]):
@@ -114,6 +197,16 @@ class ResourceGenerationWorkflow:
 
     def _resource_planner(self, state: GenerationState) -> GenerationState:
         request = state["request"]
+        plan = self._llm_resource_plan(
+            request,
+            state.get("retrieved", []),
+            state.get("target_level", infer_target_level(request.studentProfileSummary)),
+            state.get("learning_gaps", []),
+        )
+        resource_plan = self._normalized_strings(plan.get("resourcePlan"))
+        if not resource_plan:
+            raise RuntimeError("Resource planning agent returned an empty resource plan.")
+        return {"resource_plan": resource_plan[:8]}
         requested = request.targetResourceTypes or [request.resourceType]
         defaults = [
             "专业课程讲解文档",
@@ -176,15 +269,12 @@ class ResourceGenerationWorkflow:
         quality_checks = state.get("quality_checks", [])
         safety_issues = state.get("safety_issues", [])
         resource_plan = state.get("resource_plan", [])
-        provider_used = state.get("provider_used", "offline")
-        fallback_used = state.get("fallback_used", False)
         content = f"""# {request.topic} - 个性化学习资源包
 
 课程：{request.courseTitle}
 资源请求：{request.resourceType} / {request.modality}
 目标层级：{target_level}
 多智能体流程：画像分析 Agent -> RAG 检索 Agent -> 资源规划 Agent -> 资源生成 Agent -> 安全审查 Agent
-模型提供方：{provider_used}{"（已降级）" if fallback_used else ""}
 
 {sections}
 
@@ -205,7 +295,11 @@ class ResourceGenerationWorkflow:
             targetLevel=limit_text(target_level, 80),
             estimatedMinutes=estimate_minutes(request.resourceType, request.modality, len(resource_plan)),
             content=content,
-            summary=f"已基于画像、RAG资料和多智能体流程生成 {len(resource_plan)} 类学习资源。Provider={provider_used}。",
+            summary=f"已基于画像、RAG资料和多智能体流程生成 {len(resource_plan)} 类学习资源。",
+            provider=state.get("provider_used", ""),
+            model=self.settings.openai_model if state.get("provider_used") == "openai_compatible" else self.settings.xfyun_model,
+            executionMode="LLM",
+            fallbackUsed=bool(state.get("fallback_used", False)),
         )
         return {"final_response": response}
 

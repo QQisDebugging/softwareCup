@@ -53,15 +53,22 @@ class InMemoryVectorStore:
             self._chunks.extend(indexed_chunks)
         return len(indexed_chunks)
 
-    def search(self, query: str, top_k: int = 6, filters: dict[str, str] | None = None) -> list[KnowledgeMatch]:
+    def search(
+        self,
+        query: str,
+        top_k: int = 6,
+        filters: dict[str, str] | None = None,
+        soft_keys: set[str] | None = None,
+    ) -> list[KnowledgeMatch]:
         query_embedding = self.embedding_model.embed(query)
         query_tokens = set(self.embedding_model.tokens(query))
         filters = filters or {}
+        soft_keys = soft_keys or set()
         scored: list[tuple[float, KnowledgeChunk]] = []
         with self._lock:
             indexed_chunks = list(self._chunks)
         for indexed in indexed_chunks:
-            if not self._matches_filters(indexed.chunk, filters):
+            if not self._matches_filters(indexed.chunk, filters, soft_keys):
                 continue
             vector_score = self.embedding_model.cosine(query_embedding, indexed.embedding)
             lexical_score = self._lexical_score(query_tokens, indexed.chunk.text)
@@ -81,11 +88,22 @@ class InMemoryVectorStore:
             for score, chunk in scored[:top_k]
         ]
 
-    def _matches_filters(self, chunk: KnowledgeChunk, filters: dict[str, str]) -> bool:
+    def _matches_filters(
+        self,
+        chunk: KnowledgeChunk,
+        filters: dict[str, str],
+        soft_keys: set[str] | None = None,
+    ) -> bool:
+        soft_keys = soft_keys or set()
         for key, expected in filters.items():
             actual = str(chunk.metadata.get(key, ""))
-            if actual != expected:
-                return False
+            if actual == expected:
+                continue
+            # 软过滤键：允许该元数据为空的通用资料（如未打 courseId 的课程种子教材），
+            # 但仍排除明确属于其他值（如别的课程）的片段。
+            if key in soft_keys and actual == "":
+                continue
+            return False
         return True
 
     def _lexical_score(self, query_tokens: set[str], text: str) -> float:

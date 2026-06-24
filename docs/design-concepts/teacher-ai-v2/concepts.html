@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>智学工坊教师端与 AI 助手概念图</title>
+    <style>
+      :root {
+        --ink: #101a35;
+        --muted: #60708c;
+        --line: #d9e5ee;
+        --soft-line: #e8f0f5;
+        --teal: #007d78;
+        --teal-2: #16b6a5;
+        --teal-soft: #e8faf7;
+        --blue: #2f6fed;
+        --orange: #f59b32;
+        --red: #df5d58;
+        --violet: #7059d8;
+        --bg: #f7fbfc;
+        --panel: rgba(255, 255, 255, 0.92);
+        --shadow: 0 22px 70px rgba(19, 45, 65, 0.11);
+        font-family:
+          "Inter", "MiSans", "PingFang SC", "Microsoft YaHei", system-ui,
+          -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      .screen {
+        display: none;
+        min-height: 100vh;
+        grid-template-columns: 300px minmax(0, 1fr);
+        background:
+          radial-gradient(circle at 100% 0%, rgba(21, 182, 165, 0.13), transparent 34%),
+          linear-gradient(180deg, #ffffff 0, #f5fbfc 44%, #f7fbfc 100%);
+      }
+
+      .screen.active {
+        display: grid;
+      }
+
+      .sidebar {
+        position: relative;
+        padding: 28px 20px 20px;
+        border-right: 1px solid var(--line);
+        background: linear-gradient(180deg, #f0fbfa 0%, #f8fcfc 56%, #eff9f7 100%);
+        min-height: 100vh;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 0 18px 40px;
+      }
+
+      .brand img {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        box-shadow: 0 12px 32px rgba(0, 125, 120, 0.18);
+      }
+
+      .brand strong {
+        display: block;
+        font-size: 24px;
+        letter-spacing: 0;
+      }
+
+      .brand span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .nav {
+        display: grid;
+        gap: 12px;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        height: 56px;
+        padding: 0 18px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        color: #22314e;
+        font-weight: 700;
+      }
+
+      .nav-item.active {
+        border-color: #b5e3df;
+        background: linear-gradient(90deg, rgba(17, 191, 176, 0.16), rgba(255, 255, 255, 0.9));
+        box-shadow: inset 4px 0 0 var(--teal);
+        color: var(--teal);
+      }
+
+      .nav-icon {
+        display: grid;
+        place-items: center;
+        width: 25px;
+        height: 25px;
+        border-radius: 8px;
+        color: currentColor;
+      }
+
+      .account-card {
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        bottom: 22px;
+        display: grid;
+        grid-template-columns: 48px 1fr 34px;
+        align-items: center;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.82);
+      }
+
+      .avatar {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--teal), #0fb8a8);
+        color: white;
+        font-weight: 900;
+        font-size: 20px;
+      }
+
+      .account-card strong,
+      .account-card span {
+        display: block;
+      }
+
+      .account-card span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .main {
+        min-width: 0;
+        padding: 0 34px 34px;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 92px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .topbar h1 {
+        margin: 0;
+        font-size: 30px;
+        line-height: 1.1;
+      }
+
+      .topbar p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .icon-btn,
+      .ghost,
+      .primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 44px;
+        padding: 0 18px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: white;
+        color: #1b2945;
+        font-weight: 800;
+      }
+
+      .icon-btn {
+        width: 44px;
+        padding: 0;
+        border-radius: 14px;
+      }
+
+      .primary {
+        border-color: transparent;
+        background: linear-gradient(135deg, var(--teal), #0aa99b);
+        color: white;
+        box-shadow: 0 14px 28px rgba(0, 125, 120, 0.24);
+      }
+
+      .layout-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 20px;
+        padding-top: 24px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--panel);
+        box-shadow: 0 12px 42px rgba(21, 64, 83, 0.06);
+      }
+
+      .panel.pad {
+        padding: 22px;
+      }
+
+      .span-3 { grid-column: span 3; }
+      .span-4 { grid-column: span 4; }
+      .span-5 { grid-column: span 5; }
+      .span-6 { grid-column: span 6; }
+      .span-7 { grid-column: span 7; }
+      .span-8 { grid-column: span 8; }
+      .span-9 { grid-column: span 9; }
+      .span-12 { grid-column: span 12; }
+
+      .section-title {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .section-title h2 {
+        margin: 0;
+        font-size: 23px;
+      }
+
+      .section-title p {
+        margin: 6px 0 0;
+        color: var(--muted);
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: var(--teal-soft);
+        color: var(--teal);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .ai-shell {
+        display: grid;
+        grid-template-columns: 360px minmax(0, 1fr) 372px;
+        gap: 18px;
+        padding-top: 24px;
+        height: calc(100vh - 126px);
+        min-height: 980px;
+      }
+
+      .project-rail,
+      .context-rail,
+      .chat-pane {
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .project-rail {
+        padding: 18px;
+      }
+
+      .rail-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+
+      .course-space-card {
+        display: grid;
+        grid-template-columns: 52px 1fr 28px;
+        align-items: center;
+        gap: 12px;
+        padding: 14px;
+        border-radius: 16px;
+        border: 1px solid transparent;
+        margin-bottom: 12px;
+      }
+
+      .course-space-card.active {
+        border-color: #a2dbd5;
+        background: linear-gradient(135deg, #ebfbf8, #ffffff);
+        box-shadow: inset 4px 0 0 var(--teal);
+      }
+
+      .mini-art {
+        display: grid;
+        place-items: center;
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        background: #eef8ff;
+        color: var(--blue);
+        font-weight: 900;
+      }
+
+      .course-space-card strong,
+      .course-space-card span {
+        display: block;
+      }
+
+      .course-space-card strong {
+        font-size: 15px;
+      }
+
+      .course-space-card span {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .chat-pane {
+        display: grid;
+        grid-template-rows: auto auto 1fr auto;
+        padding: 0;
+      }
+
+      .chat-header {
+        padding: 22px 24px 16px;
+        border-bottom: 1px solid var(--soft-line);
+      }
+
+      .chat-header-main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .chat-header h2 {
+        margin: 0;
+        font-size: 28px;
+      }
+
+      .chat-tabs {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border-bottom: 1px solid var(--soft-line);
+      }
+
+      .chat-tabs span {
+        text-align: center;
+        padding: 16px 10px 14px;
+        font-weight: 800;
+        color: var(--muted);
+        border-bottom: 3px solid transparent;
+      }
+
+      .chat-tabs span.active {
+        color: var(--teal);
+        border-color: var(--teal);
+      }
+
+      .messages {
+        padding: 28px 42px 20px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 96% 20%, rgba(22, 182, 165, 0.08), transparent 30%),
+          linear-gradient(180deg, #ffffff, #f8fcfd);
+      }
+
+      .message-row {
+        display: grid;
+        grid-template-columns: 42px minmax(0, 760px);
+        gap: 14px;
+        margin-bottom: 26px;
+      }
+
+      .message-row.user {
+        grid-template-columns: minmax(0, 760px) 42px;
+        justify-content: end;
+      }
+
+      .bubble {
+        padding: 20px 22px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: white;
+        box-shadow: 0 14px 42px rgba(22, 56, 82, 0.08);
+        line-height: 1.72;
+      }
+
+      .user .bubble {
+        background: #dff8f4;
+        border-color: #bcece6;
+      }
+
+      .bubble ol {
+        margin: 10px 0 0 18px;
+        padding: 0;
+      }
+
+      .composer {
+        margin: 0 42px 28px;
+        border: 2px solid #91d9d1;
+        border-radius: 18px;
+        background: white;
+        box-shadow: 0 18px 60px rgba(0, 125, 120, 0.12);
+      }
+
+      .composer textarea {
+        width: 100%;
+        min-height: 92px;
+        border: 0;
+        padding: 18px 20px 8px;
+        resize: none;
+        outline: none;
+        color: var(--ink);
+      }
+
+      .composer-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px 14px;
+      }
+
+      .context-rail {
+        display: grid;
+        gap: 16px;
+        align-content: start;
+        padding: 18px;
+      }
+
+      .context-card {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: white;
+      }
+
+      .context-card h3 {
+        margin: 0 0 12px;
+        font-size: 18px;
+      }
+
+      .resource-row,
+      .audit-row,
+      .student-row,
+      .queue-row {
+        display: grid;
+        gap: 10px;
+        padding: 14px 0;
+        border-top: 1px solid var(--soft-line);
+      }
+
+      .resource-row:first-child,
+      .audit-row:first-child,
+      .student-row:first-child,
+      .queue-row:first-child {
+        border-top: 0;
+      }
+
+      .hero-panel {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 22px;
+        padding: 24px;
+        min-height: 260px;
+      }
+
+      .course-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .course-pill {
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #f8fcfc;
+      }
+
+      .course-pill.active {
+        border-color: #8fd9d2;
+        background: var(--teal-soft);
+        box-shadow: inset 4px 0 0 var(--teal);
+      }
+
+      .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border-top: 1px solid var(--soft-line);
+        margin-top: 22px;
+      }
+
+      .kpi-row div {
+        padding: 18px 18px 10px;
+        border-right: 1px solid var(--soft-line);
+      }
+
+      .kpi-row div:last-child {
+        border-right: 0;
+      }
+
+      .kpi-row span,
+      .metric-list span {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .kpi-row strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 24px;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+      }
+
+      .table th,
+      .table td {
+        padding: 16px;
+        border-bottom: 1px solid var(--soft-line);
+        text-align: left;
+        font-size: 14px;
+      }
+
+      .table th {
+        background: #f5fafb;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .queue-board {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 18px;
+      }
+
+      .stage-bar {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: hidden;
+        background: white;
+        margin-bottom: 18px;
+      }
+
+      .stage {
+        display: grid;
+        gap: 6px;
+        padding: 16px;
+        border-right: 1px solid var(--soft-line);
+      }
+
+      .stage:last-child {
+        border-right: 0;
+      }
+
+      .stage.active {
+        background: var(--teal-soft);
+      }
+
+      .review-preview {
+        padding: 20px;
+        border-radius: 18px;
+        border: 1px solid #b7e7e1;
+        background: linear-gradient(180deg, #f2fffd, #ffffff);
+      }
+
+      .two-col {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 440px;
+        gap: 20px;
+      }
+
+      .builder-flow {
+        display: grid;
+        grid-template-columns: 340px minmax(0, 1fr) 420px;
+        gap: 18px;
+      }
+
+      .upload-drop {
+        display: grid;
+        place-items: center;
+        min-height: 210px;
+        border: 2px dashed #a7dcd7;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #f6fffd, #ffffff);
+        text-align: center;
+      }
+
+      .outline-tree {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: white;
+        overflow: hidden;
+      }
+
+      .tree-line {
+        display: grid;
+        grid-template-columns: 32px 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 13px 16px;
+        border-bottom: 1px solid var(--soft-line);
+      }
+
+      .tree-line:last-child {
+        border-bottom: 0;
+      }
+
+      .profile-matrix {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 20px;
+      }
+
+      .student-card-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .student-card {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: white;
+      }
+
+      .heatmap {
+        display: grid;
+        grid-template-columns: 140px repeat(5, 1fr);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .heatmap div {
+        min-height: 52px;
+        padding: 14px;
+        border-right: 1px solid var(--soft-line);
+        border-bottom: 1px solid var(--soft-line);
+        font-weight: 800;
+      }
+
+      .heatmap .h1 { background: #e4faf6; }
+      .heatmap .h2 { background: #fff6df; }
+      .heatmap .h3 { background: #ffeceb; }
+      .heatmap .h4 { background: #eff5ff; }
+
+      .quality-banner {
+        display: grid;
+        grid-template-columns: 1fr 220px;
+        align-items: center;
+        min-height: 230px;
+        padding: 28px;
+        background: linear-gradient(135deg, #123651, #0b7570);
+        color: white;
+      }
+
+      .score-card {
+        display: grid;
+        place-items: center;
+        height: 170px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.92);
+        color: var(--ink);
+      }
+
+      .score-card strong {
+        font-size: 56px;
+      }
+
+      .metric-list {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 12px;
+      }
+
+      .metric-list div {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: white;
+      }
+
+      .metric-list strong {
+        display: block;
+        margin: 8px 0;
+        font-size: 30px;
+      }
+
+      .truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="screen" data-screen="ai-assistant">
+      <aside class="sidebar">
+        <div class="brand">
+          <img src="../../../frontend/src/assets/brand-learning-icon.png" alt="智学工坊" />
+          <div><strong>智学工坊</strong><span>个性化学习平台</span></div>
+        </div>
+        <nav class="nav">
+          <div class="nav-item"><span class="nav-icon">⌂</span>今日学习</div>
+          <div class="nav-item"><span class="nav-icon">▤</span>我的课程</div>
+          <div class="nav-item"><span class="nav-icon">◌</span>学习画像</div>
+          <div class="nav-item active"><span class="nav-icon">AI</span>AI 助手</div>
+        </nav>
+        <div class="account-card">
+          <div class="avatar">张</div>
+          <div><strong>张同学</strong><span>学生 / zhang.student</span></div>
+          <span>↗</span>
+        </div>
+      </aside>
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <h1>AI 助手</h1>
+            <p>按课程项目空间组织多轮对话、资料引用、资源生成和任务记录。</p>
+          </div>
+          <div class="top-actions">
+            <button class="icon-btn">⌕</button>
+            <button class="icon-btn">◴</button>
+            <button class="icon-btn">?</button>
+          </div>
+        </header>
+        <div class="ai-shell">
+          <aside class="panel project-rail">
+            <div class="rail-head">
+              <strong>课程项目空间</strong>
+              <button class="ghost">+ 新建空间</button>
+            </div>
+            <div class="course-space-card active">
+              <div class="mini-art">&lt;/&gt;</div>
+              <div><strong>Java Web 应用开发与软件工程实践</strong><span>12 个聊天 / 6 个生成任务</span></div>
+              <span>⋮</span>
+            </div>
+            <div class="course-space-card">
+              <div class="mini-art">AI</div>
+              <div><strong>AI 个性化学习智能体实践</strong><span>8 个聊天 / 3 个生成任务</span></div>
+              <span>⋮</span>
+            </div>
+            <div class="course-space-card">
+              <div class="mini-art">PM</div>
+              <div><strong>工程实践与项目开发</strong><span>6 个聊天 / 2 个生成任务</span></div>
+              <span>⋮</span>
+            </div>
+          </aside>
+          <section class="panel chat-pane">
+            <div class="chat-header">
+              <div class="chat-header-main">
+                <div>
+                  <h2>Java Web 应用开发与软件工程实践</h2>
+                  <p class="muted">本空间会引用课程资料、学习画像与生成资源。</p>
+                </div>
+                <div class="toolbar">
+                  <button class="ghost">新建聊天</button>
+                  <button class="ghost">生成资源</button>
+                  <button class="primary">进入任务进度</button>
+                </div>
+              </div>
+            </div>
+            <div class="chat-tabs"><span class="active">今日规划</span><span>概念答疑</span><span>错题复盘</span><span>实验辅导</span></div>
+            <div class="messages">
+              <div class="message-row">
+                <div class="avatar">AI</div>
+                <div class="bubble">
+                  根据你的学习进度与画像，我为你制定了今天 45 分钟学习安排：
+                  <ol>
+                    <li><b>知识回顾 10 分钟：</b>回顾第 2 章数据表示与运算基础。</li>
+                    <li><b>新知学习 20 分钟：</b>学习 HTTP 请求与响应报文结构。</li>
+                    <li><b>练习巩固 10 分钟：</b>完成随堂练习并记录疑问。</li>
+                    <li><b>总结提炼 5 分钟：</b>沉淀 3 条学习笔记。</li>
+                  </ol>
+                </div>
+              </div>
+              <div class="message-row user">
+                <div class="bubble">我只剩 20 分钟，应该先做什么？</div>
+                <div class="avatar">张</div>
+              </div>
+              <div class="message-row">
+                <div class="avatar">AI</div>
+                <div class="bubble">
+                  时间有限，建议优先做两件事：先用 8 分钟抓住 HTTP 请求报文的 4 个关键字段，再用 12 分钟完成 3-1 练习题。完成后我会把错因写入学习画像。
+                </div>
+              </div>
+            </div>
+            <div class="composer">
+              <textarea>向本课程 AI 助手提问，或引用 @资料 / @章节 / @画像</textarea>
+              <div class="composer-foot">
+                <div class="toolbar"><button class="ghost">附件</button><button class="ghost">引用</button><button class="ghost">使用画像</button></div>
+                <button class="primary">发送</button>
+              </div>
+            </div>
+          </section>
+          <aside class="context-rail panel">
+            <div class="context-card">
+              <h3>可引用资料 <span class="pill">6</span></h3>
+              <div class="resource-row"><strong>第3章 HTTP 协议课件.pptx</strong><span class="muted">PPTX · 8.6 MB</span></div>
+              <div class="resource-row"><strong>HTTP 协议概述.pdf</strong><span class="muted">PDF · 1.2 MB</span></div>
+              <div class="resource-row"><strong>实验指导书（第3章）</strong><span class="muted">PDF · 2.1 MB</span></div>
+            </div>
+            <div class="context-card">
+              <h3>当前章节</h3>
+              <strong>第 3 章 HTTP 协议</strong>
+              <p class="muted">学习中 · 进度 65%</p>
+            </div>
+            <div class="context-card">
+              <h3>本课画像摘要</h3>
+              <div class="resource-row"><strong>概念关系</strong><span class="pill">中等</span></div>
+              <div class="resource-row"><strong>实践应用</strong><span class="pill">待提升</span></div>
+              <div class="resource-row"><strong>表达复盘</strong><span class="pill">需加强</span></div>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </section>
+
+    <section class="screen" data-screen="teacher-workbench">
+      <aside class="sidebar">
+        <div class="brand"><img src="../../../frontend/src/assets/brand-learning-icon.png" alt="智学工坊" /><div><strong>智学工坊</strong><span>教师工作台</span></div></div>
+        <nav class="nav">
+          <div class="nav-item active"><span class="nav-icon">▦</span>教学工作台</div>
+          <div class="nav-item"><span class="nav-icon">□</span>课程建设</div>
+          <div class="nav-item"><span class="nav-icon">✧</span>资源审核</div>
+          <div class="nav-item"><span class="nav-icon">✓</span>发布质检</div>
+          <div class="nav-item"><span class="nav-icon">AI</span>智能体协同</div>
+          <div class="nav-item"><span class="nav-icon">◌</span>班级画像</div>
+        </nav>
+        <div class="account-card"><div class="avatar">李</div><div><strong>李老师</strong><span>课程教师 / li.teacher</span></div><span>↗</span></div>
+      </aside>
+      <main class="main">
+        <header class="topbar"><div><h1>教学工作台</h1><p>围绕课程建设、资源审核、发布质检和班级画像组织今日教学工作。</p></div><div class="top-actions"><button class="icon-btn">⌕</button><button class="icon-btn">◴</button><button class="icon-btn">?</button></div></header>
+        <div class="layout-grid">
+          <section class="panel span-12 hero-panel">
+            <div>
+              <span class="pill">当前课程</span>
+              <h2>Java Web 应用开发与软件工程实践</h2>
+              <p class="muted">本周重点：REST API、异步任务、文件上传和资源发布审核。</p>
+              <div class="course-strip">
+                <div class="course-pill active"><strong>Java Web</strong><span>48 学时</span></div>
+                <div class="course-pill"><strong>AI 智能体实践</strong><span>48 学时</span></div>
+                <div class="course-pill"><strong>工程实践</strong><span>64 学时</span></div>
+                <div class="course-pill"><strong>计算机基础</strong><span>32 学时</span></div>
+              </div>
+            </div>
+            <div class="panel pad">
+              <div class="section-title"><div><h2>今日待处理</h2><p>按风险和截止时间排序</p></div><span class="pill">8 项</span></div>
+              <div class="resource-row"><strong>4 个资源待审核</strong><span class="muted">其中 2 个需人工复核</span></div>
+              <div class="resource-row"><strong>3 名学生风险上升</strong><span class="muted">集中在概念表达与实验步骤</span></div>
+              <div class="resource-row"><strong>1 个课程包待发布</strong><span class="muted">发布前需完成质检</span></div>
+            </div>
+            <div class="kpi-row span-12">
+              <div><span>课程资源</span><strong>42</strong></div>
+              <div><span>待审核资源</span><strong>4</strong></div>
+              <div><span>班级平均掌握度</span><strong>68%</strong></div>
+              <div><span>AI 协同任务</span><strong>9</strong></div>
+            </div>
+          </section>
+          <section class="panel pad span-7">
+            <div class="section-title"><div><h2>教学处理队列</h2><p>课程运营动作直接进入对应工作流</p></div><button class="ghost">查看全部</button></div>
+            <table class="table"><thead><tr><th>优先级</th><th>事项</th><th>来源</th><th>建议动作</th><th>状态</th></tr></thead><tbody>
+              <tr><td>1</td><td>HTTP 讲义资源待复核</td><td>AI 生成</td><td>进入资源审核</td><td><span class="pill">待审</span></td></tr>
+              <tr><td>2</td><td>张同学实验步骤薄弱</td><td>班级画像</td><td>生成补救包</td><td><span class="pill">需处理</span></td></tr>
+              <tr><td>3</td><td>第 3 章课程包发布</td><td>课程建设</td><td>发布质检</td><td><span class="pill">待质检</span></td></tr>
+            </tbody></table>
+          </section>
+          <section class="panel pad span-5">
+            <div class="section-title"><div><h2>AI 教学建议</h2><p>由课程诊断和画像证据汇总</p></div></div>
+            <div class="audit-row"><strong>优先补一组 HTTP 报文结构练习</strong><span class="muted">覆盖请求行、Header、Body 与状态码。</span></div>
+            <div class="audit-row"><strong>发布前增加引用来源说明</strong><span class="muted">降低学生误把生成内容当成唯一资料的风险。</span></div>
+            <button class="primary" style="width:100%;margin-top:16px">生成本周教学动作</button>
+          </section>
+        </div>
+      </main>
+    </section>
+
+    <section class="screen" data-screen="teacher-builder">
+      <aside class="sidebar">
+        <div class="brand"><img src="../../../frontend/src/assets/brand-learning-icon.png" alt="智学工坊" /><div><strong>智学工坊</strong><span>教师工作台</span></div></div>
+        <nav class="nav"><div class="nav-item">教学工作台</div><div class="nav-item active">课程建设</div><div class="nav-item">资源审核</div><div class="nav-item">发布质检</div><div class="nav-item">智能体协同</div><div class="nav-item">班级画像</div></nav>
+        <div class="account-card"><div class="avatar">李</div><div><strong>李老师</strong><span>课程教师</span></div><span>↗</span></div>
+      </aside>
+      <main class="main">
+        <header class="topbar"><div><h1>课程建设</h1><p>班级发放课程、上传资料生成课程、自定义模板槽位在同一个建设流程中完成。</p></div><div class="top-actions"><button class="ghost">预览课程</button><button class="primary">保存并发布到班级</button></div></header>
+        <div class="layout-grid">
+          <section class="panel pad span-12">
+            <div class="section-title"><div><h2>课程来源</h2><p>先选择课程来源，再进入对应建设流程。</p></div></div>
+            <div class="course-strip">
+              <div class="course-pill active"><strong>班级发放课程</strong><span>维护已有课程并发布到班级</span></div>
+              <div class="course-pill"><strong>上传资料生成课程</strong><span>PPT / 书本 / 讲义 / 题库</span></div>
+              <div class="course-pill"><strong>模板槽位</strong><span>不绑定单一课程的通用结构</span></div>
+              <div class="course-pill"><strong>AI 优化</strong><span>自动补章节、目标和测评</span></div>
+            </div>
+          </section>
+          <div class="builder-flow span-12">
+            <section class="panel pad">
+              <h2>资料上传与解析</h2>
+              <div class="upload-drop"><div><strong>拖拽 PPT、教材、讲义或题库</strong><p class="muted">AI 先抽取知识点，再生成课程结构。</p></div></div>
+              <div class="resource-row"><strong>第3章 HTTP 协议课件.pptx</strong><span class="pill">已解析</span></div>
+              <div class="resource-row"><strong>实验指导书.pdf</strong><span class="pill">解析中</span></div>
+            </section>
+            <section class="panel pad">
+              <div class="section-title"><div><h2>课程草稿</h2><p>章节、知识点、建议学时和可发布状态。</p></div><button class="ghost">AI 调整结构</button></div>
+              <div class="outline-tree">
+                <div class="tree-line"><span>1</span><strong>课程导论与学习准备</strong><span class="pill">导学</span></div>
+                <div class="tree-line"><span>2</span><strong>Web 应用概述与开发环境搭建</strong><span class="pill">讲解</span></div>
+                <div class="tree-line"><span>3</span><strong>HTTP 协议与请求响应</strong><span class="pill">讲解</span></div>
+                <div class="tree-line"><span>4</span><strong>REST API 分层设计</strong><span class="pill">练习</span></div>
+                <div class="tree-line"><span>5</span><strong>课程项目综合任务</strong><span class="pill">项目</span></div>
+              </div>
+            </section>
+            <aside class="panel pad">
+              <h2>模板槽位</h2>
+              <div class="audit-row"><strong>课程封面槽位</strong><span class="muted">可替换为任意课程主题。</span></div>
+              <div class="audit-row"><strong>章节大纲槽位</strong><span class="muted">支持 AI 改写、人工锁定。</span></div>
+              <div class="audit-row"><strong>目标与测评槽位</strong><span class="muted">自动对齐课程目标。</span></div>
+              <button class="primary" style="width:100%;margin-top:16px">保存为通用模板</button>
+            </aside>
+          </div>
+        </div>
+      </main>
+    </section>
+
+    <section class="screen" data-screen="teacher-review">
+      <aside class="sidebar">
+        <div class="brand"><img src="../../../frontend/src/assets/brand-learning-icon.png" alt="智学工坊" /><div><strong>智学工坊</strong><span>教师工作台</span></div></div>
+        <nav class="nav"><div class="nav-item">教学工作台</div><div class="nav-item">课程建设</div><div class="nav-item active">资源审核</div><div class="nav-item">发布质检</div><div class="nav-item">智能体协同</div><div class="nav-item">班级画像</div></nav>
+        <div class="account-card"><div class="avatar">李</div><div><strong>李老师</strong><span>课程教师</span></div><span>↗</span></div>
+      </aside>
+      <main class="main">
+        <header class="topbar"><div><h1>资源审核</h1><p>审核 AI 生成资源，决定通过、退回修改或进入发布质检。</p></div><div class="top-actions"><button class="ghost">加载审核任务</button><button class="primary">批量通过安全项</button></div></header>
+        <div class="layout-grid">
+          <section class="panel pad span-12">
+            <div class="stage-bar">
+              <div class="stage active"><strong>资料检索</strong><span class="muted">已完成</span></div>
+              <div class="stage active"><strong>画像匹配</strong><span class="muted">已完成</span></div>
+              <div class="stage active"><strong>资源生成</strong><span class="muted">已完成</span></div>
+              <div class="stage"><strong>教师审核</strong><span class="muted">待处理</span></div>
+              <div class="stage"><strong>发布给学生</strong><span class="muted">未发布</span></div>
+            </div>
+            <div class="queue-board">
+              <div>
+                <table class="table"><thead><tr><th>资源</th><th>类型</th><th>风险</th><th>建议</th><th>操作</th></tr></thead><tbody>
+                  <tr><td>HTTP 协议课堂讲稿</td><td>讲义</td><td><span class="pill">低</span></td><td>可通过</td><td><button class="primary">通过</button></td></tr>
+                  <tr><td>REST API 分层练习</td><td>题库</td><td><span class="pill">中</span></td><td>补充答案解析</td><td><button class="ghost">退回</button></td></tr>
+                  <tr><td>异步任务导图</td><td>导图</td><td><span class="pill">低</span></td><td>可通过</td><td><button class="primary">通过</button></td></tr>
+                </tbody></table>
+              </div>
+              <div class="review-preview">
+                <span class="pill">当前预览</span>
+                <h2>REST API 分层练习</h2>
+                <p>面向基础薄弱学生，包含 10 道选择题、2 道调试题和 1 个接口设计小任务。</p>
+                <div class="audit-row"><strong>引用依据</strong><span class="muted">课程第 3 章、实验指导书、课堂讲义。</span></div>
+                <div class="audit-row"><strong>需要教师确认</strong><span class="muted">第 7 题答案解析过短，建议补充 DTO 与 Service 分层理由。</span></div>
+                <div class="toolbar"><button class="ghost">写入修改意见</button><button class="primary">通过并进入质检</button></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </section>
+
+    <section class="screen" data-screen="teacher-profile">
+      <aside class="sidebar">
+        <div class="brand"><img src="../../../frontend/src/assets/brand-learning-icon.png" alt="智学工坊" /><div><strong>智学工坊</strong><span>教师工作台</span></div></div>
+        <nav class="nav"><div class="nav-item">教学工作台</div><div class="nav-item">课程建设</div><div class="nav-item">资源审核</div><div class="nav-item">发布质检</div><div class="nav-item">智能体协同</div><div class="nav-item active">班级画像</div></nav>
+        <div class="account-card"><div class="avatar">李</div><div><strong>李老师</strong><span>课程教师</span></div><span>↗</span></div>
+      </aside>
+      <main class="main">
+        <header class="topbar"><div><h1>班级画像</h1><p>按课程聚合学生画像、证据流、掌握度和干预建议。</p></div><div class="top-actions"><button class="ghost">刷新画像</button><button class="primary">生成补救资源</button></div></header>
+        <div class="layout-grid">
+          <section class="panel pad span-12">
+            <div class="section-title"><div><h2>Java Web 应用开发与软件工程实践</h2><p>班级平均掌握度 68%，主要风险集中在概念表达和实践迁移。</p></div><span class="pill">4 名学生</span></div>
+            <div class="heatmap">
+              <div>学生</div><div>知识基础</div><div>代码实践</div><div>表达复盘</div><div>时间投入</div><div>风险</div>
+              <div>张同学</div><div class="h1">72</div><div class="h1">82</div><div class="h2">55</div><div class="h1">8.5h</div><div class="h2">关注表达</div>
+              <div>李同学</div><div class="h2">61</div><div class="h3">48</div><div class="h2">58</div><div class="h2">5.2h</div><div class="h3">需补弱</div>
+              <div>王同学</div><div class="h1">78</div><div class="h1">75</div><div class="h1">70</div><div class="h1">7.1h</div><div class="h1">稳定</div>
+            </div>
+          </section>
+          <section class="panel pad span-8">
+            <div class="section-title"><div><h2>学生画像列表</h2><p>点击学生进入个体证据链和干预动作。</p></div></div>
+            <div class="student-card-grid">
+              <div class="student-card"><span class="pill">当前画像</span><h3>张同学</h3><p>能完成基础接口，但表达和复盘不够稳定。</p><div class="toolbar"><button class="ghost">查看证据</button><button class="primary">生成练习</button></div></div>
+              <div class="student-card"><span class="pill">需关注</span><h3>李同学</h3><p>代码实践薄弱，需要补充小步练习和错因分析。</p><div class="toolbar"><button class="ghost">查看证据</button><button class="primary">补救包</button></div></div>
+              <div class="student-card"><span class="pill">跟踪中</span><h3>王同学</h3><p>整体稳定，适合增加综合项目挑战。</p><div class="toolbar"><button class="ghost">查看证据</button><button class="primary">提升任务</button></div></div>
+              <div class="student-card"><span class="pill">待同步</span><h3>陈同学</h3><p>画像证据不足，建议先安排一次诊断测评。</p><div class="toolbar"><button class="ghost">查看证据</button><button class="primary">发起测评</button></div></div>
+            </div>
+          </section>
+          <section class="panel pad span-4">
+            <div class="section-title"><div><h2>干预队列</h2><p>按风险自动排序。</p></div></div>
+            <div class="audit-row"><strong>李同学：补 REST API 分层练习</strong><span class="muted">生成 15 分钟训练包。</span></div>
+            <div class="audit-row"><strong>张同学：补表达复盘模板</strong><span class="muted">引导写出设计理由。</span></div>
+            <div class="audit-row"><strong>陈同学：发起诊断测评</strong><span class="muted">收集初始证据。</span></div>
+          </section>
+        </div>
+      </main>
+    </section>
+
+    <section class="screen" data-screen="teacher-quality">
+      <aside class="sidebar">
+        <div class="brand"><img src="../../../frontend/src/assets/brand-learning-icon.png" alt="智学工坊" /><div><strong>智学工坊</strong><span>教师工作台</span></div></div>
+        <nav class="nav"><div class="nav-item">教学工作台</div><div class="nav-item">课程建设</div><div class="nav-item">资源审核</div><div class="nav-item active">发布质检</div><div class="nav-item">智能体协同</div><div class="nav-item">班级画像</div></nav>
+        <div class="account-card"><div class="avatar">李</div><div><strong>李老师</strong><span>课程教师</span></div><span>↗</span></div>
+      </aside>
+      <main class="main">
+        <header class="topbar"><div><h1>发布质检</h1><p>发布前检查课程、画像、资源、审核记录和学习闭环证据。</p></div><div class="top-actions"><button class="ghost">进入任务审核</button><button class="primary">确认发布</button></div></header>
+        <div class="layout-grid">
+          <section class="panel span-12 quality-banner">
+            <div><span class="pill">发布结论</span><h2>可发布，需教师复核 2 项</h2><p>资源引用、安全审核、学习画像匹配均已通过；建议补充一道 REST API 分层题解析。</p></div>
+            <div class="score-card"><strong>87</strong><span>质量分</span><span class="pill">可发布需复核</span></div>
+          </section>
+          <div class="metric-list span-12">
+            <div><span>多智能体</span><strong>9</strong><span>目标 8</span></div>
+            <div><span>资源类型</span><strong>7</strong><span>目标 5</span></div>
+            <div><span>任务完成</span><strong>3</strong><span>目标 1</span></div>
+            <div><span>学习路径</span><strong>4</strong><span>目标 1</span></div>
+            <div><span>学习事件</span><strong>28</strong><span>目标 1</span></div>
+            <div><span>内容审核</span><strong>6</strong><span>目标 1</span></div>
+          </div>
+          <section class="panel pad span-8">
+            <div class="section-title"><div><h2>质检项</h2><p>不再暴露 demo 字段，只显示教师可理解的发布检查项。</p></div></div>
+            <table class="table"><thead><tr><th>检查项</th><th>结论</th><th>证据</th><th>动作</th></tr></thead><tbody>
+              <tr><td>画像匹配</td><td><span class="pill">通过</span></td><td>4 份学生画像，18 条证据</td><td>查看画像</td></tr>
+              <tr><td>资源完整性</td><td><span class="pill">通过</span></td><td>讲义、题库、导图均已生成</td><td>查看资源</td></tr>
+              <tr><td>内容审核</td><td><span class="pill">需复核</span></td><td>2 条解析建议补充引用</td><td>回到审核</td></tr>
+            </tbody></table>
+          </section>
+          <section class="panel pad span-4">
+            <div class="section-title"><div><h2>建议处理顺序</h2></div></div>
+            <div class="audit-row"><strong>1. 补充第 7 题解析</strong><span class="muted">完善 DTO 与 Service 分层理由。</span></div>
+            <div class="audit-row"><strong>2. 确认引用来源</strong><span class="muted">标注课件和实验指导书出处。</span></div>
+            <div class="audit-row"><strong>3. 发布给学生</strong><span class="muted">进入课程空间与学习路径。</span></div>
+          </section>
+        </div>
+      </main>
+    </section>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const screen = params.get("screen") || "ai-assistant";
+      document.querySelectorAll(".screen").forEach((node) => {
+        node.classList.toggle("active", node.dataset.screen === screen);
+      });
+    </script>
+  </body>
+</html>

@@ -58,6 +58,21 @@ def compact(text: str, limit: int) -> str:
     return normalized[:limit].rstrip() + "..."
 
 
+def preserve_text(text: str, limit: int) -> str:
+    """按长度截断，但保留模型输出的换行与 Markdown 结构（标题、列表、代码块）。
+
+    compact() 会把所有空白折叠成单行，适合做短摘要；模型主回答必须用本函数，
+    否则 Markdown 结构会被压扁，前端无法正确渲染。
+    """
+    normalized = (text or "").replace("\r\n", "\n").replace("\r", "\n").strip()
+    # 合并 3 个以上连续空行，避免过度留白
+    while "\n\n\n" in normalized:
+        normalized = normalized.replace("\n\n\n", "\n\n")
+    if len(normalized) <= limit:
+        return normalized
+    return normalized[:limit].rstrip() + "..."
+
+
 def limit_text(text: str, limit: int) -> str:
     normalized = " ".join(text.split())
     if len(normalized) <= limit:

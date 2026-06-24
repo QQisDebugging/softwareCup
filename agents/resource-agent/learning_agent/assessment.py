@@ -1,5 +1,6 @@
 from learning_agent.config import AgentSettings
 from learning_agent.embeddings import HashingEmbeddingModel
+from learning_agent.llm import ProviderRouter
 from learning_agent.resource_templates import compact, infer_target_level
 from learning_agent.schemas import (
     AssessmentAnswer,
@@ -12,6 +13,7 @@ from learning_agent.schemas import (
     ProfileDimensionUpdate,
     QuestionGradeResult,
 )
+from learning_agent.structured_output import as_float, as_int, as_list, as_text, complete_json
 from learning_agent.vector_store import InMemoryVectorStore
 
 
@@ -20,9 +22,12 @@ class AssessmentAgent:
         self.settings = settings
         self.vector_store = vector_store
         self.embedding_model = HashingEmbeddingModel(settings.embedding_dimensions)
+        self.provider_router = ProviderRouter(settings)
 
     def generate(self, request: AssessmentGenerateRequest) -> AssessmentGenerateResponse:
         citations = self.vector_store.search(self._query(request), top_k=self.settings.retrieval_top_k)
+        generated = self._llm_generate(request, citations)
+        return self._generate_response_from_model(request, citations, generated)
         questions = [
             self._build_question(request, citations, index)
             for index in range(request.count)
@@ -36,6 +41,8 @@ class AssessmentAgent:
         )
 
     def grade(self, request: AssessmentGradeRequest) -> AssessmentGradeResponse:
+        graded = self._llm_grade(request)
+        return self._grade_response_from_model(request, graded)
         answer_map = {answer.questionId: answer for answer in request.answers}
         results = [self._grade_question(question, answer_map.get(question.id)) for question in request.questions]
         score = sum(result.score for result in results)
@@ -58,6 +65,228 @@ class AssessmentAgent:
             nextResourceTypes=self._next_resources(ratio),
             profileDimensionUpdates=self._profile_updates(request, mastery, feedback, weak_points, ratio),
         )
+
+    def _llm_generate(
+        self,
+        request: AssessmentGenerateRequest,
+        citations: list[KnowledgeMatch],
+    ) -> dict:
+        context = "\n\n".join(
+            f"[{index}] {match.title} ({match.source}, score={match.score}): {compact(match.text, 650)}"
+            for index, match in enumerate(citations[:6], start=1)
+        )
+        system_prompt = (
+            "You are an assessment design agent for a Chinese personalized learning product. "
+            "Create grounded assessment items that test understanding, transfer, and practice. "
+            "Return strict JSON only."
+        )
+        user_prompt = f"""
+Return one JSON object in Chinese with this shape:
+{{
+  "title": "string",
+  "summary": "string",
+  "questions": [
+    {{
+      "id": "q1",
+      "type": "选择题/判断题/简答题/代码纠错题/etc",
+      "stem": "question text",
+      "options": ["A. ...", "B. ..."],
+      "answer": "standard answer",
+      "rubric": "grading rubric",
+      "explanation": "evidence-grounded explanation",
+      "difficulty": "string",
+      "knowledgePoints": ["string"],
+      "score": 10
+    }}
+  ]
+}}
+
+Constraints:
+- Generate exactly {request.count} questions.
+- Follow requested question types when possible: {request.questionTypes}.
+- Each question must reference the course/topic and be gradeable.
+- Include at least one transfer/practice-oriented item when count >= 3.
+- Do not invent unsupported outside facts.
+
+Course: {request.courseTitle}
+Topic: {request.topic}
+Difficulty: {request.difficulty}
+Learner profile: {request.studentProfileSummary}
+Retrieved evidence:
+{context or "No retrieved evidence."}
+"""
+        return complete_json(self.provider_router, system_prompt, user_prompt, "assessment generation")
+
+    def _generate_response_from_model(
+        self,
+        request: AssessmentGenerateRequest,
+        citations: list[KnowledgeMatch],
+        generated: dict,
+    ) -> AssessmentGenerateResponse:
+        questions = self._questions_from_model(request, generated)
+        if len(questions) < request.count:
+            raise RuntimeError(f"Assessment agent returned {len(questions)} questions, expected {request.count}.")
+        return AssessmentGenerateResponse(
+            title=as_text(generated.get("title"), f"{request.topic} 自适应测评"),
+            topic=request.topic,
+            questions=questions[:request.count],
+            citations=citations,
+            summary=as_text(generated.get("summary"), f"已基于画像和 RAG 证据生成 {len(questions[:request.count])} 道测评题。"),
+        )
+
+    def _questions_from_model(
+        self,
+        request: AssessmentGenerateRequest,
+        generated: dict,
+    ) -> list[AssessmentQuestion]:
+        items = [item for item in as_list(generated.get("questions")) if isinstance(item, dict)]
+        questions: list[AssessmentQuestion] = []
+        for index, item in enumerate(items, start=1):
+            qid = as_text(item.get("id"), f"q{index}")
+            question_type = as_text(
+                item.get("type"),
+                request.questionTypes[(index - 1) % len(request.questionTypes)] if request.questionTypes else "简答题",
+            )
+            questions.append(AssessmentQuestion(
+                id=qid,
+                type=question_type,
+                stem=as_text(item.get("stem"), f"请说明 {request.topic} 的关键概念与应用场景。"),
+                options=self._normalized_strings(item.get("options")),
+                answer=as_text(item.get("answer"), "需覆盖关键概念、依据和应用场景。"),
+                rubric=as_text(item.get("rubric"), "按概念准确性、证据引用、应用迁移和表达完整度评分。"),
+                explanation=as_text(item.get("explanation"), "该题用于检查学习者是否能把知识点迁移到真实任务。"),
+                difficulty=as_text(item.get("difficulty"), request.difficulty),
+                knowledgePoints=self._normalized_strings(item.get("knowledgePoints")) or [request.topic],
+                score=as_int(item.get("score"), 10, 1, 100),
+            ))
+        return questions
+
+    def _llm_grade(self, request: AssessmentGradeRequest) -> dict:
+        questions = [
+            {
+                "id": question.id,
+                "type": question.type,
+                "stem": question.stem,
+                "answer": question.answer,
+                "rubric": question.rubric,
+                "score": question.score,
+                "knowledgePoints": question.knowledgePoints,
+            }
+            for question in request.questions
+        ]
+        answers = [{"questionId": answer.questionId, "answer": answer.answer} for answer in request.answers]
+        system_prompt = (
+            "You are an evidence-based assessment grading agent. Grade strictly against the provided standard answers "
+            "and rubrics. Return strict JSON only."
+        )
+        user_prompt = f"""
+Return one JSON object in Chinese with this shape:
+{{
+  "masteryLevel": "string",
+  "feedback": "overall feedback",
+  "questionResults": [
+    {{"questionId": "q1", "score": 0, "maxScore": 10, "correct": false, "feedback": "string", "knowledgePoint": "string"}}
+  ],
+  "weaknessSignals": ["string"],
+  "nextResourceTypes": ["string"],
+  "profileDimensionUpdates": [
+    {{"dimensionKey": "MASTERY_WEAKNESS", "dimensionName": "掌握度/薄弱点", "value": "string", "evidence": "string", "confidenceScore": 0.8, "source": "assessment_agent"}}
+  ]
+}}
+
+Constraints:
+- Produce one questionResult for every question.
+- Scores must be integers from 0 to maxScore.
+- Do not reward answers that do not address the rubric.
+- Highlight actionable weaknesses and next resource types.
+
+Course: {request.courseTitle}
+Topic: {request.topic}
+Learner profile: {request.studentProfileSummary}
+Questions:
+{questions}
+Student answers:
+{answers}
+"""
+        return complete_json(self.provider_router, system_prompt, user_prompt, "assessment grading")
+
+    def _grade_response_from_model(
+        self,
+        request: AssessmentGradeRequest,
+        graded: dict,
+    ) -> AssessmentGradeResponse:
+        expected = {question.id: question for question in request.questions}
+        result_items = [item for item in as_list(graded.get("questionResults")) if isinstance(item, dict)]
+        results: list[QuestionGradeResult] = []
+        for item in result_items:
+            question_id = as_text(item.get("questionId"))
+            if question_id not in expected:
+                continue
+            question = expected[question_id]
+            max_score = as_int(item.get("maxScore"), question.score, 1, question.score)
+            score = as_int(item.get("score"), 0, 0, max_score)
+            results.append(QuestionGradeResult(
+                questionId=question_id,
+                score=score,
+                maxScore=max_score,
+                correct=bool(item.get("correct")) and score >= int(max_score * 0.7),
+                feedback=as_text(item.get("feedback"), "已按标准答案和评分规则完成批改。"),
+                knowledgePoint=as_text(
+                    item.get("knowledgePoint"),
+                    question.knowledgePoints[0] if question.knowledgePoints else request.topic,
+                ),
+            ))
+        missing = sorted(set(expected) - {result.questionId for result in results})
+        if missing:
+            raise RuntimeError(f"Assessment grader missed question results for: {', '.join(missing)}")
+        score = sum(result.score for result in results)
+        max_score = sum(result.maxScore for result in results) or 1
+        weakness_signals = self._normalized_strings(graded.get("weaknessSignals")) or [
+            result.knowledgePoint for result in results if not result.correct
+        ]
+        return AssessmentGradeResponse(
+            score=score,
+            maxScore=max_score,
+            masteryLevel=as_text(graded.get("masteryLevel"), self._mastery_level(score / max_score)),
+            feedback=as_text(graded.get("feedback"), self._feedback(request.topic, score / max_score, weakness_signals)),
+            questionResults=results,
+            weaknessSignals=weakness_signals or ["暂未发现明显薄弱点"],
+            nextResourceTypes=self._normalized_strings(graded.get("nextResourceTypes")) or self._next_resources(score / max_score),
+            profileDimensionUpdates=self._profile_updates_from_model(request, graded, weakness_signals, score, max_score),
+        )
+
+    def _profile_updates_from_model(
+        self,
+        request: AssessmentGradeRequest,
+        graded: dict,
+        weakness_signals: list[str],
+        score: int,
+        max_score: int,
+    ) -> list[ProfileDimensionUpdate]:
+        items = [item for item in as_list(graded.get("profileDimensionUpdates")) if isinstance(item, dict)]
+        updates: list[ProfileDimensionUpdate] = []
+        for item in items[:4]:
+            updates.append(ProfileDimensionUpdate(
+                dimensionKey=as_text(item.get("dimensionKey"), "MASTERY_WEAKNESS"),
+                dimensionName=as_text(item.get("dimensionName"), "掌握度/薄弱点"),
+                value=as_text(item.get("value"), "；".join(weakness_signals) or "测评表现稳定"),
+                evidence=as_text(item.get("evidence"), f"{request.topic} 测评得分 {score}/{max_score}"),
+                confidenceScore=as_float(item.get("confidenceScore"), 0.78, 0.0, 1.0),
+                source=as_text(item.get("source"), "assessment_agent"),
+            ))
+        if updates:
+            return updates
+        return [ProfileDimensionUpdate(
+            dimensionKey="MASTERY_WEAKNESS",
+            dimensionName="掌握度/薄弱点",
+            value="；".join(weakness_signals) or "测评表现稳定",
+            evidence=f"{request.topic} 测评得分 {score}/{max_score}",
+            confidenceScore=0.78,
+            source="assessment_agent",
+        )]
+
+    def _normalized_strings(self, value: object) -> list[str]:
+        return [as_text(item) for item in as_list(value) if as_text(item)]
 
     def _query(self, request: AssessmentGenerateRequest) -> str:
         return "\n".join([
@@ -219,4 +448,3 @@ class AssessmentAgent:
                 source="assessment_agent",
             ),
         ]
-

@@ -5,12 +5,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "softwarecup.agent")
 public class AgentProperties {
     private String resourceBaseUrl = "http://localhost:9001";
-    private String provider = "offline";
-    private String model = "offline-resource-agent";
-    private String fallbackProvider = "local-rule-engine";
-    private String fallbackModel = "deterministic-template-v1";
+    private String provider = "xfyun_spark";
+    private String model = "generalv3.5";
+    private String fallbackProvider = "none";
+    private String fallbackModel = "none";
     private int connectTimeoutMs = 3000;
-    private int readTimeoutMs = 30000;
+    private int readTimeoutMs = 360000;
 
     public String getResourceBaseUrl() {
         return resourceBaseUrl;

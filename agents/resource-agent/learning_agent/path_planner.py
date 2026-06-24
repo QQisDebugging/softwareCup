@@ -1,4 +1,5 @@
 from learning_agent.config import AgentSettings
+from learning_agent.llm import ProviderRouter
 from learning_agent.resource_templates import compact, infer_target_level
 from learning_agent.schemas import (
     KnowledgeMatch,
@@ -9,6 +10,7 @@ from learning_agent.schemas import (
     ResourceRecommendation,
     ReviewCheckpoint,
 )
+from learning_agent.structured_output import as_int, as_list, as_text, complete_json
 from learning_agent.vector_store import InMemoryVectorStore
 
 
@@ -16,9 +18,12 @@ class PathPlannerAgent:
     def __init__(self, settings: AgentSettings, vector_store: InMemoryVectorStore) -> None:
         self.settings = settings
         self.vector_store = vector_store
+        self.provider_router = ProviderRouter(settings)
 
     def plan(self, request: LearningPathPlanRequest) -> LearningPathPlanResponse:
         citations = self.vector_store.search(self._query(request), top_k=self.settings.retrieval_top_k)
+        llm_plan = self._llm_plan(request, citations)
+        return self._response_from_model(request, citations, llm_plan)
         target_level = infer_target_level(request.studentProfileSummary)
         weak_points = self._weak_points(request)
         stage_count = min(max(3, request.timeframeDays), 10)
@@ -45,7 +50,163 @@ class PathPlannerAgent:
             citations=citations,
             summary=summary,
             profileDimensionUpdates=self._profile_updates(request, weak_points, summary),
+            provider=as_text(plan.get("_provider"), self.provider_router.active_name),
+            model=self.settings.openai_model
+            if as_text(plan.get("_provider"), self.provider_router.active_name) == "openai_compatible"
+            else self.settings.xfyun_model,
+            executionMode=as_text(plan.get("_executionMode"), "LLM"),
+            fallbackUsed=bool(plan.get("_fallbackUsed", False)),
         )
+
+    def _llm_plan(self, request: LearningPathPlanRequest, citations: list[KnowledgeMatch]) -> dict:
+        context = "\n\n".join(
+            f"[{index}] {match.title} ({match.source}, score={match.score}): {compact(match.text, 700)}"
+            for index, match in enumerate(citations[:6], start=1)
+        )
+        system_prompt = (
+            "You are a senior learning-path planning agent for a Chinese higher-education product. "
+            "Create an executable, evidence-grounded path from the learner profile, course goal, "
+            "recent signals, and retrieved materials. Return strict JSON only."
+        )
+        user_prompt = f"""
+Return one JSON object in Chinese with this shape:
+{{
+  "planTitle": "string",
+  "targetLevel": "string",
+  "weaknessSignals": ["string"],
+  "summary": "string",
+  "stages": [
+    {{
+      "day": 1,
+      "title": "string",
+      "objective": "string",
+      "learningActions": ["3-5 concrete actions"],
+      "resourceTypes": ["documents/videos/practice/etc"],
+      "practiceTask": "observable task",
+      "checkpoint": "measurable success check",
+      "estimatedMinutes": 45
+    }}
+  ],
+  "resourceRecommendations": [
+    {{"priority": 1, "resourceType": "string", "title": "string", "reason": "string", "estimatedMinutes": 20}}
+  ],
+  "reviewCheckpoints": [
+    {{"day": 1, "method": "string", "successCriteria": "string"}}
+  ]
+}}
+
+Constraints:
+- Generate {min(max(3, request.timeframeDays), 10)} stages, ordered by day.
+- Each stage must connect learner weakness to concrete action and feedback evidence.
+- Use retrieved material when relevant; if evidence is weak, say what evidence is missing.
+- Do not invent external facts, rankings, URLs, or unsupported claims.
+
+Course: {request.courseTitle}
+Topic: {request.topic}
+Goal: {request.goal}
+Learner profile: {request.studentProfileSummary}
+Timeframe days: {request.timeframeDays}
+Daily minutes: {request.dailyMinutes}
+Weakness signals: {request.weaknessSignals}
+Completed resources: {request.completedResources}
+Recent scores: {request.recentScores}
+Retrieved evidence:
+{context or "No retrieved evidence."}
+"""
+        return complete_json(self.provider_router, system_prompt, user_prompt, "learning path planning")
+
+    def _response_from_model(
+        self,
+        request: LearningPathPlanRequest,
+        citations: list[KnowledgeMatch],
+        plan: dict,
+    ) -> LearningPathPlanResponse:
+        target_level = as_text(plan.get("targetLevel"), infer_target_level(request.studentProfileSummary))
+        weak_points = self._normalized_strings(plan.get("weaknessSignals")) or self._weak_points(request)
+        stages = self._stages_from_model(request, plan)
+        recommendations = self._recommendations_from_model(request, plan, weak_points, target_level)
+        checkpoints = self._checkpoints_from_model(plan, len(stages))
+        summary = as_text(
+            plan.get("summary"),
+            f"已基于学生画像、RAG 证据和模型规划生成 {len(stages)} 天个性化学习路径。",
+        )
+        return LearningPathPlanResponse(
+            planTitle=as_text(plan.get("planTitle"), f"{request.topic} 个性化学习路径"),
+            studentProfileId=request.studentProfileId,
+            courseId=request.courseId,
+            topic=request.topic,
+            targetLevel=target_level,
+            stages=stages,
+            resourceRecommendations=recommendations,
+            reviewCheckpoints=checkpoints,
+            mermaidRoadmap=self._roadmap(request, stages),
+            citations=citations,
+            summary=summary,
+            profileDimensionUpdates=self._profile_updates(request, weak_points, summary),
+            provider=as_text(plan.get("_provider"), self.provider_router.active_name),
+            model=self.settings.openai_model
+            if as_text(plan.get("_provider"), self.provider_router.active_name) == "openai_compatible"
+            else self.settings.xfyun_model,
+            executionMode=as_text(plan.get("_executionMode"), "LLM"),
+            fallbackUsed=bool(plan.get("_fallbackUsed", False)),
+        )
+
+    def _stages_from_model(self, request: LearningPathPlanRequest, plan: dict) -> list[LearningPathStage]:
+        items = [item for item in as_list(plan.get("stages")) if isinstance(item, dict)]
+        if not items:
+            raise RuntimeError("Learning path planner returned no stages.")
+        max_stages = min(max(3, request.timeframeDays), 10)
+        stages: list[LearningPathStage] = []
+        for index, item in enumerate(items[:max_stages], start=1):
+            day = as_int(item.get("day"), index, 1, max_stages)
+            stages.append(LearningPathStage(
+                day=day,
+                title=as_text(item.get("title"), f"第 {day} 天：{request.topic} 学习任务"),
+                objective=as_text(item.get("objective"), f"围绕 {request.topic} 完成可验证学习产出。"),
+                learningActions=self._normalized_strings(item.get("learningActions"))[:5]
+                or [f"阅读与 {request.topic} 相关的资料证据。", "完成一次短练习并记录卡点。"],
+                resourceTypes=self._normalized_strings(item.get("resourceTypes"))[:5] or ["讲解文档", "练习题"],
+                practiceTask=as_text(item.get("practiceTask"), f"完成一个 {request.topic} 的最小实践任务。"),
+                checkpoint=as_text(item.get("checkpoint"), "提交学习证据并说明仍不确定的问题。"),
+                estimatedMinutes=as_int(item.get("estimatedMinutes"), request.dailyMinutes, 10, request.dailyMinutes),
+            ))
+        return sorted(stages, key=lambda stage: stage.day)
+
+    def _recommendations_from_model(
+        self,
+        request: LearningPathPlanRequest,
+        plan: dict,
+        weak_points: list[str],
+        target_level: str,
+    ) -> list[ResourceRecommendation]:
+        items = [item for item in as_list(plan.get("resourceRecommendations")) if isinstance(item, dict)]
+        recommendations: list[ResourceRecommendation] = []
+        for index, item in enumerate(items[:8], start=1):
+            recommendations.append(ResourceRecommendation(
+                priority=as_int(item.get("priority"), index, 1, 20),
+                resourceType=as_text(item.get("resourceType"), "学习资源"),
+                title=as_text(item.get("title"), f"{request.topic} 资源 {index}"),
+                reason=as_text(item.get("reason"), f"匹配 {target_level}，用于补齐 {', '.join(weak_points[:2])}。"),
+                estimatedMinutes=as_int(item.get("estimatedMinutes"), 20, 1, 240),
+            ))
+        return recommendations or self._recommendations(request, weak_points, target_level)
+
+    def _checkpoints_from_model(self, plan: dict, stage_count: int) -> list[ReviewCheckpoint]:
+        items = [item for item in as_list(plan.get("reviewCheckpoints")) if isinstance(item, dict)]
+        checkpoints: list[ReviewCheckpoint] = []
+        for index, item in enumerate(items[:5], start=1):
+            checkpoints.append(ReviewCheckpoint(
+                day=as_int(item.get("day"), index, 1, stage_count),
+                method=as_text(item.get("method"), "阶段复盘"),
+                successCriteria=as_text(item.get("successCriteria"), "能提交可复核的学习证据。"),
+            ))
+        return checkpoints or [
+            ReviewCheckpoint(day=1, method="入口诊断", successCriteria="明确学习目标和当前卡点。"),
+            ReviewCheckpoint(day=stage_count, method="闭环复测", successCriteria="提交复测结果和下一步资源需求。"),
+        ]
+
+    def _normalized_strings(self, value: object) -> list[str]:
+        return [as_text(item) for item in as_list(value) if as_text(item)]
 
     def _query(self, request: LearningPathPlanRequest) -> str:
         return "\n".join([

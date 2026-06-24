@@ -8,10 +8,10 @@ const friendlyMessage = computed(() => {
   const message = String(props.message || '').trim()
   if (!message) return ''
   if (/Network Error|Failed to fetch|ERR_CONNECTION_REFUSED/i.test(message)) {
-    return '后端连接失败：请确认 Spring Boot 后端已启动，并检查前端 API 地址。'
+    return '学习服务连接失败：请确认服务已启动后重试。'
   }
   if (/timeout|ECONNABORTED/i.test(message)) {
-    return '接口请求超时：请确认后端服务正常运行后重试。'
+    return '请求等待时间较长，请稍后重试。'
   }
   return message
 })

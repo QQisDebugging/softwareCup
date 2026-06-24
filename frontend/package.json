@@ -7,7 +7,10 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vue-tsc --build --force && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "typecheck": "vue-tsc --build --force"
+    "capture": "node output/capture-current.mjs",
+    "typecheck": "vue-tsc --build --force",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@vueuse/core": "^13.1.0",
@@ -15,16 +18,30 @@
     "echarts": "^5.6.0",
     "lucide-vue-next": "^0.511.0",
     "markdown-it": "^14.1.0",
+    "mermaid": "^11.15.0",
     "pinia": "^3.0.2",
     "vue": "^3.5.13",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
-    "@types/node": "^22.15.17",
+    "@chromatic-com/storybook": "^5.2.1",
+    "@playwright/test": "^1.60.0",
+    "@storybook/addon-a11y": "^10.4.6",
+    "@storybook/addon-docs": "^10.4.6",
+    "@storybook/addon-mcp": "^0.6.0",
+    "@storybook/addon-onboarding": "^10.4.6",
+    "@storybook/addon-vitest": "^10.4.6",
+    "@storybook/vue3-vite": "^10.4.6",
     "@types/markdown-it": "^14.1.2",
+    "@types/node": "^22.15.17",
     "@vitejs/plugin-vue": "^5.2.3",
+    "@vitest/browser-playwright": "^4.1.9",
+    "@vitest/coverage-v8": "^4.1.9",
+    "playwright": "^1.61.0",
+    "storybook": "^10.4.6",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",
+    "vitest": "^4.1.9",
     "vue-tsc": "^2.2.10"
   }
 }

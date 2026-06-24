@@ -1,6 +1,7 @@
 package com.qqisdebugging.softwarecup.backend.common;
 
 import jakarta.validation.ConstraintViolationException;
+import com.qqisdebugging.softwarecup.backend.agent.AgentUpstreamException;
 import java.time.Instant;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,16 @@ public class ApiExceptionHandler {
     ProblemDetail handleNotFound(NotFoundException ex) {
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
         detail.setTitle("Resource not found");
+        detail.setProperty("timestamp", Instant.now());
+        return detail;
+    }
+
+    @ExceptionHandler(AgentUpstreamException.class)
+    ProblemDetail handleAgentUpstream(AgentUpstreamException ex) {
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+        detail.setTitle("Agent upstream unavailable");
+        detail.setProperty("retryable", true);
+        detail.setProperty("uiAction", Map.of("kind", "NONE", "reason", "AGENT_UPSTREAM_UNAVAILABLE"));
         detail.setProperty("timestamp", Instant.now());
         return detail;
     }

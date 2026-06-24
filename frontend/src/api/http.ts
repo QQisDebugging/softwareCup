@@ -28,18 +28,18 @@ function readServerMessage(data: unknown) {
 
 export function normalizeApiError(error: AxiosError) {
   if (error.code === 'ECONNABORTED') {
-    return `接口请求超时：请确认 Spring Boot 后端正在运行，并检查 ${apiBaseUrl}`
+    return `接口请求超时：请确认平台服务正在运行，并检查 ${apiBaseUrl}`
   }
   if (!error.response) {
-    return `后端连接失败：请确认 Spring Boot 已启动，并且 VITE_API_BASE_URL=${apiBaseUrl}`
+    return `后端连接失败：请确认平台服务已启动，并且 VITE_API_BASE_URL=${apiBaseUrl}`
   }
 
   const status = error.response.status
   const serverMessage = readServerMessage(error.response.data)
   if (serverMessage) return serverMessage
-  if (status === 404) return '接口不存在或路径不匹配，请检查前端 API 封装与后端 Controller。'
-  if (status === 401 || status === 403) return '接口无访问权限，请确认后端鉴权或演示环境配置。'
-  if (status >= 500) return '后端处理异常：请查看 Spring Boot 控制台日志。'
+  if (status === 404) return '接口不存在或路径不匹配，请检查前端 API 封装与后端服务。'
+  if (status === 401 || status === 403) return '接口无访问权限，请确认后端鉴权或运行环境配置。'
+  if (status >= 500) return '后端处理异常：请查看平台服务日志。'
   return `接口调用失败，HTTP 状态码 ${status}。`
 }
 
@@ -85,8 +85,23 @@ export async function post<T, B = unknown>(url: string, body?: B): Promise<T> {
   return http.post<T, T>(url, body)
 }
 
+export async function postForm<T>(url: string, body: FormData): Promise<T> {
+  return http.post<T, T>(url, body, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 90000,
+  })
+}
+
 export async function put<T, B = unknown>(url: string, body?: B): Promise<T> {
   return http.put<T, T>(url, body)
+}
+
+export async function patch<T, B = unknown>(url: string, body?: B): Promise<T> {
+  return http.patch<T, T>(url, body)
+}
+
+export async function del<T>(url: string, params?: Record<string, unknown>): Promise<T> {
+  return http.delete<T, T>(url, { params })
 }
 
 export async function getArray<T>(url: string, params?: Record<string, unknown>): Promise<T[]> {

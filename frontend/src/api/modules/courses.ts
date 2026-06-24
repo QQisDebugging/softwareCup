@@ -1,5 +1,5 @@
 import { asArray, asObject, get, post } from '@/api/http'
-import type { Course, CreateCourseRequest, LearningResource, ResourceType } from '@/types/api'
+import type { Course, CourseEnrollment, CreateCourseRequest, JoinCourseRequest, LearningResource, ResourceType } from '@/types/api'
 
 function normalizeCourse(value: unknown, fallback: Course): Course {
   const course = asObject<Course>(value, fallback)
@@ -17,6 +17,27 @@ function normalizeCourse(value: unknown, fallback: Course): Course {
   }
 }
 
+function normalizeCourseEnrollment(value: unknown, index: number): CourseEnrollment {
+  const enrollment = asObject<CourseEnrollment>(value, {
+    id: `enrollment-${index + 1}`,
+    courseId: '',
+    studentProfileId: '',
+    status: 'ACTIVE',
+    createdAt: '',
+    updatedAt: '',
+    course: undefined,
+  })
+  return {
+    ...enrollment,
+    id: enrollment.id || `enrollment-${index + 1}`,
+    courseId: enrollment.courseId || enrollment.course?.id || '',
+    studentProfileId: enrollment.studentProfileId || '',
+    status: enrollment.status || 'ACTIVE',
+    createdAt: enrollment.createdAt || '',
+    updatedAt: enrollment.updatedAt || '',
+  }
+}
+
 function normalizeResource(value: unknown, index: number): LearningResource {
   const resource = asObject<LearningResource>(value, {
     id: `resource-${index + 1}`,
@@ -29,6 +50,10 @@ function normalizeResource(value: unknown, index: number): LearningResource {
     targetLevel: '',
     estimatedMinutes: 0,
     content: '',
+    reviewStatus: '',
+    publishedAt: null,
+    publishedBy: null,
+    publishNote: null,
     createdAt: '',
     updatedAt: '',
   })
@@ -41,6 +66,10 @@ function normalizeResource(value: unknown, index: number): LearningResource {
     targetLevel: resource.targetLevel || '-',
     estimatedMinutes: Number(resource.estimatedMinutes || 0),
     content: resource.content || '',
+    reviewStatus: resource.reviewStatus || '',
+    publishedAt: resource.publishedAt || null,
+    publishedBy: resource.publishedBy || null,
+    publishNote: resource.publishNote || null,
   }
 }
 
@@ -84,7 +113,37 @@ export const coursesApi = {
       createdAt: '',
       updatedAt: '',
     }),
-  resources: async (courseId: string) =>
-    asArray<unknown>(await get<unknown>(`/courses/${courseId}/resources`)).map((item, index) => normalizeResource(item, index)),
+  join: async (courseId: string, body: JoinCourseRequest) =>
+    normalizeCourseEnrollment(await post<unknown, JoinCourseRequest>(`/courses/${courseId}/join`, body), 0),
+  enrolled: async (studentProfileId: string) =>
+    asArray<unknown>(await get<unknown>('/courses/enrolled', { studentProfileId })).map(normalizeCourseEnrollment),
+  resources: async (courseId: string, options?: { publishedOnly?: boolean }) =>
+    asArray<unknown>(await get<unknown>(`/courses/${courseId}/resources`, { publishedOnly: Boolean(options?.publishedOnly) })).map((item, index) =>
+      normalizeResource(item, index),
+    ),
+  activity: async (courseId: string) => {
+    const data = asObject<{ groups?: unknown[] }>(await get<unknown>(`/courses/${courseId}/activity`), { groups: [] })
+    return Array.isArray(data.groups) ? data.groups as CourseActivityGroup[] : []
+  },
+  teacherClasses: async () => asArray<TeacherClassItem>(await get<unknown>('/teaching/classes')),
   resourceTypes: async () => asArray<unknown>(await get<unknown>('/resource-types')).map((item, index) => normalizeResourceType(item, index)),
+}
+
+export interface CourseActivityItem {
+  title: string
+  courseTitle: string
+  courseId: string
+  detail: string
+  time: string | null
+}
+export interface CourseActivityGroup {
+  key: string
+  title: string
+  items: CourseActivityItem[]
+}
+export interface TeacherClassItem {
+  courseId: string
+  courseTitle: string
+  department: string
+  studentCount: number
 }

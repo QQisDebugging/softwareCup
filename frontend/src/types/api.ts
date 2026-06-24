@@ -79,12 +79,74 @@ export interface Course {
   updatedAt: string
 }
 
+export interface CourseEnrollment {
+  id: string
+  courseId: string
+  studentProfileId: string
+  status: string
+  createdAt: string
+  updatedAt: string
+  course?: Course
+}
+
 export interface CreateCourseRequest {
   title: string
   department: string
   description: string
   creditHours: number
   syllabusJson: string
+}
+
+export interface JoinCourseRequest {
+  studentProfileId: string
+}
+
+export interface ContestReadinessMetrics {
+  courseCount: number
+  studentProfileCount: number
+  profileDimensionCount: number
+  profileHistoryCount: number
+  enabledAgentCount: number
+  resourceTypeCount: number
+  taskCount: number
+  successfulTaskCount: number
+  taskStepCount: number
+  modelInvocationCount: number
+  generationAuditCount: number
+  reviewRequiredAuditCount: number
+  humanReviewGateCount: number
+  learningPathCount: number
+  learningPathNodeCount: number
+  resourceRecommendationCount: number
+  learningEventCount: number
+  tutoringSessionCount: number
+  quizAttemptCount: number
+  knowledgeMasteryCount: number
+  evaluationReportCount: number
+  agentArtifactCount: number
+}
+
+export interface ContestRequirementEvidence {
+  requirementCode: string
+  category: string
+  title: string
+  status: string
+  score: number
+  target: string
+  actual: string
+  evidenceEndpoints: string[]
+  evidenceNotes: string[]
+}
+
+export interface ContestReadinessReport {
+  generatedAt: string
+  scope: string
+  overallScore: number
+  summary: string
+  metrics: ContestReadinessMetrics
+  requirements: ContestRequirementEvidence[]
+  demoHighlights: string[]
+  recommendedDemoFlow: string[]
 }
 
 export interface LearningResource {
@@ -98,6 +160,10 @@ export interface LearningResource {
   targetLevel: string
   estimatedMinutes: number
   content: string
+  reviewStatus?: string
+  publishedAt?: string | null
+  publishedBy?: string | null
+  publishNote?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -105,6 +171,24 @@ export interface LearningResource {
 export interface ResourceType {
   code: string
   displayName: string
+}
+
+export interface UploadAsset {
+  id: string
+  originalFilename: string
+  contentType: string
+  sizeBytes: number
+  storagePath: string
+  purpose: string
+  courseId?: string | null
+  uploaderRole: string
+  materialType: string
+  parseStatus: string
+  parseMessage: string
+  extractedTextPreview: string
+  knowledgePointsJson: string
+  courseDraftJson: string
+  createdAt: string
 }
 
 export interface GenerationTask {
@@ -154,13 +238,13 @@ export interface ModelInvocation {
   id: string
   taskId: string
   stepId: string
-  provider: string
+  serviceName: string
   modelName: string
   promptHash: string
   promptSummary: string
   latencyMs: number
   status: string
-  fallbackUsed: boolean
+  recoveryUsed: boolean
   errorMessage: string | null
   createdAt: string
 }
@@ -217,6 +301,16 @@ export interface LearningEvent {
   [key: string]: unknown
 }
 
+export interface RecordLearningEventRequest {
+  studentProfileId: string
+  courseId: string
+  resourceId?: string | null
+  eventType: string
+  durationSeconds?: number
+  feedbackScore?: number
+  eventPayload?: string
+}
+
 export interface QuizAttempt {
   id: string
   studentProfileId: string
@@ -247,31 +341,52 @@ export interface EvaluationReport {
   [key: string]: unknown
 }
 
-export interface ContestReadinessMetrics {
-  [key: string]: number | string | null
-}
-
-export interface ContestRequirementEvidence {
-  requirementCode: string
-  category: string
+export interface LearningConversation {
+  id: string
+  studentProfileId: string
+  courseId: string
   title: string
-  status: string
-  score: number
-  target: string
-  actual: string
-  evidenceEndpoints: string[]
-  evidenceNotes: string[]
+  archived: boolean
+  archivedAt?: string | null
+  lastMessagePreview?: string | null
+  lastMessageAt?: string | null
+  createdAt: string
+  updatedAt: string
 }
 
-export interface ContestReadinessReport {
-  generatedAt: string
-  scope: string
-  overallScore: number
-  summary: string
-  metrics: ContestReadinessMetrics
-  requirements: ContestRequirementEvidence[]
-  demoHighlights: string[]
-  recommendedDemoFlow: string[]
+export interface LearningConversationMessage {
+  id: string
+  conversationId: string
+  role: 'user' | 'assistant' | string
+  content: string
+  citations?: unknown[]
+  followUpQuestions?: string[]
+  learningActions?: string[]
+  profileSignals?: string[]
+  mermaidDiagram?: string | null
+  provider?: string | null
+  fallbackUsed?: boolean
+  createdAt: string
+}
+
+export interface CreateLearningConversationRequest {
+  studentProfileId: string
+  courseId: string
+  title?: string
+}
+
+export interface SendLearningConversationMessageRequest {
+  content?: string
+  message?: string
+  modality?: string
+  knowledgeBasePaths?: string[]
+  documentTexts?: string[]
+}
+
+export interface SendLearningConversationMessageResponse {
+  conversation: LearningConversation
+  userMessage: LearningConversationMessage
+  assistantMessage: LearningConversationMessage
 }
 
 export interface AgentTool {

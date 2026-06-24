@@ -3,6 +3,7 @@ import type {
   CreateResourceTaskRequest,
   GenerationAudit,
   GenerationTask,
+  LearningResource,
   ModelInvocation,
   TaskStep,
 } from '@/types/api'
@@ -54,27 +55,29 @@ function normalizeStep(value: unknown, index: number): TaskStep {
 }
 
 function normalizeInvocation(value: unknown, index: number): ModelInvocation {
+  const record = asObject<Record<string, unknown>>(value, {})
   const invocation = asObject<ModelInvocation>(value, {
     id: `invocation-${index + 1}`,
     taskId: '',
     stepId: '',
-    provider: '-',
+    serviceName: '-',
     modelName: '-',
     promptHash: '',
     promptSummary: '',
     latencyMs: 0,
     status: 'UNKNOWN',
-    fallbackUsed: false,
+    recoveryUsed: false,
     errorMessage: null,
     createdAt: '',
   })
   return {
     ...invocation,
     id: invocation.id || `invocation-${index + 1}`,
-    provider: invocation.provider || '-',
+    serviceName: invocation.serviceName || String(record['provider'] || '-'),
     modelName: invocation.modelName || '-',
     latencyMs: Number(invocation.latencyMs || 0),
     status: invocation.status || 'UNKNOWN',
+    recoveryUsed: Boolean(invocation.recoveryUsed || record['fallbackUsed']),
   }
 }
 
@@ -96,6 +99,41 @@ function normalizeAudit(value: unknown, index: number): GenerationAudit {
     status: audit.status || 'UNKNOWN',
     evidenceSummary: audit.evidenceSummary || '暂无审核证据',
     reviewerRequired: Boolean(audit.reviewerRequired),
+  }
+}
+
+function normalizePublishedResource(value: unknown, index: number): LearningResource {
+  const resource = asObject<LearningResource>(value, {
+    id: `resource-${index + 1}`,
+    courseId: '',
+    sourceTaskId: '',
+    title: `学习资源 ${index + 1}`,
+    resourceType: '',
+    resourceTypeName: '',
+    modality: '',
+    targetLevel: '',
+    estimatedMinutes: 0,
+    content: '',
+    reviewStatus: '',
+    publishedAt: null,
+    publishedBy: null,
+    publishNote: null,
+    createdAt: '',
+    updatedAt: '',
+  })
+  return {
+    ...resource,
+    id: resource.id || `resource-${index + 1}`,
+    title: resource.title || `学习资源 ${index + 1}`,
+    resourceTypeName: resource.resourceTypeName || resource.resourceType || '资源',
+    modality: resource.modality || '文本',
+    targetLevel: resource.targetLevel || '-',
+    estimatedMinutes: Number(resource.estimatedMinutes || 0),
+    content: resource.content || '',
+    reviewStatus: resource.reviewStatus || '',
+    publishedAt: resource.publishedAt || null,
+    publishedBy: resource.publishedBy || null,
+    publishNote: resource.publishNote || null,
   }
 }
 
@@ -154,4 +192,10 @@ export const tasksApi = {
   modelInvocations: async (taskId: string) =>
     asArray<unknown>(await get<unknown>(`/tasks/${taskId}/model-invocations`)).map(normalizeInvocation),
   audits: async (taskId: string) => asArray<unknown>(await get<unknown>(`/tasks/${taskId}/audits`)).map(normalizeAudit),
+  reviewDecision: async (
+    taskId: string,
+    body: { decision: 'APPROVED' | 'REJECTED' | 'CHANGES_REQUIRED'; reviewer?: string; note?: string },
+  ) => post<unknown, typeof body>(`/tasks/${taskId}/review-decision`, body),
+  publish: async (taskId: string, body: { publisherName?: string; publishNote?: string }) =>
+    asArray<unknown>(await post<unknown, typeof body>(`/tasks/${taskId}/publish`, body)).map(normalizePublishedResource),
 }

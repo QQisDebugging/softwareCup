@@ -4,7 +4,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
-ProviderName = Literal["offline", "xfyun_spark"]
+ProviderName = Literal["offline", "xfyun_spark", "openai_compatible"]
 
 
 class ResourceAgentRequest(BaseModel):
@@ -30,6 +30,10 @@ class ResourceAgentResponse(BaseModel):
     estimatedMinutes: int = Field(ge=1)
     content: str
     summary: str
+    provider: str = ""
+    model: str = ""
+    executionMode: str = "LLM"
+    fallbackUsed: bool = False
 
 
 class KnowledgeMatch(BaseModel):
@@ -197,6 +201,10 @@ class LearningPathPlanResponse(BaseModel):
     citations: list[KnowledgeMatch]
     summary: str
     profileDimensionUpdates: list[ProfileDimensionUpdate]
+    provider: str = ""
+    model: str = ""
+    executionMode: str = "LLM"
+    fallbackUsed: bool = False
 
 
 class KnowledgeGraphRequest(BaseModel):
@@ -299,6 +307,83 @@ class CourseDiagnosisResponse(BaseModel):
     recommendedTasks: list[str]
     citations: list[KnowledgeMatch]
     summary: str
+    provider: str = ""
+    model: str = ""
+    executionMode: str = "LLM"
+    fallbackUsed: bool = False
+
+
+class CourseStructureRequest(BaseModel):
+    courseId: str | None = None
+    courseTitle: str = ""
+    sourceFile: str = ""
+    materialType: str = "FILE"
+    uploaderRole: str = "teacher"
+    extractedText: str = ""
+    knownKnowledgePoints: list[str] = Field(default_factory=list)
+    targetLearners: str = ""
+    learningObjectives: list[str] = Field(default_factory=list)
+    existingChapters: list[str] = Field(default_factory=list)
+    desiredWeeks: int = Field(default=8, ge=1, le=24)
+    knowledgeBasePaths: list[str] = Field(default_factory=list)
+    documentTexts: list[str] = Field(default_factory=list)
+
+
+class CourseStructureChapter(BaseModel):
+    id: str
+    title: str
+    order: int = Field(ge=1)
+    objective: str
+    sections: list[str] = Field(default_factory=list)
+
+
+class CourseStructureKnowledgePoint(BaseModel):
+    id: str
+    chapterId: str
+    name: str
+    objective: str
+    hours: str = "1"
+
+
+class CourseStructureResourceSlot(BaseModel):
+    resourceType: str
+    targetChapterId: str = ""
+    knowledgePoints: list[str] = Field(default_factory=list)
+    purpose: str
+    priority: int = Field(default=1, ge=1)
+    estimatedMinutes: int = Field(default=20, ge=1)
+
+
+class CourseStructurePublishCheck(BaseModel):
+    label: str
+    status: str
+    issueCount: int = Field(default=0, ge=0)
+    suggestion: str = ""
+
+
+class CourseStructureWeek(BaseModel):
+    week: int = Field(ge=1)
+    topic: str
+    objective: str = ""
+
+
+class CourseStructureResponse(BaseModel):
+    suggestedTitle: str
+    suggestedDepartment: str
+    suggestedCreditHours: int = Field(ge=1)
+    suggestedDescription: str
+    learningObjectives: list[str]
+    chapters: list[CourseStructureChapter]
+    knowledgePoints: list[CourseStructureKnowledgePoint]
+    resourceSlots: list[CourseStructureResourceSlot]
+    publishChecks: list[CourseStructurePublishCheck]
+    weeks: list[CourseStructureWeek]
+    citations: list[KnowledgeMatch]
+    summary: str
+    provider: str = ""
+    model: str = ""
+    executionMode: str = "LLM"
+    fallbackUsed: bool = False
 
 
 class CodePracticeGenerateRequest(BaseModel):
@@ -624,6 +709,10 @@ class ProfileInferResponse(BaseModel):
     followUpQuestions: list[str]
     citations: list[KnowledgeMatch]
     summary: str
+    provider: str = ""
+    model: str = ""
+    executionMode: str = "LLM"
+    fallbackUsed: bool = False
 
 
 class LearningEventAnalysisRequest(BaseModel):
@@ -858,6 +947,10 @@ class ClassAnalyticsResponse(BaseModel):
     teacherActions: list[str]
     citations: list[KnowledgeMatch]
     summary: str
+    provider: str = ""
+    model: str = ""
+    executionMode: str = "LLM"
+    fallbackUsed: bool = False
 
 
 class DemoScenarioRequest(BaseModel):
@@ -903,6 +996,10 @@ class DemoScenarioResponse(BaseModel):
     successMetrics: list[str]
     citations: list[KnowledgeMatch]
     summary: str
+    provider: str = ""
+    model: str = ""
+    executionMode: str = "LLM"
+    fallbackUsed: bool = False
 
 
 class RagEvaluationRequest(BaseModel):

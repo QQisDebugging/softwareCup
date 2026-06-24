@@ -1,14 +1,17 @@
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
+from dataclasses import replace as dataclass_replace
 from typing import Iterable
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
 from learning_agent.agent_trace import AgentTraceAgent
 from learning_agent.assessment_item_analysis import AssessmentItemAnalysisAgent
 from learning_agent.class_analytics import ClassAnalyticsAgent
-from learning_agent.config import AgentSettings
+from learning_agent.config import AgentSettings, RuntimeConfigError, runtime_config_path, save_runtime_overrides
+from learning_agent.llm import ProviderRouter
 from learning_agent.competition_enhancements import (
     AgentRunStore,
     CourseCoverageAgent,
@@ -28,6 +31,7 @@ from learning_agent.assessment import AssessmentAgent
 from learning_agent.code_practice import CodePracticeAgent
 from learning_agent.content_audit import ContentAuditAgent
 from learning_agent.course_diagnosis import CourseDiagnosisAgent
+from learning_agent.course_structure import CourseStructureAgent
 from learning_agent.knowledge_graph import KnowledgeGraphAgent
 from learning_agent.path_planner import PathPlannerAgent
 from learning_agent.prerequisite import PrerequisiteDiagnosisAgent
@@ -54,6 +58,8 @@ from learning_agent.schemas import (
     ContentAuditResponse,
     CourseDiagnosisRequest,
     CourseDiagnosisResponse,
+    CourseStructureRequest,
+    CourseStructureResponse,
     CourseCoverageRequest,
     CourseCoverageResponse,
     DemoScenarioRequest,
@@ -119,6 +125,7 @@ path_planner_agent = PathPlannerAgent(settings=settings, vector_store=vector_sto
 knowledge_graph_agent = KnowledgeGraphAgent(settings=settings, vector_store=vector_store)
 content_audit_agent = ContentAuditAgent(settings=settings, vector_store=vector_store)
 course_diagnosis_agent = CourseDiagnosisAgent(settings=settings, vector_store=vector_store)
+course_structure_agent = CourseStructureAgent(settings=settings, vector_store=vector_store)
 code_practice_agent = CodePracticeAgent(settings=settings, vector_store=vector_store)
 storyboard_agent = StoryboardAgent(settings=settings, vector_store=vector_store)
 prerequisite_agent = PrerequisiteDiagnosisAgent(settings=settings, vector_store=vector_store)
@@ -140,6 +147,51 @@ graphrag_query_agent = GraphRagQueryAgent(settings=settings, vector_store=vector
 error_book_agent = ErrorBookAgent(settings=settings, vector_store=vector_store)
 course_coverage_agent = CourseCoverageAgent(settings=settings, vector_store=vector_store)
 defense_pack_agent = DefensePackAgent(settings=settings, vector_store=vector_store)
+
+
+# 所有持有 settings/provider_router 的智能体集合，用于运行时热切换模型供应商。
+_RECONFIGURABLE_AGENTS = [
+    workflow,
+    tutoring_agent,
+    assessment_agent,
+    path_planner_agent,
+    knowledge_graph_agent,
+    content_audit_agent,
+    course_diagnosis_agent,
+    course_structure_agent,
+    code_practice_agent,
+    storyboard_agent,
+    prerequisite_agent,
+    resource_curation_agent,
+    portfolio_report_agent,
+    agent_trace_agent,
+    profile_inference_agent,
+    learning_event_analysis_agent,
+    assessment_item_analysis_agent,
+    project_review_agent,
+    class_analytics_agent,
+    demo_scenario_planner_agent,
+    rag_evaluation_agent,
+    human_review_agent,
+    voice_package_agent,
+    ocr_question_agent,
+    graphrag_query_agent,
+    error_book_agent,
+    course_coverage_agent,
+    defense_pack_agent,
+]
+
+
+def _rebind_settings(new_settings: "AgentSettings") -> None:
+    """把新 settings 应用到所有智能体，并重建其 ProviderRouter，实现运行时热切换。"""
+    global settings
+    settings = new_settings
+    for agent in _RECONFIGURABLE_AGENTS:
+        if hasattr(agent, "settings"):
+            agent.settings = new_settings
+        if hasattr(agent, "provider_router"):
+            agent.provider_router = ProviderRouter(new_settings)
+
 
 
 @asynccontextmanager
@@ -267,6 +319,18 @@ def diagnose_course(request: CourseDiagnosisRequest) -> CourseDiagnosisResponse:
         metadata={"courseId": request.courseId},
     )
     return course_diagnosis_agent.diagnose(request)
+
+
+@app.post("/agents/course/structure", response_model=CourseStructureResponse)
+def build_course_structure(request: CourseStructureRequest) -> CourseStructureResponse:
+    ingest_context_knowledge(
+        paths=request.knowledgeBasePaths,
+        texts=request.documentTexts + [request.extractedText, *request.knownKnowledgePoints],
+        source="request.course_structure.documentTexts",
+        title_prefix=f"course-structure-{request.courseId or 'draft'}-inline",
+        metadata={"courseId": request.courseId or "", "sourceFile": request.sourceFile},
+    )
+    return course_structure_agent.build(request)
 
 
 @app.post("/agents/code/practice/generate", response_model=CodePracticeGenerateResponse)
@@ -413,13 +477,14 @@ def analyze_class_learning(request: ClassAnalyticsRequest) -> ClassAnalyticsResp
     return class_analytics_agent.analyze(request)
 
 
+@app.post("/agents/teaching/scenario-plan", response_model=DemoScenarioResponse)
 @app.post("/agents/demo/scenario-plan", response_model=DemoScenarioResponse)
-def plan_demo_scenario(request: DemoScenarioRequest) -> DemoScenarioResponse:
+def plan_teaching_scenario(request: DemoScenarioRequest) -> DemoScenarioResponse:
     ingest_context_knowledge(
         paths=request.knowledgeBasePaths,
         texts=request.documentTexts + request.coreEndpoints + request.availableArtifacts + request.riskConcerns,
-        source="request.demo_scenario.documentTexts",
-        title_prefix="demo-scenario-inline",
+        source="request.teaching_scenario.documentTexts",
+        title_prefix="teaching-scenario-inline",
         metadata={"courseTitle": request.courseTitle},
     )
     return demo_scenario_planner_agent.plan(request)
@@ -557,7 +622,119 @@ def provider_status() -> dict:
     status["vectorDocuments"] = vector_store.document_count
     status["vectorChunks"] = vector_store.chunk_count
     status["xfyunAppIdConfigured"] = bool(settings.xfyun_app_id)
+    config_path = runtime_config_path()
+    status["runtimeConfigPersisted"] = config_path.exists()
+    status["runtimeConfigPath"] = str(config_path)
     return status
+
+
+class ProviderConfigRequest(BaseModel):
+    provider: str | None = None
+    openaiApiKey: str | None = None
+    openaiBaseUrl: str | None = None
+    openaiModel: str | None = None
+    apiKey: str | None = None
+    baseUrl: str | None = None
+    model: str | None = None
+    modelName: str | None = None
+    deepseekApiKey: str | None = None
+    xfyunApiPassword: str | None = None
+    xfyunModel: str | None = None
+
+
+@app.post("/agents/providers/config")
+def update_provider_config(request: ProviderConfigRequest) -> dict:
+    """运行时热切换模型供应商。空字段保持原值，便于只更新部分配置。"""
+    provider = _normalize_provider(request)
+    if provider not in {"offline", "xfyun_spark", "openai_compatible"}:
+        raise HTTPException(status_code=400, detail=f"Unsupported provider '{provider}'.")
+    openai_api_key = _first_text(request.openaiApiKey, request.apiKey, request.deepseekApiKey, settings.openai_api_key)
+    openai_base_url = _first_text(request.openaiBaseUrl, request.baseUrl, settings.openai_base_url).rstrip("/")
+    openai_model = _first_text(request.openaiModel, request.modelName, request.model, settings.openai_model)
+    if provider == "openai_compatible":
+        missing = [
+            name
+            for name, value in {
+                "openaiApiKey": openai_api_key,
+                "openaiBaseUrl": openai_base_url,
+                "openaiModel": openai_model,
+            }.items()
+            if not value
+        ]
+        if missing:
+            raise HTTPException(
+                status_code=400,
+                detail="OpenAI-compatible provider requires " + ", ".join(missing) + ".",
+            )
+    new_settings = dataclass_replace(
+        settings,
+        provider=provider,  # type: ignore[arg-type]
+        openai_api_key=openai_api_key,
+        openai_base_url=openai_base_url,
+        openai_model=openai_model,
+        xfyun_api_password=request.xfyunApiPassword if request.xfyunApiPassword is not None else settings.xfyun_api_password,
+        xfyun_model=request.xfyunModel or settings.xfyun_model,
+    )
+    try:
+        save_runtime_overrides({
+            "provider": new_settings.provider,
+            "openai_api_key": new_settings.openai_api_key,
+            "openai_base_url": new_settings.openai_base_url,
+            "openai_model": new_settings.openai_model,
+            "xfyun_api_password": new_settings.xfyun_api_password,
+            "xfyun_model": new_settings.xfyun_model,
+        })
+    except RuntimeConfigError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    _rebind_settings(new_settings)
+    # 持久化到本地文件，重启服务后自动恢复用户切换的供应商配置
+    status = workflow.provider_router.status()
+    status["applied"] = True
+    config_path = runtime_config_path()
+    status["runtimeConfigPersisted"] = config_path.exists()
+    status["runtimeConfigPath"] = str(config_path)
+    return status
+
+
+def _normalize_provider(request: ProviderConfigRequest) -> str:
+    raw_provider = (request.provider or "").strip().lower()
+    aliases = {
+        "deepseek": "openai_compatible",
+        "qwen": "openai_compatible",
+        "dashscope": "openai_compatible",
+        "zhipu": "openai_compatible",
+        "kimi": "openai_compatible",
+        "moonshot": "openai_compatible",
+        "openai": "openai_compatible",
+        "openai-compatible": "openai_compatible",
+        "openai_compatible": "openai_compatible",
+        "xfyun": "xfyun_spark",
+        "spark": "xfyun_spark",
+        "xfyun_spark": "xfyun_spark",
+        "offline": "offline",
+    }
+    if raw_provider:
+        return aliases.get(raw_provider, raw_provider)
+    if _first_text(
+        request.openaiApiKey,
+        request.apiKey,
+        request.deepseekApiKey,
+        request.openaiBaseUrl,
+        request.baseUrl,
+        request.openaiModel,
+        request.modelName,
+        request.model,
+    ):
+        return "openai_compatible"
+    return settings.provider
+
+
+def _first_text(*values: str | None) -> str:
+    for value in values:
+        if value is not None and str(value).strip():
+            return str(value).strip()
+    return ""
+
 
 
 

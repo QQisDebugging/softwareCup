@@ -13,6 +13,10 @@ public record LearningResourceResponse(
         String targetLevel,
         Integer estimatedMinutes,
         String content,
+        String reviewStatus,
+        Instant publishedAt,
+        String publishedBy,
+        String publishNote,
         Instant createdAt,
         Instant updatedAt) {
     public static LearningResourceResponse from(LearningResource resource) {
@@ -27,6 +31,10 @@ public record LearningResourceResponse(
                 resource.getTargetLevel(),
                 resource.getEstimatedMinutes(),
                 resource.getContent(),
+                resource.getReviewStatus(),
+                resource.getPublishedAt(),
+                resource.getPublishedBy(),
+                resource.getPublishNote(),
                 resource.getCreatedAt(),
                 resource.getUpdatedAt());
     }

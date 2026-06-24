@@ -28,7 +28,7 @@ export function downloadJson(filename: string, value: unknown) {
 }
 
 export function safeFilePart(value: string) {
-  return value.replace(/[\\/:*?"<>|\s]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'softwarecup'
+  return value.replace(/[\\/:*?"<>|\s]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'zhixue'
 }
 
 export function jsonToMarkdown(title: string, value: unknown) {

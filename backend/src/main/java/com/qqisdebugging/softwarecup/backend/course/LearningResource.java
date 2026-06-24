@@ -38,6 +38,17 @@ public class LearningResource {
     @Column(nullable = false, columnDefinition = "text")
     private String content;
 
+    @Column(nullable = false, length = 40)
+    private String reviewStatus;
+
+    private Instant publishedAt;
+
+    @Column(length = 80)
+    private String publishedBy;
+
+    @Column(columnDefinition = "text")
+    private String publishNote;
+
     @Column(nullable = false)
     private Instant createdAt;
 
@@ -64,12 +75,16 @@ public class LearningResource {
         this.targetLevel = targetLevel;
         this.estimatedMinutes = estimatedMinutes;
         this.content = content;
+        this.reviewStatus = "REVIEWING";
     }
 
     @jakarta.persistence.PrePersist
     void prePersist() {
         if (id == null) {
             id = UUID.randomUUID().toString();
+        }
+        if (reviewStatus == null || reviewStatus.isBlank()) {
+            reviewStatus = "REVIEWING";
         }
         Instant now = Instant.now();
         createdAt = now;
@@ -122,6 +137,55 @@ public class LearningResource {
             throw new IllegalArgumentException("Resource content cannot be blank");
         }
         this.content = content;
+    }
+
+    public void markReadyForPublish() {
+        if (!"PUBLISHED".equals(reviewStatus)) {
+            reviewStatus = "READY_TO_PUBLISH";
+        }
+    }
+
+    public void markReviewRequired() {
+        if (!"PUBLISHED".equals(reviewStatus)) {
+            reviewStatus = "REVIEW_REQUIRED";
+        }
+    }
+
+    public void publish(String publisherName, String note) {
+        if (!"READY_TO_PUBLISH".equals(reviewStatus) && !"APPROVED".equals(reviewStatus)) {
+            throw new IllegalStateException("Resource is not ready to publish: " + reviewStatus);
+        }
+        reviewStatus = "PUBLISHED";
+        publishedAt = Instant.now();
+        publishedBy = publisherName == null || publisherName.isBlank() ? "课程教师" : publisherName.trim();
+        publishNote = note == null || note.isBlank() ? "教师已确认审核证据并发布给学生。" : note.trim();
+    }
+
+    public void applyReviewDecision(String decision, String reviewer, String note) {
+        reviewStatus = decision;
+        publishedBy = reviewer == null || reviewer.isBlank() ? null : reviewer.trim();
+        publishNote = note == null || note.isBlank() ? null : note.trim();
+        if ("APPROVED".equals(decision)) {
+            publishedAt = Instant.now();
+        } else {
+            publishedAt = null;
+        }
+    }
+
+    public String getReviewStatus() {
+        return reviewStatus;
+    }
+
+    public Instant getPublishedAt() {
+        return publishedAt;
+    }
+
+    public String getPublishedBy() {
+        return publishedBy;
+    }
+
+    public String getPublishNote() {
+        return publishNote;
     }
 
     public Instant getCreatedAt() {

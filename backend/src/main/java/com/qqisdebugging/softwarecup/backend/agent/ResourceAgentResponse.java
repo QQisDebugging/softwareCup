@@ -7,5 +7,9 @@ public record ResourceAgentResponse(
         String targetLevel,
         Integer estimatedMinutes,
         String content,
-        String summary) {
+        String summary,
+        String provider,
+        String model,
+        String executionMode,
+        Boolean fallbackUsed) {
 }

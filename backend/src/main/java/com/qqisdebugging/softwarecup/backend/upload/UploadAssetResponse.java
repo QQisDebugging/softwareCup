@@ -9,6 +9,14 @@ public record UploadAssetResponse(
         Long sizeBytes,
         String storagePath,
         String purpose,
+        String courseId,
+        String uploaderRole,
+        String materialType,
+        String parseStatus,
+        String parseMessage,
+        String extractedTextPreview,
+        String knowledgePointsJson,
+        String courseDraftJson,
         Instant createdAt) {
     static UploadAssetResponse from(UploadedAsset asset) {
         return new UploadAssetResponse(
@@ -18,6 +26,14 @@ public record UploadAssetResponse(
                 asset.getSizeBytes(),
                 asset.getStoragePath(),
                 asset.getPurpose(),
+                asset.getCourseId(),
+                asset.getUploaderRole(),
+                asset.getMaterialType(),
+                asset.getParseStatus(),
+                asset.getParseMessage(),
+                asset.getExtractedTextPreview(),
+                asset.getKnowledgePointsJson(),
+                asset.getCourseDraftJson(),
                 asset.getCreatedAt());
     }
 }

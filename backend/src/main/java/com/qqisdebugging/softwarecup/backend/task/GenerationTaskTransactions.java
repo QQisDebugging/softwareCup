@@ -52,12 +52,14 @@ public class GenerationTaskTransactions {
                 new TaskStep(taskId, "PROFILE_ANALYZER", 1, "画像分析中", 10),
                 new TaskStep(taskId, "KNOWLEDGE_DIAGNOSTIC", 2, "知识诊断中", 22),
                 new TaskStep(taskId, "PATH_PLANNER", 3, "路径规划中", 35),
-                new TaskStep(taskId, "DOCUMENT_GENERATOR", 4, "资源生成中", 55),
-                new TaskStep(taskId, "QUIZ_GENERATOR", 5, "题库生成中", 68),
-                new TaskStep(taskId, "MIND_MAP_GENERATOR", 6, "思维导图生成中", 78),
-                new TaskStep(taskId, "PRACTICE_CASE_GENERATOR", 7, "实操案例生成中", 86),
-                new TaskStep(taskId, "PPT_COURSEWARE_GENERATOR", 8, "PPT课件生成中", 92),
-                new TaskStep(taskId, "SAFETY_REVIEWER", 9, "安全审核中", 97)));
+                new TaskStep(taskId, "DOCUMENT_GENERATOR", 4, "讲解文档生成中", 45),
+                new TaskStep(taskId, "QUIZ_GENERATOR", 5, "题库生成中", 55),
+                new TaskStep(taskId, "MIND_MAP_GENERATOR", 6, "思维导图生成中", 64),
+                new TaskStep(taskId, "EXTENDED_READING_GENERATOR", 7, "拓展阅读生成中", 72),
+                new TaskStep(taskId, "VIDEO_SCRIPT_GENERATOR", 8, "视频脚本生成中", 80),
+                new TaskStep(taskId, "PRACTICE_CASE_GENERATOR", 9, "实操案例生成中", 88),
+                new TaskStep(taskId, "PPT_COURSEWARE_GENERATOR", 10, "PPT课件生成中", 94),
+                new TaskStep(taskId, "SAFETY_REVIEWER", 11, "安全审核中", 98)));
     }
 
     @Transactional
@@ -156,6 +158,29 @@ public class GenerationTaskTransactions {
     }
 
     @Transactional
+    public LearningResource saveCompanionResource(
+            String taskId,
+            String courseId,
+            ResourceType resourceType,
+            String title,
+            String modality,
+            String targetLevel,
+            Integer estimatedMinutes,
+            String content) {
+        LearningResource resource = new LearningResource(
+                courseId,
+                taskId,
+                valueOrFallback(title, resourceType.displayName()),
+                resourceType.name(),
+                valueOrFallback(modality, "文本"),
+                valueOrFallback(targetLevel, "自适应"),
+                estimatedMinutes == null ? 15 : estimatedMinutes,
+                valueOrFallback(content, resourceType.displayName() + "生成完成。"));
+        resource.markReadyForPublish();
+        return resourceRepository.save(resource);
+    }
+
+    @Transactional
     public void markSucceeded(String taskId, String resourceId, String summary) {
         GenerationTask task = requireTask(taskId);
         task.markSucceeded(resourceId, summary);
@@ -180,6 +205,12 @@ public class GenerationTaskTransactions {
         boolean accuracyReview = unsupportedCount > 0 || score < 75;
         boolean safetyReview = riskyCount > 0 || score < 60;
         boolean finalReview = evidenceReview || accuracyReview || safetyReview;
+        if (finalReview) {
+            resource.markReviewRequired();
+        } else {
+            resource.markReadyForPublish();
+        }
+        resourceRepository.save(resource);
 
         auditRepository.saveAll(List.of(
                 new GenerationAudit(
@@ -223,6 +254,12 @@ public class GenerationTaskTransactions {
     @Transactional
     public void saveAudits(String taskId, String resourceId, Course course, LearningResource resource) {
         boolean needsReview = resource.getContent() == null || resource.getContent().length() < 80;
+        if (needsReview) {
+            resource.markReviewRequired();
+        } else {
+            resource.markReadyForPublish();
+        }
+        resourceRepository.save(resource);
         auditRepository.saveAll(List.of(
                 new GenerationAudit(
                         taskId,
@@ -245,6 +282,55 @@ public class GenerationTaskTransactions {
                         "PASSED",
                         "内容安全检查：未发现与课程学习无关的敏感指令或不当输出。",
                         false)));
+    }
+
+    @Transactional
+    public List<LearningResource> publishTaskResources(String taskId, String publisherName, String publishNote) {
+        GenerationTask task = requireTask(taskId);
+        List<LearningResource> resources = resourceRepository.findBySourceTaskIdOrderByCreatedAtDesc(task.getId());
+        if (resources.isEmpty()) {
+            throw new NotFoundException("No generated resources found for task: " + taskId);
+        }
+        List<LearningResource> blockedResources = resources.stream()
+                .filter(resource -> !isPublishable(resource.getReviewStatus()))
+                .toList();
+        if (!blockedResources.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Task contains resources that are not ready to publish: "
+                            + blockedResources.stream()
+                                    .map(resource -> resource.getTitle() + "[" + resource.getReviewStatus() + "]")
+                                    .toList());
+        }
+        resources.forEach(resource -> resource.publish(publisherName, publishNote));
+        return resourceRepository.saveAll(resources);
+    }
+
+    @Transactional
+    public ReviewDecisionResult applyReviewDecision(
+            String taskId,
+            ReviewDecision decision,
+            String reviewer,
+            String note) {
+        GenerationTask task = requireTask(taskId);
+        List<LearningResource> resources = resourceRepository.findBySourceTaskIdOrderByCreatedAtDesc(task.getId());
+        if (resources.isEmpty() && task.getCreatedResourceId() != null) {
+            resources = resourceRepository.findById(task.getCreatedResourceId())
+                    .map(List::of)
+                    .orElse(List.of());
+        }
+        if (resources.isEmpty()) {
+            throw new NotFoundException("No generated resources found for task: " + taskId);
+        }
+        resources.forEach(resource -> resource.applyReviewDecision(decision.name(), reviewer, note));
+        List<LearningResource> savedResources = resourceRepository.saveAll(resources);
+        GenerationAudit audit = auditRepository.save(new GenerationAudit(
+                taskId,
+                task.getCreatedResourceId(),
+                "REVIEW_DECISION",
+                decision.name(),
+                reviewDecisionSummary(decision, reviewer, note, savedResources.size()),
+                decision != ReviewDecision.APPROVED));
+        return new ReviewDecisionResult(savedResources, audit);
     }
 
     @Transactional(readOnly = true)
@@ -324,6 +410,26 @@ public class GenerationTaskTransactions {
         return value == null || value.isBlank() ? fallback : value;
     }
 
+    private boolean isPublishable(String reviewStatus) {
+        return "READY_TO_PUBLISH".equals(reviewStatus) || "APPROVED".equals(reviewStatus);
+    }
+
+    private String reviewDecisionSummary(
+            ReviewDecision decision,
+            String reviewer,
+            String note,
+            int resourceCount) {
+        String reviewerText = valueOrFallback(reviewer, "UNSPECIFIED_REVIEWER");
+        String noteText = valueOrFallback(note, "No review note provided.");
+        return "Reviewer=" + reviewerText
+                + "; decision=" + decision.name()
+                + "; affectedResources=" + resourceCount
+                + "; note=" + noteText;
+    }
+
     public record ResourceGenerationContext(GenerationTask task, StudentProfile profile, Course course) {
+    }
+
+    public record ReviewDecisionResult(List<LearningResource> resources, GenerationAudit audit) {
     }
 }

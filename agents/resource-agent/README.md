@@ -140,9 +140,10 @@ $env:XFYUN_API_PASSWORD='你的 APIPassword'
 $env:XFYUN_API_KEY='你的 API Key'
 $env:XFYUN_API_SECRET='你的 API Secret'
 $env:XFYUN_MODEL='generalv3.5'
+$env:XFYUN_ENDPOINT='https://spark-api-open.xf-yun.com/v1/chat/completions'
 ```
 
-HTTP 调用优先使用 `XFYUN_API_PASSWORD`；如果只拿到旧版 `APIKey/APISecret`，也可以继续配置 `XFYUN_API_KEY` 和 `XFYUN_API_SECRET`。未配置密钥或调用失败时，系统会使用离线模板生成器继续返回结构化学习资源，保证比赛演示链路不中断。`GET /agents/providers/status` 会返回当前凭据模式、模型、fallback 状态和最近错误。
+HTTP 调用优先使用 `XFYUN_API_PASSWORD`；如果只拿到旧版 `APIKey/APISecret`，也可以继续配置 `XFYUN_API_KEY` 和 `XFYUN_API_SECRET`。正式展示和评测应确认 `GET /agents/providers/status` 返回 `activeProvider=xfyun_spark`、`xfyunConfigured=true` 和正确的凭据模式。完整申请、配置和验证步骤见 `../../docs/XFYUN_SPARK_SETUP.md`。
 
 ## 国赛增强能力
 

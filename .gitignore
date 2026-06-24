@@ -18,3 +18,28 @@ reference/**/.vite/
 
 .env
 *.log
+agents/resource-agent/.agent-runtime-config.json
+
+# 工具、缓存、运行时与打包产物（不纳入仓库）
+output/
+frontend/output/
+frontend/dist/
+.cache/
+.claude/
+.codex/
+.agents/
+.impeccable/
+.runtime/
+node_modules/
+
+
+# 本地参考资料与课程素材（非项目交付物）
+reference/
+example/
+
+# 工具skills与临时渲染产物
+data/skills/
+tmp/
+PRODUCT.md
+design-qa.md
+skills-lock.json

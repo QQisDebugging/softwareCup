@@ -185,15 +185,15 @@ public class ProfileService {
         payload.put("constraintsText", request.constraintsText());
         payload.put("dialogueTurns", request.dialogueTurns());
         payload.put("documentTexts", List.of(summary));
-        try {
-            Map<String, Object> response = agentArtifactService.invokeAndStore(
-                    "PROFILE_INFERENCE_MAIN_FLOW",
-                    "/agents/profile/infer",
-                    payload);
-            return parseAgentDimensions(response.get("dimensions"));
-        } catch (RuntimeException ex) {
-            return List.of();
+        Map<String, Object> response = agentArtifactService.invokeAndStore(
+                "PROFILE_INFERENCE_MAIN_FLOW",
+                "/agents/profile/infer",
+                payload);
+        List<ProfileDimensionRequest> dimensions = parseAgentDimensions(response.get("dimensions"));
+        if (dimensions.isEmpty()) {
+            throw new IllegalStateException("Profile inference agent returned no dimensions");
         }
+        return dimensions;
     }
 
     private List<ProfileDimensionRequest> parseAgentDimensions(Object rawDimensions) {
